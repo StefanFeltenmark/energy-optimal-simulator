@@ -342,27 +342,27 @@
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Domain/2.0.0.476": {
+      "Powel.Optimal.MultiAsset.Domain/2.0.0.479-alpha": {
         "dependencies": {
-          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.476",
-          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.476"
+          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.479-alpha",
+          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.479-alpha"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Domain.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.476"
+            "fileVersion": "2.0.0.479"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.476": {
+      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.479-alpha": {
         "runtime": {
           "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.476"
+            "fileVersion": "2.0.0.479"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.476": {
+      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.479-alpha": {
         "dependencies": {
           "Microsoft.Extensions.Configuration": "7.0.0",
           "Microsoft.Extensions.Configuration.Binder": "7.0.4",
@@ -372,35 +372,35 @@
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Infrastructure.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.476"
+            "fileVersion": "2.0.0.479"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.476": {
+      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.479-alpha": {
         "dependencies": {
           "MathNet.Numerics.Signed": "4.15.0",
           "Microsoft.AspNet.WebApi.Core": "5.3.0",
           "Newtonsoft.Json": "13.0.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.476",
-          "Powel.Optimal.MultiAsset.Utility": "2.0.0.476",
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.479-alpha",
+          "Powel.Optimal.MultiAsset.Utility": "2.0.0.479-alpha",
           "protobuf-net": "2.4.0"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.OPS.Core.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.476"
+            "fileVersion": "2.0.0.479"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Utility/2.0.0.476": {
+      "Powel.Optimal.MultiAsset.Utility/2.0.0.479-alpha": {
         "dependencies": {
           "EPPlus": "4.5.3.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.476"
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.479-alpha"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Utility.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.476"
+            "fileVersion": "2.0.0.479"
           }
         }
       },
@@ -1128,7 +1128,7 @@
       },
       "BatterySimulator/1.0.0": {
         "dependencies": {
-          "Powel.Optimal.MultiAsset.Domain": "2.0.0.476"
+          "Powel.Optimal.MultiAsset.Domain": "2.0.0.479-alpha"
         },
         "runtime": {
           "BatterySimulator.dll": {
@@ -1348,40 +1348,40 @@
       "path": "powel.optimal.log.client/1.15.0.571",
       "hashPath": "powel.optimal.log.client.1.15.0.571.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Domain/2.0.0.476": {
+    "Powel.Optimal.MultiAsset.Domain/2.0.0.479-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-H4+qnTtr4uNZXhf5v501s/EuM21bFzgZOMjOrJErCGF1q9hvkRdtg2osJhFyz0S2V6mubFKp7KDAZoVloQ7g8A==",
-      "path": "powel.optimal.multiasset.domain/2.0.0.476",
-      "hashPath": "powel.optimal.multiasset.domain.2.0.0.476.nupkg.sha512"
+      "sha512": "sha512-GlTnFBV+Uq8TYDjWRKzqtMJbOFd1VEeNV1fZUchP9FF/HEnl9omtAYKGOq/aIED2L+Yvu+14SSp0VZbhYmuMAg==",
+      "path": "powel.optimal.multiasset.domain/2.0.0.479-alpha",
+      "hashPath": "powel.optimal.multiasset.domain.2.0.0.479-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.476": {
+    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.479-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-FHoMPdWKWpWwL1PXFYhCGA6E0NDbDwqIm7usSOO8sK0fb3OAULQfspSmeGiDrAWAyJ+1j5cb75k2g3arSsZS2w==",
-      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.476",
-      "hashPath": "powel.optimal.multiasset.dynphydroplantopt.2.0.0.476.nupkg.sha512"
+      "sha512": "sha512-EDDOff4jBTAgt+h9Z6hIsr6amPo/KOwLm5lynj6B6+/mgIbX86nRdc1NjSdB5NZqQQBpqMCEXCHnlDfBNxi3wg==",
+      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.479-alpha",
+      "hashPath": "powel.optimal.multiasset.dynphydroplantopt.2.0.0.479-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.476": {
+    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.479-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-uH67zalg/6AWcdwRWLWli/0itWdJmbGKFjS85p2HYGY1KUGvSLxshhbWHEWGwL1co3Apy5EVxypfsc9IezxDAQ==",
-      "path": "powel.optimal.multiasset.infrastructure/2.0.0.476",
-      "hashPath": "powel.optimal.multiasset.infrastructure.2.0.0.476.nupkg.sha512"
+      "sha512": "sha512-RV0kib5r0b9Z+ZjMBlHkE87bZhqIvEJSNrlDwRbhuYVV5fBKH0yjMQBsdMDR3ikEkcSasXm2RR03NFCCNmRciA==",
+      "path": "powel.optimal.multiasset.infrastructure/2.0.0.479-alpha",
+      "hashPath": "powel.optimal.multiasset.infrastructure.2.0.0.479-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.476": {
+    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.479-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-VO+vvxdtea82CTH6+TF9oLaSD4bdkkcQ9OY7ZU+OKRC0guQmqgIIKrmVRpx+4n9JT9ma8VoutWIQTFyrCRa3Pw==",
-      "path": "powel.optimal.multiasset.ops.core/2.0.0.476",
-      "hashPath": "powel.optimal.multiasset.ops.core.2.0.0.476.nupkg.sha512"
+      "sha512": "sha512-g8Gc4uTbieMFpKtN/uhvigrcLUACDXNhzESR1Uen0qbrX3QWwsukAyUkwOq7Z4RXqpdaYLPOUAh84p8RAGyJNA==",
+      "path": "powel.optimal.multiasset.ops.core/2.0.0.479-alpha",
+      "hashPath": "powel.optimal.multiasset.ops.core.2.0.0.479-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Utility/2.0.0.476": {
+    "Powel.Optimal.MultiAsset.Utility/2.0.0.479-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-Vu/HRex1Aj35v2dd+1ZxDcNRjTGpvtO9Y4FtAR6kjEFczc58WfPh70hRWdWA/0eQNhVD3Nb3tPAu3wMyNOWZHw==",
-      "path": "powel.optimal.multiasset.utility/2.0.0.476",
-      "hashPath": "powel.optimal.multiasset.utility.2.0.0.476.nupkg.sha512"
+      "sha512": "sha512-Ohm9AcRKL/0OQHYl9ub1WAB/CKJvuQQg/GqcXDg/d14RxTXSbDRJSO00EOOONSc2ZhxJxTXiEbM+lK6lYwJ8FQ==",
+      "path": "powel.optimal.multiasset.utility/2.0.0.479-alpha",
+      "hashPath": "powel.optimal.multiasset.utility.2.0.0.479-alpha.nupkg.sha512"
     },
     "protobuf-net/2.4.0": {
       "type": "package",

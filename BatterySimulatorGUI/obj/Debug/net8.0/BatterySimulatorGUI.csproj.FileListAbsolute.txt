@@ -21,6 +21,7 @@ C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGU
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.Fonts.Inter.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.FreeDesktop.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.Native.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.ReactiveUI.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.Remote.Protocol.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.Skia.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.Themes.Fluent.dll
@@ -28,6 +29,7 @@ C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGU
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.Win32.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Avalonia.X11.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\CommunityToolkit.Mvvm.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\DynamicData.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\EPPlus.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\HarfBuzzSharp.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\LiveChartsCore.dll
@@ -66,15 +68,18 @@ C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGU
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Powel.Optimal.MultiAsset.OPS.Core.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Powel.Optimal.MultiAsset.Utility.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\protobuf-net.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\ReactiveUI.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Serilog.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Serilog.Sinks.Async.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Serilog.Sinks.Console.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Serilog.Sinks.File.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\SkiaSharp.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\SkiaSharp.HarfBuzz.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\Splat.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\System.Drawing.Common.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\System.IO.Pipelines.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\System.Reactive.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\System.Security.Cryptography.Pkcs.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\bin\Debug\net8.0\System.Security.Permissions.dll
@@ -120,6 +125,7 @@ C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGU
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\obj\Debug\net8.0\BatterySimulatorGUI.AssemblyInfoInputs.cache
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\obj\Debug\net8.0\BatterySimulatorGUI.AssemblyInfo.cs
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\obj\Debug\net8.0\BatterySimulatorGUI.csproj.CoreCompileInputs.cache
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\obj\Debug\net8.0\BatterySimulatorGUI.sourcelink.json
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\obj\Debug\net8.0\Avalonia\BatterySimulatorGUI.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\obj\Debug\net8.0\Avalonia\BatterySimulatorGUI.pdb
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorGUI\obj\Debug\net8.0\refint\Avalonia\BatterySimulatorGUI.dll

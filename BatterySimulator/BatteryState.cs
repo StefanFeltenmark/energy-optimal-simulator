@@ -9,6 +9,7 @@ namespace BatterySimulator
 {
     public class BatteryState
     {
+        
         private Energy _energyContent;
         private Energy _capacity;
         private Power _chargeCapacity;

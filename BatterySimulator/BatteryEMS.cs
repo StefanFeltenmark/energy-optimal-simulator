@@ -14,10 +14,12 @@ using Power = Powel.Optimal.MultiAsset.Domain.Thermal.Quantities.Power;
 
 namespace BatterySimulator
 {
-    public class BatteryEMS
+    public class BatteryEMS : IObservable<BatteryState>
     {
         private Battery _battery;
         private BatteryState _state;
+        private List<IObserver<BatteryState>> observers = new List<IObserver<BatteryState>>();
+
 
         public BatteryEMS(Battery battery, BatteryState initialState)
         {
@@ -66,6 +68,31 @@ namespace BatterySimulator
 
             // Capacity reduction
 
+        }
+
+        public IDisposable Subscribe(IObserver<BatteryState> observer)
+        {
+            if (!observers.Contains(observer))
+                observers.Add(observer);
+            return new Unsubscriber(observers, observer);
+        }
+
+        private class Unsubscriber : IDisposable
+        {
+            private List<IObserver<BatteryState>>_observers;
+            private IObserver<BatteryState> _observer;
+
+            public Unsubscriber(List<IObserver<BatteryState>> observers, IObserver<BatteryState> observer)
+            {
+                this._observers = observers;
+                this._observer = observer;
+            }
+
+            public void Dispose()
+            {
+                if (_observer != null && _observers.Contains(_observer))
+                    _observers.Remove(_observer);
+            }
         }
     }
 }

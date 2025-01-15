@@ -1,8 +1,10 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Reactive;
+using CommunityToolkit.Mvvm.ComponentModel;
+using ReactiveUI;
 
 namespace BatterySimulatorGUI.ViewModels
 {
-    public class ViewModelBase : ObservableObject
+    public class ViewModelBase : ReactiveObject
     {
     }
 }

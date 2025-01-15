@@ -65,6 +65,7 @@ C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorCo
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\obj\Debug\net8.0\BatterySimulatorConsole.AssemblyInfoInputs.cache
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\obj\Debug\net8.0\BatterySimulatorConsole.AssemblyInfo.cs
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\obj\Debug\net8.0\BatterySimulatorConsole.csproj.CoreCompileInputs.cache
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\obj\Debug\net8.0\BatterySimulatorConsole.sourcelink.json
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\obj\Debug\net8.0\BatteryS.F2D4992A.Up2Date
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\obj\Debug\net8.0\BatterySimulatorConsole.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\obj\Debug\net8.0\refint\BatterySimulatorConsole.dll
