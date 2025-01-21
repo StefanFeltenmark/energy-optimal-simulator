@@ -55,7 +55,7 @@
           "dependencies": {
             "Powel.Optimal.MultiAsset.Domain": {
               "target": "Package",
-              "version": "[2.0.0.476, )"
+              "version": "[2.0.0.486-alpha, )"
             }
           },
           "imports": [
@@ -134,6 +134,10 @@
             "Microsoft.NET.Test.Sdk": {
               "target": "Package",
               "version": "[17.12.0, )"
+            },
+            "Powel.Optimal.MultiAsset.Domain": {
+              "target": "Package",
+              "version": "[2.0.0.486-alpha, )"
             },
             "xunit": {
               "target": "Package",

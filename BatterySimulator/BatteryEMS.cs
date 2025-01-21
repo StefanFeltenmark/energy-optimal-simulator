@@ -1,16 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
-using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
-using Powel.Optimal.MultiAsset.Domain;
-using Powel.Optimal.MultiAsset.Domain.Common;
-using Powel.Optimal.MultiAsset.Domain.General.Data;
-using Powel.Optimal.MultiAsset.Domain.Thermal.Quantities;
-using Power = Powel.Optimal.MultiAsset.Domain.Thermal.Quantities.Power;
+﻿using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
+using Powel.Optimal.MultiAsset.Domain.Quantities;
+
 
 namespace BatterySimulator
 {
@@ -18,13 +8,15 @@ namespace BatterySimulator
     {
         private Battery _battery;
         private BatteryState _state;
+        private DateTime _lastestTime;
         private List<IObserver<BatteryState>> observers = new List<IObserver<BatteryState>>();
 
 
-        public BatteryEMS(Battery battery, BatteryState initialState)
+        public BatteryEMS(Battery battery, BatteryState initialState, DateTime start)
         {
             _battery = battery;
             _state = initialState;
+            _lastestTime = start;
         }
 
         public Battery Battery1
@@ -35,7 +27,7 @@ namespace BatterySimulator
         public void SetChargeLevel(Power setpoint)
         {
             _state.Charging = (setpoint.Value > 0)? setpoint:0.0;
-            _state.Discharging = (setpoint.Value < 0)?-setpoint:0.0;
+            _state.Discharging = (setpoint.Value < 0)? new Power(-setpoint.Value, Units.MegaWatt):0.0;
         }
 
         public Power GetChargeLevel()
@@ -50,8 +42,10 @@ namespace BatterySimulator
         }
 
         
-        public void UpdateState(Time delta)
+        public async Task UpdateState(DateTime time)
         {
+            Time delta = new Time((time -_lastestTime).TotalHours, Units.Hour);
+            
             _state.EnergyContent +=
                 _state.Charging * delta - _state.Discharging * delta;
 
@@ -61,12 +55,15 @@ namespace BatterySimulator
                 _state.EnergyContent = 0.0;
             }
 
-            if(_state.EnergyContent > _battery.NominalEnergyCapacity)
+            if(_state.EnergyContent.Value > _battery.NominalEnergyCapacity.Value)
             {
-                _state.EnergyContent = _battery.NominalEnergyCapacity;
+                _state.EnergyContent = _battery.NominalEnergyCapacity.Value;
             }
 
+            PushBatteryState(_state);
+
             // Capacity reduction
+            _lastestTime = time;
 
         }
 
@@ -93,6 +90,22 @@ namespace BatterySimulator
                 if (_observer != null && _observers.Contains(_observer))
                     _observers.Remove(_observer);
             }
+        }
+
+        public async Task PushBatteryState(BatteryState state)
+        {
+            foreach (var observer in observers) {
+                    observer.OnNext(state);
+            }
+        }
+
+        public void EndTransmission()
+        {
+            foreach (var observer in observers.ToArray())
+                if (observers.Contains(observer))
+                    observer.OnCompleted();
+
+            observers.Clear();
         }
     }
 }

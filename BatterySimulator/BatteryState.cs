@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Powel.Optimal.MultiAsset.Domain.Thermal.Quantities;
+using Powel.Optimal.MultiAsset.Domain.Quantities;
+
 
 namespace BatterySimulator
 {

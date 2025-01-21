@@ -1,19 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 using Powel.Optimal.MultiAsset.Domain.Common;
+using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
-using Powel.Optimal.MultiAsset.Domain.Thermal.Quantities;
+using Powel.Optimal.MultiAsset.Domain.Quantities;
+
 
 namespace BatterySimulator
 {
     public class BatteryPlanner
     {
         private TimeSeries _plan;
-        private BatteryEMS _battery;
-        public BatteryPlanner(BatteryEMS battery)
+        private Battery _battery;
+        public BatteryPlanner(Battery battery)
         {
             _plan = new TimeSeries();
             _battery = battery;
@@ -27,7 +25,7 @@ namespace BatterySimulator
 
         public Power GetPlannedProduction(DateTime time)
         {
-            return _plan[time];
+            return new Power(_plan[time], Units.MegaWatt);
         }
 
         public void UpdatePlan(DateTime currentTime)
@@ -39,7 +37,9 @@ namespace BatterySimulator
             PlanningPeriod planningPeriod = new PlanningPeriod(currentTime, TimeSpan.FromMinutes(15), 20);
             foreach (PlanningInterval simulationInterval in planningPeriod.Intervals)
             {
-                _plan.SetValueAt(simulationInterval.Start, _battery.Battery1.CapacityC().Value - 2*r.NextDouble()*_battery.Battery1.CapacityC().Value );
+                var cap = _battery.CapacityC().ConvertToUnit(Units.MegaWatt);
+                var test = cap.Value - 2 * r.NextDouble() * cap.Value; 
+                _plan.SetValueAt(simulationInterval.Start, test);
             }
         }
     }

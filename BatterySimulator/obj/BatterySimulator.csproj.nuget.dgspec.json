@@ -55,7 +55,7 @@
           "dependencies": {
             "Powel.Optimal.MultiAsset.Domain": {
               "target": "Package",
-              "version": "[2.0.0.476, )"
+              "version": "[2.0.0.486-alpha, )"
             }
           },
           "imports": [

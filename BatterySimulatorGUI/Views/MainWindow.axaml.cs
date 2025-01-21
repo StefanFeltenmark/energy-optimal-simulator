@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using BatterySimulatorGUI.ViewModels;
+using LiveChartsCore;
 
 namespace BatterySimulatorGUI.Views
 {
@@ -11,9 +13,11 @@ namespace BatterySimulatorGUI.Views
             InitializeComponent();
         }
 
-        public void ButtonClicked(object source, RoutedEventArgs args)
+
+        private void Button_OnClick_Run(object? sender, RoutedEventArgs e)
         {
-            Debug.WriteLine($"Click! {Title.Text}");
+            var vm = (MainWindowViewModel)DataContext;
+            vm.StartSimulation();
         }
     }
 }

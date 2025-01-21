@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.486-alpha" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BatterySimulator\BatterySimulator.csproj" />
   </ItemGroup>
 

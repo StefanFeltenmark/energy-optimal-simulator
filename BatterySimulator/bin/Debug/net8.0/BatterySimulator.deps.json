@@ -8,7 +8,7 @@
     ".NETCoreApp,Version=v8.0": {
       "BatterySimulator/1.0.0": {
         "dependencies": {
-          "Powel.Optimal.MultiAsset.Domain": "2.0.0.479-alpha"
+          "Powel.Optimal.MultiAsset.Domain": "2.0.0.486-alpha"
         },
         "runtime": {
           "BatterySimulator.dll": {}
@@ -71,7 +71,7 @@
       "Microsoft.AspNetCore.Http.Abstractions/2.1.1": {
         "dependencies": {
           "Microsoft.AspNetCore.Http.Features": "3.1.32",
-          "System.Text.Encodings.Web": "7.0.0"
+          "System.Text.Encodings.Web": "9.0.0"
         },
         "runtime": {
           "lib/netstandard2.0/Microsoft.AspNetCore.Http.Abstractions.dll": {
@@ -97,7 +97,7 @@
       "Microsoft.AspNetCore.Http.Features/3.1.32": {
         "dependencies": {
           "Microsoft.Extensions.Primitives": "7.0.0",
-          "System.IO.Pipelines": "4.7.5"
+          "System.IO.Pipelines": "9.0.0"
         },
         "runtime": {
           "lib/netcoreapp3.1/Microsoft.AspNetCore.Http.Features.dll": {
@@ -161,7 +161,7 @@
           "Microsoft.Extensions.Configuration.Abstractions": "7.0.0",
           "Microsoft.Extensions.Configuration.FileExtensions": "7.0.0",
           "Microsoft.Extensions.FileProviders.Abstractions": "7.0.0",
-          "System.Text.Json": "7.0.0"
+          "System.Text.Json": "9.0.0"
         },
         "runtime": {
           "lib/net7.0/Microsoft.Extensions.Configuration.Json.dll": {
@@ -273,6 +273,39 @@
           }
         }
       },
+      "Microsoft.IdentityModel.JsonWebTokens/5.7.0": {
+        "dependencies": {
+          "Microsoft.IdentityModel.Tokens": "5.7.0",
+          "Newtonsoft.Json": "13.0.3"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.IdentityModel.JsonWebTokens.dll": {
+            "assemblyVersion": "5.7.0.0",
+            "fileVersion": "5.7.0.41120"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Logging/5.7.0": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.IdentityModel.Logging.dll": {
+            "assemblyVersion": "5.7.0.0",
+            "fileVersion": "5.7.0.41120"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Tokens/5.7.0": {
+        "dependencies": {
+          "Microsoft.IdentityModel.Logging": "5.7.0",
+          "Newtonsoft.Json": "13.0.3",
+          "System.Security.Cryptography.Cng": "4.7.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.IdentityModel.Tokens.dll": {
+            "assemblyVersion": "5.7.0.0",
+            "fileVersion": "5.7.0.41120"
+          }
+        }
+      },
       "Microsoft.Net.Http.Headers/2.1.1": {
         "dependencies": {
           "Microsoft.Extensions.Primitives": "7.0.0",
@@ -342,65 +375,73 @@
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Domain/2.0.0.479-alpha": {
+      "Powel.Optimal.MultiAsset.Domain/2.0.0.486-alpha": {
         "dependencies": {
-          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.479-alpha",
-          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.479-alpha"
+          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.486-alpha",
+          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.486-alpha",
+          "System.IdentityModel.Tokens.Jwt": "5.7.0",
+          "System.Text.Json": "9.0.0"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Domain.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.479"
+            "fileVersion": "2.0.0.486"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.479-alpha": {
+      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.486-alpha": {
         "runtime": {
           "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.479"
+            "fileVersion": "2.0.0.486"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.479-alpha": {
+      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.486-alpha": {
         "dependencies": {
           "Microsoft.Extensions.Configuration": "7.0.0",
           "Microsoft.Extensions.Configuration.Binder": "7.0.4",
           "Microsoft.Extensions.Configuration.Json": "7.0.0",
-          "Powel.Optimal.Log.Client": "1.15.0.571"
+          "Powel.Optimal.Log.Client": "1.15.0.571",
+          "System.IdentityModel.Tokens.Jwt": "5.7.0",
+          "System.Text.Json": "9.0.0"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Infrastructure.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.479"
+            "fileVersion": "2.0.0.486"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.479-alpha": {
+      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.486-alpha": {
         "dependencies": {
           "MathNet.Numerics.Signed": "4.15.0",
           "Microsoft.AspNet.WebApi.Core": "5.3.0",
           "Newtonsoft.Json": "13.0.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.479-alpha",
-          "Powel.Optimal.MultiAsset.Utility": "2.0.0.479-alpha",
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.486-alpha",
+          "Powel.Optimal.MultiAsset.Utility": "2.0.0.486-alpha",
+          "System.IdentityModel.Tokens.Jwt": "5.7.0",
+          "System.Text.Json": "9.0.0",
           "protobuf-net": "2.4.0"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.OPS.Core.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.479"
+            "fileVersion": "2.0.0.486"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Utility/2.0.0.479-alpha": {
+      "Powel.Optimal.MultiAsset.Utility/2.0.0.486-alpha": {
         "dependencies": {
           "EPPlus": "4.5.3.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.479-alpha"
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.486-alpha",
+          "System.IdentityModel.Tokens.Jwt": "5.7.0",
+          "System.Text.Json": "9.0.0"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Utility.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.479"
+            "fileVersion": "2.0.0.486"
           }
         }
       },
@@ -660,6 +701,19 @@
           "System.Runtime.InteropServices": "4.3.0"
         }
       },
+      "System.IdentityModel.Tokens.Jwt/5.7.0": {
+        "dependencies": {
+          "Microsoft.IdentityModel.JsonWebTokens": "5.7.0",
+          "Microsoft.IdentityModel.Tokens": "5.7.0",
+          "Newtonsoft.Json": "13.0.3"
+        },
+        "runtime": {
+          "lib/netstandard2.0/System.IdentityModel.Tokens.Jwt.dll": {
+            "assemblyVersion": "5.7.0.0",
+            "fileVersion": "5.7.0.41120"
+          }
+        }
+      },
       "System.IO/4.3.0": {
         "dependencies": {
           "Microsoft.NETCore.Platforms": "3.1.0",
@@ -686,11 +740,11 @@
           "System.Runtime": "4.3.0"
         }
       },
-      "System.IO.Pipelines/4.7.5": {
+      "System.IO.Pipelines/9.0.0": {
         "runtime": {
-          "lib/netcoreapp3.0/System.IO.Pipelines.dll": {
-            "assemblyVersion": "4.0.2.4",
-            "fileVersion": "4.700.22.12208"
+          "lib/net8.0/System.IO.Pipelines.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.24.52809"
           }
         }
       },
@@ -1016,10 +1070,32 @@
           "System.Text.Encoding": "4.3.0"
         }
       },
-      "System.Text.Encodings.Web/7.0.0": {},
-      "System.Text.Json/7.0.0": {
+      "System.Text.Encodings.Web/9.0.0": {
+        "runtime": {
+          "lib/net8.0/System.Text.Encodings.Web.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.24.52809"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll": {
+            "rid": "browser",
+            "assetType": "runtime",
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.24.52809"
+          }
+        }
+      },
+      "System.Text.Json/9.0.0": {
         "dependencies": {
-          "System.Text.Encodings.Web": "7.0.0"
+          "System.IO.Pipelines": "9.0.0",
+          "System.Text.Encodings.Web": "9.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/System.Text.Json.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.24.52809"
+          }
         }
       },
       "System.Text.RegularExpressions/4.3.0": {
@@ -1288,6 +1364,27 @@
       "path": "microsoft.extensions.primitives/7.0.0",
       "hashPath": "microsoft.extensions.primitives.7.0.0.nupkg.sha512"
     },
+    "Microsoft.IdentityModel.JsonWebTokens/5.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zWeKWLdKdA9hbxEFBMCrImfbcHGSbwXJh4Q7dE2xIqDcaG+Uect+QUTSuXLsibtGG7/CwjhZgjZx7cl3KuRoXA==",
+      "path": "microsoft.identitymodel.jsonwebtokens/5.7.0",
+      "hashPath": "microsoft.identitymodel.jsonwebtokens.5.7.0.nupkg.sha512"
+    },
+    "Microsoft.IdentityModel.Logging/5.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ciNPEQSnOXlhLBjylS2B8QLQhmWFXBAzbKyxpswLd9NHheCKoyC1zFU46W36Oj/Bx+RpYuOWkq1FZgnu8DqH2g==",
+      "path": "microsoft.identitymodel.logging/5.7.0",
+      "hashPath": "microsoft.identitymodel.logging.5.7.0.nupkg.sha512"
+    },
+    "Microsoft.IdentityModel.Tokens/5.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-hj7eUanB5f8ap9e4I+iVY0Fbm9Uh0tG1UlZq3Z+EGq9nbDUOn8ml3N5YotNQX6XD0q/Upe16tt0jkAIVIWKrWg==",
+      "path": "microsoft.identitymodel.tokens/5.7.0",
+      "hashPath": "microsoft.identitymodel.tokens.5.7.0.nupkg.sha512"
+    },
     "Microsoft.Net.Http.Headers/2.1.1": {
       "type": "package",
       "serviceable": true,
@@ -1337,40 +1434,40 @@
       "path": "powel.optimal.log.client/1.15.0.571",
       "hashPath": "powel.optimal.log.client.1.15.0.571.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Domain/2.0.0.479-alpha": {
+    "Powel.Optimal.MultiAsset.Domain/2.0.0.486-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-GlTnFBV+Uq8TYDjWRKzqtMJbOFd1VEeNV1fZUchP9FF/HEnl9omtAYKGOq/aIED2L+Yvu+14SSp0VZbhYmuMAg==",
-      "path": "powel.optimal.multiasset.domain/2.0.0.479-alpha",
-      "hashPath": "powel.optimal.multiasset.domain.2.0.0.479-alpha.nupkg.sha512"
+      "sha512": "sha512-Aqeu+bPx5avTrKom6XWZBiQMQgrFtduIjBkIXDFQBxqNLYXnDTf+1kBgjxzJl+a/YyrNjgaVheazLT/USgrBjg==",
+      "path": "powel.optimal.multiasset.domain/2.0.0.486-alpha",
+      "hashPath": "powel.optimal.multiasset.domain.2.0.0.486-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.479-alpha": {
+    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.486-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-EDDOff4jBTAgt+h9Z6hIsr6amPo/KOwLm5lynj6B6+/mgIbX86nRdc1NjSdB5NZqQQBpqMCEXCHnlDfBNxi3wg==",
-      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.479-alpha",
-      "hashPath": "powel.optimal.multiasset.dynphydroplantopt.2.0.0.479-alpha.nupkg.sha512"
+      "sha512": "sha512-MxqCagkinBl3A/UJ+7yQwnyrOI3DQPstcycUHvRZ3RKL4C79s40b1xbjwcnUyXZLTEv3F2xtbIdhq04AKXS0ew==",
+      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.486-alpha",
+      "hashPath": "powel.optimal.multiasset.dynphydroplantopt.2.0.0.486-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.479-alpha": {
+    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.486-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-RV0kib5r0b9Z+ZjMBlHkE87bZhqIvEJSNrlDwRbhuYVV5fBKH0yjMQBsdMDR3ikEkcSasXm2RR03NFCCNmRciA==",
-      "path": "powel.optimal.multiasset.infrastructure/2.0.0.479-alpha",
-      "hashPath": "powel.optimal.multiasset.infrastructure.2.0.0.479-alpha.nupkg.sha512"
+      "sha512": "sha512-GoRmX6Gi4Kv01EdD+zKSHrlhZoBjLaD/8+53kc2NKZdRNsjdVCf3sUMM1J5Er2JCh2JjQY+JXZ2DIypFgvnjmg==",
+      "path": "powel.optimal.multiasset.infrastructure/2.0.0.486-alpha",
+      "hashPath": "powel.optimal.multiasset.infrastructure.2.0.0.486-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.479-alpha": {
+    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.486-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-g8Gc4uTbieMFpKtN/uhvigrcLUACDXNhzESR1Uen0qbrX3QWwsukAyUkwOq7Z4RXqpdaYLPOUAh84p8RAGyJNA==",
-      "path": "powel.optimal.multiasset.ops.core/2.0.0.479-alpha",
-      "hashPath": "powel.optimal.multiasset.ops.core.2.0.0.479-alpha.nupkg.sha512"
+      "sha512": "sha512-7zA+el9DGoy42Eb5/wxSXchvtCW20axi3IAE1iZuBQh9tPAMvTCNqm1gkMEd8cIpTsCrFX1/wq77PB5Nu0H/GQ==",
+      "path": "powel.optimal.multiasset.ops.core/2.0.0.486-alpha",
+      "hashPath": "powel.optimal.multiasset.ops.core.2.0.0.486-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Utility/2.0.0.479-alpha": {
+    "Powel.Optimal.MultiAsset.Utility/2.0.0.486-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-Ohm9AcRKL/0OQHYl9ub1WAB/CKJvuQQg/GqcXDg/d14RxTXSbDRJSO00EOOONSc2ZhxJxTXiEbM+lK6lYwJ8FQ==",
-      "path": "powel.optimal.multiasset.utility/2.0.0.479-alpha",
-      "hashPath": "powel.optimal.multiasset.utility.2.0.0.479-alpha.nupkg.sha512"
+      "sha512": "sha512-l3VP6LYJqEIRABHF/bwAyYAbTKIJSJQ90e+jXzXwS1nBvaQ6C9jiHM5CCA4FqU/WfERhM9o7zBg59hunlIKFAQ==",
+      "path": "powel.optimal.multiasset.utility/2.0.0.486-alpha",
+      "hashPath": "powel.optimal.multiasset.utility.2.0.0.486-alpha.nupkg.sha512"
     },
     "protobuf-net/2.4.0": {
       "type": "package",
@@ -1624,6 +1721,13 @@
       "path": "system.globalization.extensions/4.3.0",
       "hashPath": "system.globalization.extensions.4.3.0.nupkg.sha512"
     },
+    "System.IdentityModel.Tokens.Jwt/5.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9whmG+NvaZaTVW27i7CWiEMWAndDC4JpHg6FhZgYzFOQidscBmwu8qeGsTi0YL/HdqxmNzWqsni591dPgMYB0g==",
+      "path": "system.identitymodel.tokens.jwt/5.7.0",
+      "hashPath": "system.identitymodel.tokens.jwt.5.7.0.nupkg.sha512"
+    },
     "System.IO/4.3.0": {
       "type": "package",
       "serviceable": true,
@@ -1645,12 +1749,12 @@
       "path": "system.io.filesystem.primitives/4.3.0",
       "hashPath": "system.io.filesystem.primitives.4.3.0.nupkg.sha512"
     },
-    "System.IO.Pipelines/4.7.5": {
+    "System.IO.Pipelines/9.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-iqGBxw9zqxHK4bzwiYMYGYnaKK1OBQkLGwqqN/+kkj1lQVo+jEaEntOCL4XztOHjpp+ANYQ4UPKNUeeQmFK3mQ==",
-      "path": "system.io.pipelines/4.7.5",
-      "hashPath": "system.io.pipelines.4.7.5.nupkg.sha512"
+      "sha512": "sha512-eA3cinogwaNB4jdjQHOP3Z3EuyiDII7MT35jgtnsA4vkn0LUrrSHsU0nzHTzFzmaFYeKV7MYyMxOocFzsBHpTw==",
+      "path": "system.io.pipelines/9.0.0",
+      "hashPath": "system.io.pipelines.9.0.0.nupkg.sha512"
     },
     "System.Linq/4.3.0": {
       "type": "package",
@@ -1876,19 +1980,19 @@
       "path": "system.text.encoding.extensions/4.3.0",
       "hashPath": "system.text.encoding.extensions.4.3.0.nupkg.sha512"
     },
-    "System.Text.Encodings.Web/7.0.0": {
+    "System.Text.Encodings.Web/9.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-OP6umVGxc0Z0MvZQBVigj4/U31Pw72ITihDWP9WiWDm+q5aoe0GaJivsfYGq53o6dxH7DcXWiCTl7+0o2CGdmg==",
-      "path": "system.text.encodings.web/7.0.0",
-      "hashPath": "system.text.encodings.web.7.0.0.nupkg.sha512"
+      "sha512": "sha512-e2hMgAErLbKyUUwt18qSBf9T5Y+SFAL3ZedM8fLupkVj8Rj2PZ9oxQ37XX2LF8fTO1wNIxvKpihD7Of7D/NxZw==",
+      "path": "system.text.encodings.web/9.0.0",
+      "hashPath": "system.text.encodings.web.9.0.0.nupkg.sha512"
     },
-    "System.Text.Json/7.0.0": {
+    "System.Text.Json/9.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-DaGSsVqKsn/ia6RG8frjwmJonfos0srquhw09TlT8KRw5I43E+4gs+/bZj4K0vShJ5H9imCuXupb4RmS+dBy3w==",
-      "path": "system.text.json/7.0.0",
-      "hashPath": "system.text.json.7.0.0.nupkg.sha512"
+      "sha512": "sha512-js7+qAu/9mQvnhA4EfGMZNEzXtJCDxgkgj8ohuxq/Qxv+R56G+ljefhiJHOxTNiw54q8vmABCWUwkMulNdlZ4A==",
+      "path": "system.text.json/9.0.0",
+      "hashPath": "system.text.json.9.0.0.nupkg.sha512"
     },
     "System.Text.RegularExpressions/4.3.0": {
       "type": "package",

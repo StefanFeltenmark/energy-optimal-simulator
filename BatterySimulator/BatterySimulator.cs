@@ -4,15 +4,21 @@ using Powel.Optimal.MultiAsset.Domain.Common;
 using Powel.Optimal.MultiAsset.Domain.Common.Market;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
-using Powel.Optimal.MultiAsset.Domain.Thermal.Quantities;
+using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
-    public class BatterySimulator
+    public class BatterySimulator : IDisposable
     {
-        private DateTime _simulationTime;
+        private SimulationTimeProvider _time;
         private bool _isRealTime;
-        
+        private DataRecorder _recorder;
+        private BatteryEMS _ems;
+        private BatteryPlanner _planner;
+        private TimeSpan _delta;
+        private DateTime _end;
+        private bool _simulationEnabled;
+
         public BatterySimulator()
         {
 
@@ -24,10 +30,26 @@ namespace BatterySimulator
             set => _isRealTime = value;
         }
 
-
-        public void Simulate()
+        public DataRecorder Recorder
         {
-            DateTime start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local);
+            get => _recorder;
+            set => _recorder = value;
+        }
+
+        public bool SimulationEnabled
+        {
+            get => _simulationEnabled;
+            set => _simulationEnabled = value;
+        }
+
+        public void SetUp(int nHours, int deltaSeconds)
+        {
+            DateTime start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local); 
+            _end = start + TimeSpan.FromHours(nHours);
+            _delta = TimeSpan.FromSeconds(deltaSeconds);
+            _time = new SimulationTimeProvider(start, _delta);
+
+            _recorder = new DataRecorder(_time);
 
             Random r = new Random();
 
@@ -39,47 +61,71 @@ namespace BatterySimulator
             Battery b = new Battery
             {
                 NominalChargeCapacity = new Power(10,Units.MegaWatt),
-                NominalEnergyCapacity =  new Energy(100, Units.MegaWattHours),
+                NominalEnergyCapacity =  new Energy(100, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
                 InitialSoHe = new Percentage(100)
             };
 
             BatteryState initialState = new BatteryState
             {
-                EnergyContent = new Energy(50, Units.MegaWattHours),
-                Capacity = new Energy(100, Units.MegaWattHours)
+                EnergyContent = new Energy(50, Units.MegaWattHour),
+                Capacity = new Energy(100, Units.MegaWattHour)
             };
 
-            BatteryEMS batteryEms = new BatteryEMS(b, initialState);
+            _ems = new BatteryEMS(b, initialState, start);
 
-            PlanningPeriod simulationPeriod = new PlanningPeriod(start, TimeSpan.FromMinutes(1), 24 * 60);
+            _recorder.Subscribe(_ems);
+
+            _recorder.EnergyContent.CollectionChanged += EnergyContent_CollectionChanged;
+
+            //PlanningPeriod simulationPeriod = new PlanningPeriod(start, TimeSpan.FromMinutes(1), 24 * 60);
 
             // Generate a random plan or policy
-            BatteryPlanner planner = new BatteryPlanner(batteryEms);
-            planner.UpdatePlan(start);
+            _planner = new BatteryPlanner(b);
+            _planner.UpdatePlan(start);
 
-            foreach (var simulationInterval in simulationPeriod.Intervals)
+        }
+
+        private void EnergyContent_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            Console.Out.WriteLine($"Got this: {e.Action}");
+        }
+        
+
+        public async Task Simulate()
+        {
+            
+            while(_time.GetTime() < _end && SimulationEnabled)
             {
-                _simulationTime = simulationInterval.Start;
-
                 // Implement plan/policy
-                batteryEms.SetChargeLevel(planner.GetPlannedProduction(_simulationTime));
+                _ems.SetChargeLevel(_planner.GetPlannedProduction(_time.GetTime()));
                 
                 // Update state
-                batteryEms.UpdateState(simulationInterval.Length);
+                _ems.UpdateState(_time.GetTime());
 
-                Console.Out.WriteLine($"{_simulationTime}: Net charge = {batteryEms.GetChargeLevel()} SoC = {batteryEms.GetSoC().Value:P2}");
+                Console.Out.WriteLine($"{_time.GetTime()}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC().Value:P2}");
+
+                Thread.Sleep(100);
 
                 if (_isRealTime)
                 {
-                    Thread.Sleep(simulationInterval.Length);
+                    Thread.Sleep(_delta);
                     // test
                 }
 
+                _time.Increment();
+
             }
+
+            Recorder.Unsubscribe();
 
             // Calculate market cost/revenue "settlement"
 
+        }
+
+        public void Dispose()
+        {
+            _ems.EndTransmission();
         }
     }
 }

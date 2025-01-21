@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.486-alpha" />
     <PackageReference Include="xunit" Version="2.9.3" />
   </ItemGroup>
 
