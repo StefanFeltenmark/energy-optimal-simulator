@@ -1,4 +1,5 @@
 ﻿using MathNet.Numerics.Random;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
 using Powel.Optimal.MultiAsset.Domain;
 using Powel.Optimal.MultiAsset.Domain.Common;
 using Powel.Optimal.MultiAsset.Domain.Common.Market;
@@ -22,7 +23,7 @@ namespace BatterySimulator
 
         public BatterySimulator()
         {
-
+            _delta = TimeSpan.FromSeconds(300);
         }
 
         public bool IsRealTime
@@ -49,12 +50,23 @@ namespace BatterySimulator
             set => _start = value;
         }
 
+        public TimeSpan Delta
+        {
+            get => _delta;
+            set => _delta = value;
+        }
+
+        public DateTime SimulationTime
+        {
+            get { return _time.GetTime(); }
+        }
+
         public void SetUp(int nHours, int deltaSeconds)
         {
             Start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local); 
             _end = _start + TimeSpan.FromHours(nHours);
-            _delta = TimeSpan.FromSeconds(deltaSeconds);
-            _time = new SimulationTimeProvider(_start, _delta);
+            Delta = TimeSpan.FromSeconds(deltaSeconds);
+            _time = new SimulationTimeProvider(_start, Delta);
 
             _recorder = new DataRecorder(_time);
 
@@ -85,7 +97,7 @@ namespace BatterySimulator
 
             // Generate a random plan or policy
             _planner = new BatteryPlanner(b);
-            _planner.UpdatePlan(_start);
+            _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
 
         }
 
@@ -106,7 +118,7 @@ namespace BatterySimulator
 
                 if (_isRealTime)
                 {
-                    Thread.Sleep(_delta);
+                    Thread.Sleep(Delta);
                 }
 
                 _time.Increment();

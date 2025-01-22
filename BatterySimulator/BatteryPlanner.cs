@@ -30,13 +30,13 @@ namespace BatterySimulator
             return new Power(_plan[time], Units.MegaWatt);
         }
 
-        public void UpdatePlan(DateTime currentTime)
+        public void UpdatePlan(DateTime currentTime, TimeSpan resolution, int nPeriods)
         {
             // update
             _plan = new TimeSeries(true, true);
             
 
-            PlanningPeriod planningPeriod = new PlanningPeriod(currentTime, TimeSpan.FromMinutes(15), 20);
+            PlanningPeriod planningPeriod = new PlanningPeriod(currentTime, resolution, nPeriods);
             foreach (PlanningInterval simulationInterval in planningPeriod.Intervals)
             {
                 var cap = _battery.CapacityC().ConvertToUnit(Units.MegaWatt);

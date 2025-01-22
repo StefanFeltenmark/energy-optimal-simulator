@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -27,15 +28,18 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<ISeries> _netChargeSeries;
         private ObservableCollection<DateTimePoint> _SoCvalues;
         private ObservableCollection<DateTimePoint> _netChargevalues;
+        private DateTimeAxis _customAxis;
+        private int _nHours;
+        private int _maxItems = 100;
         
-        public object Sync { get; } = new object();
-
         public MainWindowViewModel()
         {
             _simulator = new BatterySimulator.BatterySimulator();
-            _simulator.SetUp(24,300);
-           
-            _simulator.Recorder.EnergyContent.MaxItems = 100;
+            _nHours = 24;
+
+            _simulator.SetUp(_nHours ,(int) _simulator.Delta.TotalSeconds);
+
+            _simulator.Recorder.EnergyContent.MaxItems = _maxItems;
             _SoCvalues = new ObservableCollection<DateTimePoint>();
             _simulator.Recorder.EnergyContent.CollectionChanged += EnergyContent_CollectionChanged;
             _socSeries = new ObservableCollection<ISeries>();
@@ -44,10 +48,10 @@ namespace BatterySimulatorGUI.ViewModels
                 Values = _SoCvalues,
                 Name = "SoC",
                 Stroke = new SolidColorPaint(SKColors.Blue) { StrokeThickness = 2 }, 
-                Fill = null,
+                Fill = new SolidColorPaint(SKColors.LightBlue) { StrokeThickness = 2 }, 
                 GeometryFill = null,
                 GeometryStroke = null,
-                
+                IsVisibleAtLegend = true
             });
 
             _simulator.Recorder.NetCharge.MaxItems = 100;
@@ -62,8 +66,41 @@ namespace BatterySimulatorGUI.ViewModels
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null,
-                
+                IsVisibleAtLegend = true
             });
+
+            //_customAxis = new DateTimeAxis(TimeSpan.FromSeconds(10), Formatter)
+            //{
+            //    CustomSeparators = GetSeparators(),
+            //    AnimationsSpeed = TimeSpan.FromMilliseconds(0),
+            //    SeparatorsPaint = new SolidColorPaint(SKColors.Black.WithAlpha(100))
+            //};
+
+            //XAxes = [_customAxis];
+        }
+
+       
+
+        public ObservableCollection<ISeries> SoC => _socSeries;
+        public ObservableCollection<ISeries> NetCharge => _netChargeSeries;
+
+        public async Task StartSimulation()
+        {
+            await Task.Run(ReadData);
+        }
+
+        private async Task ReadData()
+        {
+            _simulator.SimulationEnabled = true;
+            _simulator.IsRealTime = false;
+            XAxes[0].MaxLimit = (_simulator.Start + TimeSpan.FromMinutes(600)).Ticks;
+            XAxes[0].MinLimit = _simulator.Start.Ticks;
+            await Task.Run(_simulator.Simulate);
+        }
+
+        public void StopSimulation()
+        {
+            _simulator.SimulationEnabled = false;
         }
 
         private void NetCharge_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -76,7 +113,7 @@ namespace BatterySimulatorGUI.ViewModels
                     _netChargevalues.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
                 }
 
-                if (_netChargevalues.Count > 100)
+                if (_netChargevalues.Count > _maxItems)
                 {
                     _netChargevalues.RemoveAt(0);
                 }
@@ -94,8 +131,10 @@ namespace BatterySimulatorGUI.ViewModels
                     _SoCvalues.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
                 }
 
-                if (_SoCvalues.Count > 100)
+                if (_SoCvalues.Count > _maxItems)
                 {
+                    XAxes[0].MaxLimit = null;
+                    XAxes[0].MinLimit = null;
                     _SoCvalues.RemoveAt(0);
                 }
                 
@@ -103,27 +142,40 @@ namespace BatterySimulatorGUI.ViewModels
 
         }
 
+
+        private static string Formatter(DateTime date)
+        {
+            
+            return date.ToShortTimeString();
+        }
+
+        private static double[] GetSeparators()
+        {
+            var now = DateTime.Now;
+
+            return
+            [
+                now.AddSeconds(-25).Ticks,
+                now.AddSeconds(-20).Ticks,
+                now.AddSeconds(-15).Ticks,
+                now.AddSeconds(-10).Ticks,
+                now.AddSeconds(-5).Ticks,
+                now.Ticks
+            ];
+        }
+
         public Axis[] XAxes { get; set; }
-            = new Axis[]
-            {
-                new Axis
+            =
+            [
+                new DateTimeAxis(TimeSpan.FromSeconds(10),Formatter)
                 {
-                    Name = "Time",
-                    NamePaint = new SolidColorPaint(SKColors.Black), 
-                    UnitWidth = TimeSpan.FromMinutes(15).Ticks,
-                    MaxLimit = null,
-                    MinLimit = null,
-                    LabelsPaint = new SolidColorPaint(SKColors.Blue), 
-
-                    TextSize = 10,
-
-                    SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) { StrokeThickness = 2 }  
+                  //  Name = "Time",
                 }
-            };
-
+            ];
+           
         public Axis[] SoCAxes { get; set; }
-            = new Axis[]
-            {
+            =
+            [
                 new Axis
                 {
                     Name = "SoC (%)",
@@ -140,7 +192,7 @@ namespace BatterySimulatorGUI.ViewModels
                         PathEffect = new DashEffect(new float[] { 3, 3 }) 
                     } 
                 }
-            };
+            ];
 
         public Axis[] netChargeAxes { get; set; }
             = new Axis[]
@@ -160,26 +212,19 @@ namespace BatterySimulatorGUI.ViewModels
                     } 
                 }
             };
-        
 
-        public ObservableCollection<ISeries> SoC => _socSeries;
-        public ObservableCollection<ISeries> NetCharge => _netChargeSeries;
-
-        public async Task StartSimulation()
+        public string TimeStepSeconds
         {
-            await Task.Run(ReadData);
-        }
-
-        private async Task ReadData()
-        {
-            _simulator.SimulationEnabled = true;
-            _simulator.IsRealTime = false;
-            await Task.Run(_simulator.Simulate);
-        }
-
-        public void StopSimulation()
-        {
-            _simulator.SimulationEnabled = false;
+            get => _simulator.Delta.TotalSeconds.ToString();
+            set
+            {
+                int nSeconds = 300;
+                bool ok = int.TryParse(value, out nSeconds);
+                if (ok)
+                {
+                    _simulator.Delta = TimeSpan.FromSeconds(nSeconds);
+                }
+            }
         }
     }
 }

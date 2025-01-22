@@ -9,7 +9,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="BatterySimulatorGUI"
-        Width="1600"
+        Width="2100"
         Height="900"
         Position="800 200">
 
@@ -35,13 +35,13 @@
                 BorderThickness="2"
                 CornerRadius="3"
                 Padding="10" Margin="10">
-        <TextBlock FontSize="36" Name="Title" HorizontalAlignment="Center" VerticalAlignment="Center">Battery Simulator </TextBlock>
+        <TextBlock FontSize="36" Name="Title" HorizontalAlignment="Center" VerticalAlignment="Center">Volue Battery Simulator </TextBlock>
             </Border>
 
         <StackPanel Grid.Column="0" Grid.Row="1">
             <ToggleButton Margin="5 5" Click="Button_OnClick_Run" HorizontalAlignment="Center" VerticalAlignment="Top">Start simulation</ToggleButton>
             <TextBlock Margin="5 5">Time step</TextBlock>
-            <TextBox  Margin="5 5" Watermark="Enter simulation time step"></TextBox>
+            <TextBox  Margin="5 5" Watermark="Enter simulation time step" Text="{Binding TimeStepSeconds}"></TextBox>
         </StackPanel>
 		<Border Grid.Column="1" Grid.Row="1" Background="White"
                 BorderBrush="Black"
@@ -49,13 +49,11 @@
                 CornerRadius="3"
                 Padding="10" Margin="10">
         <lvc:CartesianChart 
-            Grid.Row="1"
-            Grid.Column="1"
             x:Name ="batteryEnergy"
             Series="{Binding SoC}"
             XAxes="{Binding XAxes}"
             YAxes="{Binding SoCAxes}">
-    </lvc:CartesianChart>
+        </lvc:CartesianChart>
             </Border>
         <Border Grid.Column="1" Grid.Row="2" Background="White"
                 BorderBrush="Black"
@@ -67,7 +65,7 @@
             Series="{Binding NetCharge}"
             XAxes="{Binding XAxes}"
             YAxes="{Binding netChargeAxes}">
-        </lvc:CartesianChart>
+		</lvc:CartesianChart>
         </Border>
     </Grid>
 
