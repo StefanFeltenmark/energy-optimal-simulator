@@ -11,6 +11,8 @@ namespace BatterySimulator
     {
         private TimeSeries _plan;
         private Battery _battery;
+        private Random _r = new Random(297349);
+
         public BatteryPlanner(Battery battery)
         {
             _plan = new TimeSeries();
@@ -32,13 +34,13 @@ namespace BatterySimulator
         {
             // update
             _plan = new TimeSeries(true, true);
-            Random r = new Random();
+            
 
             PlanningPeriod planningPeriod = new PlanningPeriod(currentTime, TimeSpan.FromMinutes(15), 20);
             foreach (PlanningInterval simulationInterval in planningPeriod.Intervals)
             {
                 var cap = _battery.CapacityC().ConvertToUnit(Units.MegaWatt);
-                var test = cap.Value - 2 * r.NextDouble() * cap.Value; 
+                var test = cap.Value - 2 * _r.NextDouble() * cap.Value; 
                 _plan.SetValueAt(simulationInterval.Start, test);
             }
         }

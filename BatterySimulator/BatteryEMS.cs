@@ -57,10 +57,12 @@ namespace BatterySimulator
 
             if(_state.EnergyContent.Value > _battery.NominalEnergyCapacity.Value)
             {
-                _state.EnergyContent = _battery.NominalEnergyCapacity.Value;
+                _state.EnergyContent = _battery.NominalEnergyCapacity;
             }
 
-            PushBatteryState(_state);
+            _state.SoC = GetSoC();
+
+            await PushBatteryState(_state);
 
             // Capacity reduction
             _lastestTime = time;
@@ -95,7 +97,7 @@ namespace BatterySimulator
         public async Task PushBatteryState(BatteryState state)
         {
             foreach (var observer in observers) {
-                    observer.OnNext(state);
+                  observer.OnNext(state);
             }
         }
 

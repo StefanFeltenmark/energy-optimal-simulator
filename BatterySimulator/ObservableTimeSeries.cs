@@ -4,27 +4,29 @@ using Powel.Optimal.MultiAsset.Domain.General.Data;
 
 namespace BatterySimulator
 {
-    public class ObservableTimeSeries : INotifyCollectionChanged, IReadOnlyCollection<double>
+    public class ObservableTimeSeries : INotifyCollectionChanged, IReadOnlyCollection<KeyValuePair<DateTime,double>>
     {
         private TimeSeries _ts;
+        private int _maxItems;
 
         public ObservableTimeSeries()
         {
             _ts = new TimeSeries();
+            _maxItems = int.MaxValue;
         }
 
         public void Add(DateTime t, double val)
         {
             _ts.AddValueAt(t,val);
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add,val));
+            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add,new KeyValuePair<DateTime,double>(t,val)));
         }
 
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
-        public IEnumerator<double> GetEnumerator()
+        public IEnumerator<KeyValuePair<DateTime, double>> GetEnumerator()
         {
-
-            return _ts.Values().GetEnumerator();
+            List<KeyValuePair<DateTime, double>> list = _ts.ToArray().Take(_maxItems).ToList();
+            return list.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -33,5 +35,11 @@ namespace BatterySimulator
         }
 
         public int Count { get; set; }
+
+        public int MaxItems
+        {
+            get => _maxItems;
+            set => _maxItems = value;
+        }
     }
 }

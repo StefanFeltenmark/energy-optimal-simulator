@@ -16,6 +16,7 @@ namespace BatterySimulator
         private Power _chargeCapacity;
         private Power _charging;
         private Power _discharging;
+        private Percentage _SoC;
 
         public Energy EnergyContent
         {
@@ -45,6 +46,12 @@ namespace BatterySimulator
         {
             get => _chargeCapacity;
             set => _chargeCapacity = value;
+        }
+
+        public Percentage SoC
+        {
+            get => _SoC;
+            set => _SoC = value;
         }
     }
 }

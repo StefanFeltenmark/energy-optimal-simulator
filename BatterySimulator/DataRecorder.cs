@@ -12,6 +12,7 @@ namespace BatterySimulator
         private IDisposable unsubscriber;
         private ITimeProvider _timeProvider;
         private ObservableTimeSeries _energyContent = new ObservableTimeSeries();
+        private ObservableTimeSeries _netCharge = new ObservableTimeSeries();
         public object Sync { get; } = new object();
 
         public DataRecorder(ITimeProvider timeProvider)
@@ -25,7 +26,12 @@ namespace BatterySimulator
             get => _energyContent;
         }
 
-     
+        public ObservableTimeSeries NetCharge
+        {
+            get => _netCharge;
+        }
+
+
         public virtual void Subscribe(IObservable<BatteryState> provider)
         {
             if (provider != null)
@@ -47,7 +53,8 @@ namespace BatterySimulator
         {
             lock (Sync)
             {
-                _energyContent.Add(_timeProvider.GetTime(), value.EnergyContent.Value);
+                _energyContent.Add(_timeProvider.GetTime(), value.SoC.Value);
+                _netCharge.Add(_timeProvider.GetTime(), value.Charging.Value-value.Discharging.Value);
             }
         }
 

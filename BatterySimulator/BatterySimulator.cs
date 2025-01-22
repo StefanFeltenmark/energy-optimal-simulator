@@ -17,6 +17,7 @@ namespace BatterySimulator
         private BatteryPlanner _planner;
         private TimeSpan _delta;
         private DateTime _end;
+        private DateTime _start;
         private bool _simulationEnabled;
 
         public BatterySimulator()
@@ -42,55 +43,51 @@ namespace BatterySimulator
             set => _simulationEnabled = value;
         }
 
+        public DateTime Start
+        {
+            get => _start;
+            set => _start = value;
+        }
+
         public void SetUp(int nHours, int deltaSeconds)
         {
-            DateTime start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local); 
-            _end = start + TimeSpan.FromHours(nHours);
+            Start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local); 
+            _end = _start + TimeSpan.FromHours(nHours);
             _delta = TimeSpan.FromSeconds(deltaSeconds);
-            _time = new SimulationTimeProvider(start, _delta);
+            _time = new SimulationTimeProvider(_start, _delta);
 
             _recorder = new DataRecorder(_time);
 
             Random r = new Random();
 
             EnergyMarket market = new EnergyMarket(Guid.NewGuid(), "EPEX Intraday");
-            market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(100).ToArray(),start, TimeSpan.FromMinutes(15));
+            market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(100).ToArray(),_start, TimeSpan.FromMinutes(15));
             double spread = 0.01;
             market.Ts.EnergyBuyPrice = market.Ts.EnergySellPrice + TimeSeries.CreateTimeSeries(market.Ts.EnergySellPrice.TimePoints(),spread);
 
             Battery b = new Battery
             {
                 NominalChargeCapacity = new Power(10,Units.MegaWatt),
-                NominalEnergyCapacity =  new Energy(100, Units.MegaWattHour),
+                NominalEnergyCapacity =  new Energy(10, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
                 InitialSoHe = new Percentage(100)
             };
 
             BatteryState initialState = new BatteryState
             {
-                EnergyContent = new Energy(50, Units.MegaWattHour),
-                Capacity = new Energy(100, Units.MegaWattHour)
+                EnergyContent = new Energy(5, Units.MegaWattHour),
+                Capacity = new Energy(10, Units.MegaWattHour)
             };
 
-            _ems = new BatteryEMS(b, initialState, start);
+            _ems = new BatteryEMS(b, initialState, _start);
 
             _recorder.Subscribe(_ems);
 
-            _recorder.EnergyContent.CollectionChanged += EnergyContent_CollectionChanged;
-
-            //PlanningPeriod simulationPeriod = new PlanningPeriod(start, TimeSpan.FromMinutes(1), 24 * 60);
-
             // Generate a random plan or policy
             _planner = new BatteryPlanner(b);
-            _planner.UpdatePlan(start);
+            _planner.UpdatePlan(_start);
 
         }
-
-        private void EnergyContent_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            Console.Out.WriteLine($"Got this: {e.Action}");
-        }
-        
 
         public async Task Simulate()
         {
@@ -103,23 +100,18 @@ namespace BatterySimulator
                 // Update state
                 _ems.UpdateState(_time.GetTime());
 
-                Console.Out.WriteLine($"{_time.GetTime()}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC().Value:P2}");
+                Console.Out.WriteLine($"{_time.GetTime()}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
 
-                Thread.Sleep(100);
+                Thread.Sleep(500);
 
                 if (_isRealTime)
                 {
                     Thread.Sleep(_delta);
-                    // test
                 }
 
                 _time.Increment();
 
             }
-
-            Recorder.Unsubscribe();
-
-            // Calculate market cost/revenue "settlement"
 
         }
 

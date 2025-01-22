@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Metadata;
+using BatterySimulator;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Kernel;
@@ -21,25 +23,84 @@ namespace BatterySimulatorGUI.ViewModels
     public partial class MainWindowViewModel : ViewModelBase
     {
         private BatterySimulator.BatterySimulator _simulator;
-        private ObservableCollection<ISeries> _soc;
+        private ObservableCollection<ISeries> _socSeries;
+        private ObservableCollection<ISeries> _netChargeSeries;
+        private ObservableCollection<DateTimePoint> _SoCvalues;
+        private ObservableCollection<DateTimePoint> _netChargevalues;
         
         public object Sync { get; } = new object();
 
         public MainWindowViewModel()
         {
             _simulator = new BatterySimulator.BatterySimulator();
-            _simulator.SetUp(24,60);
-            
-            _soc = new ObservableCollection<ISeries>();
-            _soc.Add(new LineSeries<double>
+            _simulator.SetUp(24,300);
+           
+            _simulator.Recorder.EnergyContent.MaxItems = 100;
+            _SoCvalues = new ObservableCollection<DateTimePoint>();
+            _simulator.Recorder.EnergyContent.CollectionChanged += EnergyContent_CollectionChanged;
+            _socSeries = new ObservableCollection<ISeries>();
+            _socSeries.Add(new LineSeries<DateTimePoint>
             {
-                Values = _simulator.Recorder.EnergyContent,
+                Values = _SoCvalues,
                 Name = "SoC",
-                Stroke = new SolidColorPaint(SKColors.Blue) { StrokeThickness = 4 }, 
+                Stroke = new SolidColorPaint(SKColors.Blue) { StrokeThickness = 2 }, 
                 Fill = null,
                 GeometryFill = null,
-                GeometryStroke = null
+                GeometryStroke = null,
+                
             });
+
+            _simulator.Recorder.NetCharge.MaxItems = 100;
+            _netChargevalues = new ObservableCollection<DateTimePoint>();
+            _simulator.Recorder.NetCharge.CollectionChanged += NetCharge_CollectionChanged;
+            _netChargeSeries = new ObservableCollection<ISeries>();
+            _netChargeSeries.Add(new StepLineSeries<DateTimePoint>
+            {
+                Values = _netChargevalues,
+                Name = "Net charge",
+                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 2 }, 
+                Fill = null,
+                GeometryFill = null,
+                GeometryStroke = null,
+                
+            });
+        }
+
+        private void NetCharge_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            var series = sender as ObservableTimeSeries;
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
+                {
+                    _netChargevalues.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
+                }
+
+                if (_netChargevalues.Count > 100)
+                {
+                    _netChargevalues.RemoveAt(0);
+                }
+                
+            }
+        }
+
+        private void EnergyContent_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            var series = sender as ObservableTimeSeries;
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
+                {
+                    _SoCvalues.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
+                }
+
+                if (_SoCvalues.Count > 100)
+                {
+                    _SoCvalues.RemoveAt(0);
+                }
+                
+            }
+
         }
 
         public Axis[] XAxes { get; set; }
@@ -49,25 +110,48 @@ namespace BatterySimulatorGUI.ViewModels
                 {
                     Name = "Time",
                     NamePaint = new SolidColorPaint(SKColors.Black), 
-
+                    UnitWidth = TimeSpan.FromMinutes(15).Ticks,
+                    MaxLimit = null,
+                    MinLimit = null,
                     LabelsPaint = new SolidColorPaint(SKColors.Blue), 
+
                     TextSize = 10,
 
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) { StrokeThickness = 2 }  
                 }
             };
 
-        public Axis[] YAxes { get; set; }
+        public Axis[] SoCAxes { get; set; }
             = new Axis[]
             {
                 new Axis
                 {
                     Name = "SoC (%)",
-                    NamePaint = new SolidColorPaint(SKColors.Red), 
-                    MinLimit = 0, MaxLimit = 100,
+                    NamePaint = new SolidColorPaint(SKColors.White), 
+                    MinLimit = 0, 
+                    MaxLimit = 100,
 
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 
-                    TextSize = 20,
+                    TextSize = 10,
+
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
+                    { 
+                        StrokeThickness = 2, 
+                        PathEffect = new DashEffect(new float[] { 3, 3 }) 
+                    } 
+                }
+            };
+
+        public Axis[] netChargeAxes { get; set; }
+            = new Axis[]
+            {
+                new Axis
+                {
+                    Name = "Net charge (MW)",
+                    NamePaint = new SolidColorPaint(SKColors.White), 
+                    
+                    LabelsPaint = new SolidColorPaint(SKColors.Green), 
+                    TextSize = 10,
 
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
                     { 
@@ -78,47 +162,24 @@ namespace BatterySimulatorGUI.ViewModels
             };
         
 
-        public ObservableCollection<ISeries> SoC => _soc;
+        public ObservableCollection<ISeries> SoC => _socSeries;
+        public ObservableCollection<ISeries> NetCharge => _netChargeSeries;
 
         public async Task StartSimulation()
         {
-            _ = Task.Run(ReadData);
-            //Random r = new Random();
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    _values.Add(new  DateTimePoint(DateTime.Now,r.Next(1,40)));
-            //    Thread.Sleep(100);
-            //}
-
+            await Task.Run(ReadData);
         }
 
         private async Task ReadData()
         {
-            // to keep this sample simple, we run the next infinite loop 
-            // in a real application you should stop the loop/task when the view is disposed 
-           // Random _random = new Random();
+            _simulator.SimulationEnabled = true;
+            _simulator.IsRealTime = false;
+            await Task.Run(_simulator.Simulate);
+        }
 
-            //while (true)
-            //{
-            //    await Task.Delay(1000);
-
-                // Because we are updating the chart from a different thread 
-                // we need to use a lock to access the chart data. 
-                // this is not necessary if your changes are made in the UI thread. 
-                //lock (Sync)
-                //{
-                    _simulator.SimulationEnabled = true;
-                    _simulator.IsRealTime = false;
-                    _ = Task.Run(_simulator.Simulate);
-                  //  _simulator.Recorder.EnergyContent.Add(DateTime.Now, _random.Next(0, 10));
-                    //_values.Add(new DateTimePoint();
-                    //if (_values.Count > 250) _values.RemoveAt(0);
-
-                    // we need to update the separators every time we add a new point 
-                    //_customAxis.CustomSeparators = GetSeparators();
-             //   }
-          //  }
-            
+        public void StopSimulation()
+        {
+            _simulator.SimulationEnabled = false;
         }
     }
 }
