@@ -16,14 +16,12 @@ namespace BatterySimulator
         private DataRecorder _recorder;
         private BatteryEMS _ems;
         private BatteryPlanner _planner;
-        private TimeSpan _delta;
         private DateTime _end;
         private DateTime _start;
         private bool _simulationEnabled;
 
         public BatterySimulator()
         {
-            _delta = TimeSpan.FromSeconds(300);
         }
 
         public bool IsRealTime
@@ -52,23 +50,30 @@ namespace BatterySimulator
 
         public TimeSpan Delta
         {
-            get => _delta;
-            set => _delta = value;
+            get => TimeProvider.TimeStep;
+            set => TimeProvider.TimeStep = value;
         }
 
+        
         public DateTime SimulationTime
         {
-            get { return _time.GetTime(); }
+            get { return TimeProvider.GetTime(); }
+        }
+
+        public SimulationTimeProvider TimeProvider
+        {
+            get => _time;
+            set => _time = value;
         }
 
         public void SetUp(int nHours, int deltaSeconds)
         {
-            Start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local); 
+            _start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local); 
             _end = _start + TimeSpan.FromHours(nHours);
-            Delta = TimeSpan.FromSeconds(deltaSeconds);
-            _time = new SimulationTimeProvider(_start, Delta);
+            TimeSpan delta = TimeSpan.FromSeconds(deltaSeconds);
+            TimeProvider = new SimulationTimeProvider(_start, delta);
 
-            _recorder = new DataRecorder(_time);
+            _recorder = new DataRecorder(TimeProvider);
 
             Random r = new Random();
 
@@ -104,15 +109,15 @@ namespace BatterySimulator
         public async Task Simulate()
         {
             
-            while(_time.GetTime() < _end && SimulationEnabled)
+            while(TimeProvider.GetTime() < _end && SimulationEnabled)
             {
                 // Implement plan/policy
-                _ems.SetChargeLevel(_planner.GetPlannedProduction(_time.GetTime()));
+                _ems.SetChargeLevel(_planner.GetPlannedProduction(TimeProvider.GetTime()));
                 
                 // Update state
-                _ems.UpdateState(_time.GetTime());
+                _ems.UpdateState(TimeProvider.GetTime());
 
-                Console.Out.WriteLine($"{_time.GetTime()}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
+                Console.Out.WriteLine($"{TimeProvider.GetTime()}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
 
                 Thread.Sleep(500);
 
@@ -121,7 +126,7 @@ namespace BatterySimulator
                     Thread.Sleep(Delta);
                 }
 
-                _time.Increment();
+                TimeProvider.Increment();
 
             }
 

@@ -11,12 +11,14 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Metadata;
 using BatterySimulator;
+using CommunityToolkit.Mvvm.ComponentModel;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Kernel;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.Painting.Effects;
+using ReactiveUI;
 using SkiaSharp;
 
 namespace BatterySimulatorGUI.ViewModels
@@ -28,7 +30,7 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<ISeries> _netChargeSeries;
         private ObservableCollection<DateTimePoint> _SoCvalues;
         private ObservableCollection<DateTimePoint> _netChargevalues;
-        private DateTimeAxis _customAxis;
+        private DateTime _simulationTime;
         private int _nHours;
         private int _maxItems = 100;
         
@@ -37,7 +39,7 @@ namespace BatterySimulatorGUI.ViewModels
             _simulator = new BatterySimulator.BatterySimulator();
             _nHours = 24;
 
-            _simulator.SetUp(_nHours ,(int) _simulator.Delta.TotalSeconds);
+            _simulator.SetUp(_nHours , 300);
 
             _simulator.Recorder.EnergyContent.MaxItems = _maxItems;
             _SoCvalues = new ObservableCollection<DateTimePoint>();
@@ -69,17 +71,21 @@ namespace BatterySimulatorGUI.ViewModels
                 IsVisibleAtLegend = true
             });
 
-            //_customAxis = new DateTimeAxis(TimeSpan.FromSeconds(10), Formatter)
-            //{
-            //    CustomSeparators = GetSeparators(),
-            //    AnimationsSpeed = TimeSpan.FromMilliseconds(0),
-            //    SeparatorsPaint = new SolidColorPaint(SKColors.Black.WithAlpha(100))
-            //};
-
-            //XAxes = [_customAxis];
+            _simulator.TimeProvider.PropertyChanged += TimeProvider_PropertyChanged;
+            _simulationTime = _simulator.TimeProvider.GetTime();
         }
 
-       
+        private void TimeProvider_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            SimulationTime = _simulator.TimeProvider.GetTime();
+        }
+
+        
+        public DateTime SimulationTime
+        {
+            get => _simulationTime; 
+            set => this.RaiseAndSetIfChanged(ref _simulationTime, value); 
+        }
 
         public ObservableCollection<ISeries> SoC => _socSeries;
         public ObservableCollection<ISeries> NetCharge => _netChargeSeries;
@@ -93,8 +99,10 @@ namespace BatterySimulatorGUI.ViewModels
         {
             _simulator.SimulationEnabled = true;
             _simulator.IsRealTime = false;
-            XAxes[0].MaxLimit = (_simulator.Start + TimeSpan.FromMinutes(600)).Ticks;
+            XAxes[0].MaxLimit = (_simulator.Start + TimeSpan.FromHours(6)).Ticks;
             XAxes[0].MinLimit = _simulator.Start.Ticks;
+            XAxes[0].ForceStepToMin = false;
+            XAxes[0].MinStep = TimeSpan.FromSeconds(600).Ticks;
             await Task.Run(_simulator.Simulate);
         }
 
@@ -167,9 +175,12 @@ namespace BatterySimulatorGUI.ViewModels
         public Axis[] XAxes { get; set; }
             =
             [
-                new DateTimeAxis(TimeSpan.FromSeconds(10),Formatter)
+                new DateTimeAxis(TimeSpan.FromSeconds(1),Formatter)
                 {
-                  //  Name = "Time",
+                  ShowSeparatorLines = true,
+                  TicksAtCenter = false,
+                  SeparatorsAtCenter = false,
+                  UnitWidth = TimeSpan.FromSeconds(1).Ticks
                 }
             ];
            
@@ -226,5 +237,7 @@ namespace BatterySimulatorGUI.ViewModels
                 }
             }
         }
+
+       
     }
 }

@@ -9,7 +9,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="BatterySimulatorGUI"
-        Width="2100"
+        Width="1600"
         Height="900"
         Position="800 200">
 
@@ -23,6 +23,7 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="100"/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -30,20 +31,21 @@
             <ColumnDefinition Width="150"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <Border Grid.Column="1" Grid.Row="0" Background="Gainsboro"
+        <Border Grid.Column="1" Grid.Row="0" Background="CadetBlue"
                 BorderBrush="Black"
                 BorderThickness="2"
                 CornerRadius="3"
                 Padding="10" Margin="10">
-        <TextBlock FontSize="36" Name="Title" HorizontalAlignment="Center" VerticalAlignment="Center">Volue Battery Simulator </TextBlock>
+        <TextBlock FontSize="36" Name="Title" HorizontalAlignment="Center" VerticalAlignment="Center" >Volue Battery Simulator </TextBlock>
             </Border>
 
         <StackPanel Grid.Column="0" Grid.Row="1">
             <ToggleButton Margin="5 5" Click="Button_OnClick_Run" HorizontalAlignment="Center" VerticalAlignment="Top">Start simulation</ToggleButton>
             <TextBlock Margin="5 5">Time step</TextBlock>
-            <TextBox  Margin="5 5" Watermark="Enter simulation time step" Text="{Binding TimeStepSeconds}"></TextBox>
+            <TextBox  Margin="5 5" Watermark="Enter simulation time step" Text="{Binding TimeStepSeconds , UpdateSourceTrigger=LostFocus}" ></TextBox>
         </StackPanel>
-		<Border Grid.Column="1" Grid.Row="1" Background="White"
+        <TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" Text="{Binding SimulationTime, Mode = OneWay}"></TextBlock>
+		<Border Grid.Column="1" Grid.Row="2" Background="White"
                 BorderBrush="Black"
                 BorderThickness="2"
                 CornerRadius="3"
@@ -55,7 +57,7 @@
             YAxes="{Binding SoCAxes}">
         </lvc:CartesianChart>
             </Border>
-        <Border Grid.Column="1" Grid.Row="2" Background="White"
+        <Border Grid.Column="1" Grid.Row="3" Background="White"
                 BorderBrush="Black"
                 BorderThickness="2"
                 CornerRadius="3"
