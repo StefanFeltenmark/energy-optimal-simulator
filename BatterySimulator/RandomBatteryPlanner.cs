@@ -7,13 +7,13 @@ using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
-    public class BatteryPlanner
+    public class RandomBatteryPlanner : IBatteryPlanner
     {
         private TimeSeries _plan;
         private Battery _battery;
         private Random _r = new Random(297349);
 
-        public BatteryPlanner(Battery battery)
+        public RandomBatteryPlanner(Battery battery)
         {
             _plan = new TimeSeries();
             _battery = battery;
@@ -30,13 +30,12 @@ namespace BatterySimulator
             return new Power(_plan[time], Units.MegaWatt);
         }
 
-        public void UpdatePlan(DateTime currentTime, TimeSpan resolution, int nPeriods)
+        public void UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
         {
             // update
             _plan = new TimeSeries(true, true);
             
-
-            PlanningPeriod planningPeriod = new PlanningPeriod(currentTime, resolution, nPeriods);
+            PlanningPeriod planningPeriod = new PlanningPeriod(planStart, resolution, nPeriods);
             foreach (PlanningInterval simulationInterval in planningPeriod.Intervals)
             {
                 var cap = _battery.CapacityC().ConvertToUnit(Units.MegaWatt);

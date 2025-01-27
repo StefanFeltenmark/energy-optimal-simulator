@@ -1,7 +1,4 @@
 ﻿using MathNet.Numerics.Random;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
-using Powel.Optimal.MultiAsset.Domain;
-using Powel.Optimal.MultiAsset.Domain.Common;
 using Powel.Optimal.MultiAsset.Domain.Common.Market;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
@@ -15,7 +12,8 @@ namespace BatterySimulator
         private bool _isRealTime;
         private DataRecorder _recorder;
         private BatteryEMS _ems;
-        private BatteryPlanner _planner;
+        private IBatteryPlanner _planner;
+        private TimeSeries _priceForecast;
         private DateTime _end;
         private DateTime _start;
         private bool _simulationEnabled;
@@ -66,6 +64,12 @@ namespace BatterySimulator
             set => _time = value;
         }
 
+        public TimeSeries PriceForecast
+        {
+            get => _priceForecast;
+            set => _priceForecast = value;
+        }
+
         public void SetUp(int nHours, int deltaSeconds)
         {
             _start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local); 
@@ -75,12 +79,15 @@ namespace BatterySimulator
 
             _recorder = new DataRecorder(TimeProvider);
 
-            Random r = new Random();
+            Random r = new Random(456345);
 
             EnergyMarket market = new EnergyMarket(Guid.NewGuid(), "EPEX Intraday");
             market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(100).ToArray(),_start, TimeSpan.FromMinutes(15));
             double spread = 0.01;
             market.Ts.EnergyBuyPrice = market.Ts.EnergySellPrice + TimeSeries.CreateTimeSeries(market.Ts.EnergySellPrice.TimePoints(),spread);
+
+            // exakt 
+            _priceForecast = market.Ts.EnergySellPrice;
 
             Battery b = new Battery
             {
@@ -92,16 +99,21 @@ namespace BatterySimulator
 
             BatteryState initialState = new BatteryState
             {
-                EnergyContent = new Energy(5, Units.MegaWattHour),
-                Capacity = new Energy(10, Units.MegaWattHour)
+                EnergyContent = new Energy(50, Units.MegaWattHour),
+                Capacity = new Energy(100, Units.MegaWattHour)
             };
+
 
             _ems = new BatteryEMS(b, initialState, _start);
 
             _recorder.Subscribe(_ems);
 
             // Generate a random plan or policy
-            _planner = new BatteryPlanner(b);
+            //_planner = new RandomBatteryPlanner(b);
+            //_planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
+
+            _planner = new PriceLevelPlanner(b);
+            ((PriceLevelPlanner)_planner).EnergyPriceForecast = _priceForecast;
             _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
 
         }

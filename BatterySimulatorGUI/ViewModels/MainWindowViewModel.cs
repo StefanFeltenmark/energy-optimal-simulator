@@ -18,6 +18,7 @@ using LiveChartsCore.Kernel;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.Painting.Effects;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
 using ReactiveUI;
 using SkiaSharp;
 
@@ -29,10 +30,11 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<ISeries> _socSeries;
         private ObservableCollection<ISeries> _netChargeSeries;
         private ObservableCollection<DateTimePoint> _SoCvalues;
+        private ObservableCollection<DateTimePoint> _price;
         private ObservableCollection<DateTimePoint> _netChargevalues;
         private DateTime _simulationTime;
         private int _nHours;
-        private int _maxItems = 100;
+        private int _maxItems = 40;
         
         public MainWindowViewModel()
         {
@@ -64,11 +66,25 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 Values = _netChargevalues,
                 Name = "Net charge",
-                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 2 }, 
+                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 3 }, 
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null,
-                IsVisibleAtLegend = true
+                IsVisibleAtLegend = true,
+                ScalesYAt = 0
+            });
+
+            _price = new ObservableCollection<DateTimePoint>();
+            _netChargeSeries.Add(new LineSeries<DateTimePoint>
+            {
+                Values = _price,
+                Name = "Price",
+                Stroke = new SolidColorPaint(SKColors.Red) { StrokeThickness = 2 }, 
+                Fill = null,
+                GeometryFill = null,
+                GeometryStroke = null,
+                IsVisibleAtLegend = true,
+                ScalesYAt = 1
             });
 
             _simulator.TimeProvider.PropertyChanged += TimeProvider_PropertyChanged;
@@ -99,12 +115,25 @@ namespace BatterySimulatorGUI.ViewModels
         {
             _simulator.SimulationEnabled = true;
             _simulator.IsRealTime = false;
+            SetPrice(_simulator.Start, _simulator.Start + TimeSpan.FromHours(24));
             XAxes[0].MaxLimit = (_simulator.Start + TimeSpan.FromHours(6)).Ticks;
             XAxes[0].MinLimit = _simulator.Start.Ticks;
             XAxes[0].ForceStepToMin = false;
             XAxes[0].MinStep = TimeSpan.FromSeconds(600).Ticks;
             await Task.Run(_simulator.Simulate);
         }
+
+        public void SetPrice(DateTime fromTime, DateTime toTime)
+        {
+            DateTime t = fromTime;
+            _price.Clear();
+            while (t < toTime)
+            {
+                _price.Add(new DateTimePoint(t, _simulator.PriceForecast[t]));
+                t += TimeSpan.FromMinutes(15);
+            }
+        }
+
 
         public void StopSimulation()
         {
@@ -141,9 +170,15 @@ namespace BatterySimulatorGUI.ViewModels
 
                 if (_SoCvalues.Count > _maxItems)
                 {
-                    XAxes[0].MaxLimit = null;
-                    XAxes[0].MinLimit = null;
                     _SoCvalues.RemoveAt(0);
+
+                    XAxes[0].MinLimit = _SoCvalues.First().DateTime.Ticks;
+                    XAxes[0].MaxLimit = _SoCvalues.Last().DateTime.Ticks;
+
+                    //SetPrice(_SoCvalues.First().DateTime, _SoCvalues.Last().DateTime);
+                    //XAxes[0].MaxLimit = null;
+                    //XAxes[0].MinLimit = null;
+                    
                 }
                 
             }
@@ -181,7 +216,8 @@ namespace BatterySimulatorGUI.ViewModels
                   TicksAtCenter = false,
                   SeparatorsAtCenter = false,
                   UnitWidth = TimeSpan.FromSeconds(1).Ticks
-                }
+                },
+               
             ];
            
         public Axis[] SoCAxes { get; set; }
@@ -206,6 +242,28 @@ namespace BatterySimulatorGUI.ViewModels
             ];
 
         public Axis[] netChargeAxes { get; set; }
+            = [
+                new Axis
+                {
+                    Name = "Net charge (MW)",
+                    NamePaint = new SolidColorPaint(SKColors.White), 
+                    
+                    LabelsPaint = new SolidColorPaint(SKColors.Green), 
+                    TextSize = 10,
+
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
+                    { 
+                        StrokeThickness = 2, 
+                        PathEffect = new DashEffect(new float[] { 3, 3 }) 
+                    } 
+                },
+                new Axis
+                {
+                Name = "Price",
+                }
+            ];
+
+        public Axis[] priceAxes { get; set; }
             = new Axis[]
             {
                 new Axis

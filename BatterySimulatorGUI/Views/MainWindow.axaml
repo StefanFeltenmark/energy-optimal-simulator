@@ -31,7 +31,7 @@
             <ColumnDefinition Width="150"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <Border Grid.Column="1" Grid.Row="0" Background="CadetBlue"
+        <Border Grid.Column="1" Grid.Row="0" Background="LightBlue"
                 BorderBrush="Black"
                 BorderThickness="2"
                 CornerRadius="3"
