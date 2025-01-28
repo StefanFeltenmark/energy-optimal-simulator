@@ -32,7 +32,7 @@ namespace BatterySimulator
         public DataRecorder Recorder
         {
             get => _recorder;
-            set => _recorder = value;
+            
         }
 
         public bool SimulationEnabled
@@ -69,6 +69,12 @@ namespace BatterySimulator
         {
             get => _priceForecaster;
             set => _priceForecaster = value;
+        }
+
+        public PnLManager PnlManager
+        {
+            get => _pnlManager;
+            set => _pnlManager = value;
         }
 
 
@@ -109,7 +115,7 @@ namespace BatterySimulator
 
             _ems = new BatteryEMS(b, initialState, _start);
 
-            _recorder.Subscribe(_ems);
+            Recorder.Subscribe(_ems);
 
             // Generate a random plan or policy
             //_planner = new RandomBatteryPlanner(b);
@@ -135,7 +141,7 @@ namespace BatterySimulator
                 // Update state
                 await _ems.UpdateState(TimeProvider.GetTime());
 
-                Console.Out.WriteLine($"{TimeProvider.GetTime()}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
+                await Console.Out.WriteLineAsync($"{TimeProvider.GetTime()}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
 
                 Thread.Sleep(200);
 

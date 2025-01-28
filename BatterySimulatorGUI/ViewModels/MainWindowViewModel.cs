@@ -43,11 +43,13 @@ namespace BatterySimulatorGUI.ViewModels
             _simulator = new BatterySimulator.BatterySimulator();
             _nHours = 24;
 
+            _simulator.Recorder.PropertyChanged += Recorder_PropertyChanged;
+
             _simulator.SetUp(_nHours , 100);
 
-            _simulator.Recorder.EnergyContent.MaxItems = _maxItems;
+            _simulator.Recorder.SoC.MaxItems = _maxItems;
             _SoCvalues = new ObservableCollection<DateTimePoint>();
-            _simulator.Recorder.EnergyContent.CollectionChanged += EnergyContent_CollectionChanged;
+            _simulator.Recorder.SoC.CollectionChanged += SoC_CollectionChanged;
             _socSeries = new ObservableCollection<ISeries>();
             _socSeries.Add(new LineSeries<DateTimePoint>
             {
@@ -89,7 +91,11 @@ namespace BatterySimulatorGUI.ViewModels
                 ScalesYAt = 1
             });
             
+            _pnlSeries = new ObservableCollection<ISeries>();
             _pnlValues = new ObservableCollection<DateTimePoint>();
+            
+            _simulator.PnlManager.PnL.CollectionChanged += 
+
             PnlSeries.Add(new LineSeries<DateTimePoint>
             {
                 Values = _pnlValues,
@@ -104,6 +110,11 @@ namespace BatterySimulatorGUI.ViewModels
 
             _simulator.TimeProvider.PropertyChanged += TimeProvider_PropertyChanged;
             _simulationTime = _simulator.TimeProvider.GetTime();
+        }
+
+        private void Recorder_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            
         }
 
         private void TimeProvider_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -173,7 +184,7 @@ namespace BatterySimulatorGUI.ViewModels
             }
         }
 
-        private void EnergyContent_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private void SoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             var series = sender as ObservableTimeSeries;
             if (e.Action == NotifyCollectionChangedAction.Add)
@@ -189,8 +200,6 @@ namespace BatterySimulatorGUI.ViewModels
 
                     XAxes[0].MinLimit = _SoCvalues.First().DateTime.Ticks;
                     XAxes[0].MaxLimit = _SoCvalues.Last().DateTime.Ticks;
-
-                   
                 }
                 
             }
@@ -200,7 +209,6 @@ namespace BatterySimulatorGUI.ViewModels
 
         private static string Formatter(DateTime date)
         {
-            
             return date.ToShortTimeString();
         }
 

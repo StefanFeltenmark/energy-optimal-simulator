@@ -13,12 +13,14 @@ namespace BatterySimulator
         TimeSeries _sellIncome;
         TimeSeries _buyCost;
         TimeSeries _profit;
+        TimeSeries _accProfit;
 
         public PnLManager()
         {
-            SellIncome = new TimeSeries();
-            BuyCost = new TimeSeries();
-            Profit = new TimeSeries();
+            _sellIncome = new TimeSeries();
+            _buyCost = new TimeSeries();
+            _profit = new TimeSeries();
+            _accProfit = new TimeSeries();
         }
 
         public TimeSeries SellIncome
@@ -39,11 +41,18 @@ namespace BatterySimulator
             set => _profit = value;
         }
 
+        public TimeSeries AccProfit
+        {
+            get => _accProfit;
+            set => _accProfit = value;
+        }
+
         public void UpdatePnL(DateTime t, Energy soldEnergy, Energy boughtEnergy, UnitPrice sellPrice, UnitPrice buyPrice)
         {
             _buyCost.SetValueAt(t, boughtEnergy.Value * buyPrice.Price);
             _sellIncome.SetValueAt(t, soldEnergy.Value * sellPrice.Price);
             _profit.SetValueAt(t, _sellIncome[t] - _buyCost[t]);
+            _accProfit.SetValueAt(t, _accProfit[t - TimeSpan.FromSeconds(1)] + _profit[t]);
         }
     }
 }
