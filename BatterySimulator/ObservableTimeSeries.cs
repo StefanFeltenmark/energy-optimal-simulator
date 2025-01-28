@@ -9,9 +9,11 @@ namespace BatterySimulator
         private TimeSeries _ts;
         private int _maxItems;
 
-        public ObservableTimeSeries()
+        public ObservableTimeSeries(double defaultvalue = 0.0, bool isBreakpoint = true)
         {
             _ts = new TimeSeries();
+            _ts.DefaultValue = defaultvalue;
+            _ts.IsBreakPointSeries = isBreakpoint;
             _maxItems = int.MaxValue;
         }
 
@@ -19,6 +21,11 @@ namespace BatterySimulator
         {
             _ts.AddValueAt(t,val);
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add,new KeyValuePair<DateTime,double>(t,val)));
+        }
+
+        public double this[DateTime t]
+        {
+            get => _ts[t];
         }
 
         public event NotifyCollectionChangedEventHandler? CollectionChanged;

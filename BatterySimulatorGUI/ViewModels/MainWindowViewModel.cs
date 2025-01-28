@@ -36,16 +36,15 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _pnlValues;
         private DateTime _simulationTime;
         private int _nHours;
-        private int _maxItems = 200;
+        private int _maxItems = 240;
         
         public MainWindowViewModel()
         {
             _simulator = new BatterySimulator.BatterySimulator();
             _nHours = 24;
+            _simulator.SetUp(_nHours , 120);
 
             _simulator.Recorder.PropertyChanged += Recorder_PropertyChanged;
-
-            _simulator.SetUp(_nHours , 100);
 
             _simulator.Recorder.SoC.MaxItems = _maxItems;
             _SoCvalues = new ObservableCollection<DateTimePoint>();
@@ -70,7 +69,7 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 Values = _netChargevalues,
                 Name = "Net charge",
-                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 3 }, 
+                Stroke = new SolidColorPaint(SKColors.Blue) { StrokeThickness = 3 }, 
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null,
@@ -79,7 +78,7 @@ namespace BatterySimulatorGUI.ViewModels
             });
 
             _price = new ObservableCollection<DateTimePoint>();
-            _netChargeSeries.Add(new LineSeries<DateTimePoint>
+            _netChargeSeries.Add(new StepLineSeries<DateTimePoint>
             {
                 Values = _price,
                 Name = "Price",
@@ -93,14 +92,14 @@ namespace BatterySimulatorGUI.ViewModels
             
             _pnlSeries = new ObservableCollection<ISeries>();
             _pnlValues = new ObservableCollection<DateTimePoint>();
-            
-            _simulator.PnlManager.PnL.CollectionChanged += 
+
+            _simulator.PnlManager.AccProfit.CollectionChanged += AccProfit_CollectionChanged;
 
             PnlSeries.Add(new LineSeries<DateTimePoint>
             {
                 Values = _pnlValues,
                 Name = "PnL",
-                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 2 }, 
+                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 3 }, 
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null,
@@ -111,6 +110,8 @@ namespace BatterySimulatorGUI.ViewModels
             _simulator.TimeProvider.PropertyChanged += TimeProvider_PropertyChanged;
             _simulationTime = _simulator.TimeProvider.GetTime();
         }
+
+       
 
         private void Recorder_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
@@ -206,6 +207,29 @@ namespace BatterySimulatorGUI.ViewModels
 
         }
 
+        private void AccProfit_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            Update(sender, e, _pnlValues);
+        }
+
+        private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values)
+        {
+            var series = sender as ObservableTimeSeries;
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
+                {
+                    values.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
+                }
+
+                if (values.Count > _maxItems)
+                {
+                    values.RemoveAt(0);
+                }
+                
+            }
+        }
+
 
         private static string Formatter(DateTime date)
         {
@@ -275,10 +299,9 @@ namespace BatterySimulatorGUI.ViewModels
                 new Axis
                 {
                     Name = "PnL",
-                    NamePaint = new SolidColorPaint(SKColors.White), 
                     
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 
-                    TextSize = 10,
+                    TextSize = 20,
 
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
                     { 

@@ -20,8 +20,8 @@ namespace BatterySimulator
         {
             _plan = new TimeSeries();
             _battery = battery;
-            _buyPriceThreshold = new Percentage(10);
-            _sellPriceThreshold = new Percentage(10);
+            _buyPriceThreshold = new Percentage(15);
+            _sellPriceThreshold = new Percentage(15);
         }
 
         public TimeSeries Plan

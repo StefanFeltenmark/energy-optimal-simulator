@@ -11,7 +11,6 @@ namespace BatterySimulator
         private DateTime _lastestTime;
         private List<IObserver<BatteryState>> observers = new List<IObserver<BatteryState>>();
 
-
         public BatteryEMS(Battery battery, BatteryState initialState, DateTime start)
         {
             _battery = battery;
@@ -46,18 +45,26 @@ namespace BatterySimulator
         {
             Time delta = new Time((time -_lastestTime).TotalHours, Units.Hour);
             
-            _state.EnergyContent +=
-                _state.Charging * delta - _state.Discharging * delta; // losses?
+            // At most one of charging and discharging is non-zero
+            Energy deltaMinus = _state.Discharging * delta;
+            Energy deltaplus = _state.Charging * delta;
+
+            Energy deltaMinusBattery = (1/ _battery.DischargeEfficiency) * deltaMinus;
+            Energy deltaPlusBattery = _battery.ChargeEfficiency * deltaplus;
+
+            Energy deltaBattery = deltaPlusBattery - deltaMinusBattery;
+
+            _state.EnergyContent += deltaPlusBattery - deltaMinusBattery; 
 
             // Truncate to limits
-            if (_state.EnergyContent.Value < 0)
+            if (_state.EnergyContent + deltaBattery < new Energy(0.0))
             {
-                _state.EnergyContent = 0.0;
+                _state.EnergyContent = new Energy(0, Units.MegaWattHour);
             }
 
-            if(_state.EnergyContent > _battery.NominalEnergyCapacity)
+            if(_state.EnergyContent + deltaBattery > _battery.NominalEnergyCapacity)
             {
-                _state.EnergyContent = _battery.NominalEnergyCapacity;
+                _state.EnergyContent = _battery.NominalEnergyCapacity.ConvertToUnit(Units.MegaWattHour);
             }
 
             _state.SoC = GetSoC();

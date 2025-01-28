@@ -10,49 +10,66 @@ namespace BatterySimulator
 {
     public class PnLManager
     {
-        TimeSeries _sellIncome;
-        TimeSeries _buyCost;
-        TimeSeries _profit;
-        TimeSeries _accProfit;
+        ObservableTimeSeries _sellIncome;
+        ObservableTimeSeries _buyCost;
+        ObservableTimeSeries _profit;
+        ObservableTimeSeries _accProfit;
+        DataRecorder _recorder;
+        DateTime _latestTime;
 
-        public PnLManager()
+        public PnLManager(DataRecorder recorder)
         {
-            _sellIncome = new TimeSeries();
-            _buyCost = new TimeSeries();
-            _profit = new TimeSeries();
-            _accProfit = new TimeSeries();
+            _sellIncome = new ObservableTimeSeries();
+            _buyCost = new ObservableTimeSeries();
+            _profit = new ObservableTimeSeries();
+            _accProfit = new ObservableTimeSeries();
+            
+            _recorder = recorder;
         }
 
-        public TimeSeries SellIncome
+        public void SetUp(DateTime t)
         {
-            get => _sellIncome;
-            set => _sellIncome = value;
+            _latestTime = t;
+            _sellIncome.Add(t, 0);
+            _buyCost.Add(t, 0);
+            _profit.Add(t, 0);
+            _accProfit.Add(t, 0);
         }
 
-        public TimeSeries BuyCost
-        {
-            get => _buyCost;
-            set => _buyCost = value;
-        }
+        public ObservableTimeSeries SellIncome => _sellIncome;
 
-        public TimeSeries Profit
-        {
-            get => _profit;
-            set => _profit = value;
-        }
+        public ObservableTimeSeries BuyCost => _buyCost;
 
-        public TimeSeries AccProfit
-        {
-            get => _accProfit;
-            set => _accProfit = value;
-        }
+        public ObservableTimeSeries Profit => _profit;
 
-        public void UpdatePnL(DateTime t, Energy soldEnergy, Energy boughtEnergy, UnitPrice sellPrice, UnitPrice buyPrice)
+        public ObservableTimeSeries AccProfit => _accProfit;
+
+        public void UpdatePnL(DateTime t, UnitPrice buyPrice, UnitPrice sellPrice)
         {
-            _buyCost.SetValueAt(t, boughtEnergy.Value * buyPrice.Price);
-            _sellIncome.SetValueAt(t, soldEnergy.Value * sellPrice.Price);
-            _profit.SetValueAt(t, _sellIncome[t] - _buyCost[t]);
-            _accProfit.SetValueAt(t, _accProfit[t - TimeSpan.FromSeconds(1)] + _profit[t]);
+            Energy boughtEnergy;
+            Energy soldEnergy;
+            Power netCharge = new Power(_recorder.NetCharge[t], Units.MegaWatt);
+            Time delta = new Time((t - _latestTime).TotalHours, Units.Hour);
+            if(netCharge.Value < 0)
+            {
+                soldEnergy = (-netCharge*delta).ToUnit(Units.MegaWattHour);
+                boughtEnergy = new Energy(0);
+            }
+            else
+            {
+                soldEnergy = new Energy(0);
+                boughtEnergy = (netCharge*delta).ToUnit(Units.MegaWattHour);
+            }
+            _buyCost.Add(t, boughtEnergy.Value * buyPrice.Price);
+            _sellIncome.Add(t, soldEnergy.Value * sellPrice.Price);
+            
+            _profit.Add(t, _sellIncome[t] - _buyCost[t]);
+
+            double accProf = _accProfit[_latestTime];
+            accProf += _profit[t];
+            _accProfit.Add(t, accProf);
+
+            _latestTime = t;
         }
     }
 }

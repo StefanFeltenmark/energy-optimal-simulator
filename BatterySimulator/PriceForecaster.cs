@@ -15,12 +15,12 @@ namespace BatterySimulator
         private double _a;
         private double _b;
 
-        public PriceForecaster(TimeSeries truePrice)
+        public PriceForecaster(TimeSeries truePrice, double a = 0.1, double b = 5.0)
         {
             _priceForecast = new TimeSeries();
             _truePrice = truePrice;
-            _a = 0.1;
-            _b = 5;
+            _a = a;
+            _b = b;
         }
 
         public TimeSeries PriceForecast
