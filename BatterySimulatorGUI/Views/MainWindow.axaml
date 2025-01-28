@@ -26,6 +26,7 @@
             <RowDefinition Height="40"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150"/>
@@ -46,7 +47,7 @@
         </StackPanel>
 
             
-                        <TextBlock Grid.Row="1" Grid.Column="1" Margin="300 5" VerticalAlignment="Center" FontSize="20" Text="{Binding SimulationTime, Mode = OneWay}"></TextBlock>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Margin="320 5" VerticalAlignment="Center" FontSize="20" Text="{Binding SimulationTime, Mode = OneWay}"></TextBlock>
                         <Border Grid.Column="2" Grid.Row="2" Background="White"
                                 BorderBrush="Black"
                                 BorderThickness="2"
@@ -71,5 +72,17 @@
                                 YAxes="{Binding netChargeAxes}">
                             </lvc:CartesianChart>
                         </Border>
+        <Border Grid.Column="1" Grid.Row="4" Background="White"
+                BorderBrush="Black"
+                BorderThickness="2"
+                CornerRadius="3"
+                Padding="10" Margin="10">
+            <lvc:CartesianChart
+                x:Name ="pnl"
+                Series="{Binding PnlSeries}"
+                XAxes="{Binding XAxes}"
+                YAxes="{Binding pnlAxes}">
+            </lvc:CartesianChart>
+        </Border>
     </Grid>
 </Window>

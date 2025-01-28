@@ -29,9 +29,11 @@ namespace BatterySimulatorGUI.ViewModels
         private BatterySimulator.BatterySimulator _simulator;
         private ObservableCollection<ISeries> _socSeries;
         private ObservableCollection<ISeries> _netChargeSeries;
+        private ObservableCollection<ISeries> _pnlSeries;
         private ObservableCollection<DateTimePoint> _SoCvalues;
         private ObservableCollection<DateTimePoint> _price;
         private ObservableCollection<DateTimePoint> _netChargevalues;
+        private ObservableCollection<DateTimePoint> _pnlValues;
         private DateTime _simulationTime;
         private int _nHours;
         private int _maxItems = 200;
@@ -85,6 +87,19 @@ namespace BatterySimulatorGUI.ViewModels
                 GeometryStroke = null,
                 IsVisibleAtLegend = true,
                 ScalesYAt = 1
+            });
+            
+            _pnlValues = new ObservableCollection<DateTimePoint>();
+            PnlSeries.Add(new LineSeries<DateTimePoint>
+            {
+                Values = _pnlValues,
+                Name = "PnL",
+                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 2 }, 
+                Fill = null,
+                GeometryFill = null,
+                GeometryStroke = null,
+                IsVisibleAtLegend = true,
+                ScalesYAt = 0
             });
 
             _simulator.TimeProvider.PropertyChanged += TimeProvider_PropertyChanged;
@@ -246,12 +261,12 @@ namespace BatterySimulatorGUI.ViewModels
                 }
             ];
 
-        public Axis[] priceAxes { get; set; }
+        public Axis[] pnlAxes { get; set; }
             = new Axis[]
             {
                 new Axis
                 {
-                    Name = "Price",
+                    Name = "PnL",
                     NamePaint = new SolidColorPaint(SKColors.White), 
                     
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 
@@ -279,6 +294,10 @@ namespace BatterySimulatorGUI.ViewModels
             }
         }
 
-       
+        public ObservableCollection<ISeries> PnlSeries
+        {
+            get => _pnlSeries;
+            set => _pnlSeries = value;
+        }
     }
 }

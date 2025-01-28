@@ -14,6 +14,7 @@ namespace BatterySimulator
         private BatteryEMS _ems;
         private IBatteryPlanner _planner;
         private IPriceForecaster _priceForecaster;
+        private PnLManager _pnlManager;
         private DateTime _end;
         private DateTime _start;
         private bool _simulationEnabled;
@@ -118,6 +119,8 @@ namespace BatterySimulator
             ((PriceLevelPlanner)_planner).EnergyPriceForecast = _priceForecaster.PriceForecast;
 
             _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
+
+            _pnlManager = new PnLManager();
 
         }
 

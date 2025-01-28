@@ -46,13 +46,8 @@ namespace BatterySimulator
         {
             Time delta = new Time((time -_lastestTime).TotalHours, Units.Hour);
             
-            if(time == new DateTime(2025,1, 10, 19,15,0, DateTimeKind.Local))
-            {
-                ;
-            }
-
             _state.EnergyContent +=
-                _state.Charging * delta - _state.Discharging * delta;
+                _state.Charging * delta - _state.Discharging * delta; // losses?
 
             // Truncate to limits
             if (_state.EnergyContent.Value < 0)
@@ -69,7 +64,6 @@ namespace BatterySimulator
 
             await PushBatteryState(_state);
 
-            // Capacity reduction
             _lastestTime = time;
 
         }

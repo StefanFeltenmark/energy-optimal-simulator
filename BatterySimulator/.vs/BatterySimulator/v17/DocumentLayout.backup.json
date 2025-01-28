@@ -3,6 +3,18 @@
   "WorkspaceRootPath": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|c:\\users\\stefan.feltenmark\\documents\\energy-optimal-simulator\\batterysimulator\\batteryems.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|solutionrelative:batteryems.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|c:\\users\\stefan.feltenmark\\documents\\energy-optimal-simulator\\batterysimulator\\batterysimulator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|solutionrelative:batterysimulator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|c:\\users\\stefan.feltenmark\\documents\\energy-optimal-simulator\\batterysimulator\\pnlmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|solutionrelative:pnlmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{95F10375-B9EA-4348-A2EE-6570DEA5BE1B}|..\\BatterySimulatorGUI\\BatterySimulatorGUI.csproj|c:\\users\\stefan.feltenmark\\documents\\energy-optimal-simulator\\batterysimulatorgui\\views\\mainwindow.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
     },
     {
@@ -10,14 +22,6 @@
     },
     {
       "AbsoluteMoniker": "D:0:0:{95F10375-B9EA-4348-A2EE-6570DEA5BE1B}|..\\BatterySimulatorGUI\\BatterySimulatorGUI.csproj|c:\\users\\stefan.feltenmark\\documents\\energy-optimal-simulator\\batterysimulatorgui\\views\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|c:\\users\\stefan.feltenmark\\documents\\energy-optimal-simulator\\batterysimulator\\batteryems.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|solutionrelative:batteryems.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|c:\\users\\stefan.feltenmark\\documents\\energy-optimal-simulator\\batterysimulator\\batterysimulator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|solutionrelative:batterysimulator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{3B7D4F21-D42B-47CD-BBCC-8DE85F3E92B3}|BatterySimulator.csproj|c:\\users\\stefan.feltenmark\\documents\\energy-optimal-simulator\\batterysimulator\\priceforecaster.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -84,7 +88,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 10,
+          "SelectedChildIndex": 21,
           "Children": [
             {
               "$type": "Bookmark",
@@ -92,7 +96,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 2,
+              "Title": "PnLManager.cs",
+              "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\PnLManager.cs",
+              "RelativeDocumentMoniker": "PnLManager.cs",
+              "ToolTip": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\PnLManager.cs",
+              "RelativeToolTip": "PnLManager.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAB0AAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-01-28T11:32:30.365Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
               "Title": "PriceForecaster.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\PriceForecaster.cs",
               "RelativeDocumentMoniker": "PriceForecaster.cs",
@@ -100,12 +117,11 @@
               "RelativeToolTip": "PriceForecaster.cs",
               "ViewState": "AgIAAAYAAAAAAAAAAAAAACQAAAAzAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-28T08:25:33.49Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-28T08:25:33.49Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "PriceLevelPlanner.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\PriceLevelPlanner.cs",
               "RelativeDocumentMoniker": "PriceLevelPlanner.cs",
@@ -113,12 +129,11 @@
               "RelativeToolTip": "PriceLevelPlanner.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-27T14:06:37.684Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-27T14:06:37.684Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "IBatteryPlanner.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\IBatteryPlanner.cs",
               "RelativeDocumentMoniker": "IBatteryPlanner.cs",
@@ -126,12 +141,11 @@
               "RelativeToolTip": "IBatteryPlanner.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-27T14:01:14.759Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-27T14:01:14.759Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": "CoreAxis.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\AppData\\Local\\SourceServer\\4982dc58dd17cd13c83fd3801ed4b0b7f384249e2cc8b52dd67114d7eba99e9f\\src\\LiveChartsCore\\CoreAxis.cs",
               "RelativeDocumentMoniker": "..\\..\\..\\AppData\\Local\\SourceServer\\4982dc58dd17cd13c83fd3801ed4b0b7f384249e2cc8b52dd67114d7eba99e9f\\src\\LiveChartsCore\\CoreAxis.cs",
@@ -139,12 +153,11 @@
               "RelativeToolTip": "..\\..\\..\\AppData\\Local\\SourceServer\\4982dc58dd17cd13c83fd3801ed4b0b7f384249e2cc8b52dd67114d7eba99e9f\\src\\LiveChartsCore\\CoreAxis.cs",
               "ViewState": "AgIAALkFAAAAAAAAAAArwL8FAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-24T09:43:12.236Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-24T09:43:12.236Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "RandomBatteryPlanner.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\RandomBatteryPlanner.cs",
               "RelativeDocumentMoniker": "RandomBatteryPlanner.cs",
@@ -152,12 +165,11 @@
               "RelativeToolTip": "RandomBatteryPlanner.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAABOwA8AAAA0AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-22T12:12:42.602Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-22T12:12:42.602Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 19,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorConsole\\Program.cs",
               "RelativeDocumentMoniker": "..\\BatterySimulatorConsole\\Program.cs",
@@ -165,12 +177,11 @@
               "RelativeToolTip": "..\\BatterySimulatorConsole\\Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-22T12:09:00.325Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-22T12:09:00.325Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 13,
               "Title": "LiveChartsSettings.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\AppData\\Local\\SourceServer\\0e7eb8aa52db131e5346342319875a959e1212a15e54926c2910f36b907ed0bf\\src\\LiveChartsCore\\Kernel\\LiveChartsSettings.cs",
               "RelativeDocumentMoniker": "..\\..\\..\\AppData\\Local\\SourceServer\\0e7eb8aa52db131e5346342319875a959e1212a15e54926c2910f36b907ed0bf\\src\\LiveChartsCore\\Kernel\\LiveChartsSettings.cs",
@@ -178,12 +189,11 @@
               "RelativeToolTip": "..\\..\\..\\AppData\\Local\\SourceServer\\0e7eb8aa52db131e5346342319875a959e1212a15e54926c2910f36b907ed0bf\\src\\LiveChartsCore\\Kernel\\LiveChartsSettings.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-21T15:14:08.319Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-21T15:14:08.319Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 5,
               "Title": "MainWindow.axaml.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorGUI\\Views\\MainWindow.axaml.cs",
               "RelativeDocumentMoniker": "..\\BatterySimulatorGUI\\Views\\MainWindow.axaml.cs",
@@ -191,37 +201,36 @@
               "RelativeToolTip": "..\\BatterySimulatorGUI\\Views\\MainWindow.axaml.cs",
               "ViewState": "AgIAAAEAAAAAAAAAAAAjwBEAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-21T09:51:23.787Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-21T09:51:23.787Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
               "Title": "MainWindowViewModel.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorGUI\\ViewModels\\MainWindowViewModel.cs",
               "RelativeDocumentMoniker": "..\\BatterySimulatorGUI\\ViewModels\\MainWindowViewModel.cs",
               "ToolTip": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorGUI\\ViewModels\\MainWindowViewModel.cs",
               "RelativeToolTip": "..\\BatterySimulatorGUI\\ViewModels\\MainWindowViewModel.cs",
-              "ViewState": "AgIAADMAAAAAAAAAAAAkwF8AAAA+AAAAAAAAAA==",
+              "ViewState": "AgIAAPcAAAAAAAAAAAAuwA0BAAATAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-01-21T09:39:33.268Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "MainWindow.axaml",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorGUI\\Views\\MainWindow.axaml",
               "RelativeDocumentMoniker": "..\\BatterySimulatorGUI\\Views\\MainWindow.axaml",
-              "ToolTip": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorGUI\\Views\\MainWindow.axaml*",
-              "RelativeToolTip": "..\\BatterySimulatorGUI\\Views\\MainWindow.axaml*",
+              "ToolTip": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorGUI\\Views\\MainWindow.axaml",
+              "RelativeToolTip": "..\\BatterySimulatorGUI\\Views\\MainWindow.axaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
               "WhenOpened": "2025-01-21T09:37:54.198Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 15,
               "Title": "SimulationTimeProvider.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\SimulationTimeProvider.cs",
               "RelativeDocumentMoniker": "SimulationTimeProvider.cs",
@@ -229,25 +238,24 @@
               "RelativeToolTip": "SimulationTimeProvider.cs",
               "ViewState": "AgIAAA4AAAAAAAAAAAAcwB8AAAAeAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-22T14:25:52.976Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-22T14:25:52.976Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 1,
               "Title": "BatterySimulator.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\BatterySimulator.cs",
               "RelativeDocumentMoniker": "BatterySimulator.cs",
               "ToolTip": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\BatterySimulator.cs",
               "RelativeToolTip": "BatterySimulator.cs",
-              "ViewState": "AgIAADwAAAAAAAAAAAAzwEsAAABIAAAAAAAAAA==",
+              "ViewState": "AgIAAHMAAAAAAAAAAAAxwIcAAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-01-21T09:39:52.037Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 14,
               "Title": "ViewModelBase.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorGUI\\ViewModels\\ViewModelBase.cs",
               "RelativeDocumentMoniker": "..\\BatterySimulatorGUI\\ViewModels\\ViewModelBase.cs",
@@ -255,12 +263,11 @@
               "RelativeToolTip": "..\\BatterySimulatorGUI\\ViewModels\\ViewModelBase.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-21T11:10:20.518Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-21T11:10:20.518Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 16,
               "Title": "ITimeProvider.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\ITimeProvider.cs",
               "RelativeDocumentMoniker": "ITimeProvider.cs",
@@ -268,12 +275,11 @@
               "RelativeToolTip": "ITimeProvider.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-24T07:36:40.681Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-24T07:36:40.681Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "ObservableTimeSeries.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\ObservableTimeSeries.cs",
               "RelativeDocumentMoniker": "ObservableTimeSeries.cs",
@@ -281,12 +287,11 @@
               "RelativeToolTip": "ObservableTimeSeries.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-21T12:35:48.85Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-21T12:35:48.85Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 17,
               "Title": "BatteryState.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\BatteryState.cs",
               "RelativeDocumentMoniker": "BatteryState.cs",
@@ -294,12 +299,11 @@
               "RelativeToolTip": "BatteryState.cs",
               "ViewState": "AgIAABQAAAAAAAAAAAA0wBQAAAAfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-22T12:22:53.963Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-22T12:22:53.963Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 20,
               "Title": "Microsoft.Common.CurrentVersion.targets",
               "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\Msbuild\\Current\\Bin\\amd64\\Microsoft.Common.CurrentVersion.targets",
               "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\Msbuild\\Current\\Bin\\amd64\\Microsoft.Common.CurrentVersion.targets",
@@ -307,12 +311,11 @@
               "RelativeToolTip": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\Msbuild\\Current\\Bin\\amd64\\Microsoft.Common.CurrentVersion.targets",
               "ViewState": "AgIAALQUAAAAAAAAAAAWwL4UAAAHAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003801|",
-              "WhenOpened": "2025-01-21T11:40:51.72Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-21T11:40:51.72Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 18,
               "Title": "DataRecorder.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\DataRecorder.cs",
               "RelativeDocumentMoniker": "DataRecorder.cs",
@@ -320,12 +323,11 @@
               "RelativeToolTip": "DataRecorder.cs",
               "ViewState": "AgIAACkAAAAAAAAAAAAAwEIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-21T11:58:24.139Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-21T11:58:24.139Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "DataFactory.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\AppData\\Local\\SourceServer\\70e037a3d8d76580957af57d3c43723272f9de44c3c194934e4a911a24121155\\src\\LiveChartsCore\\Kernel\\Providers\\DataFactory.cs",
               "RelativeDocumentMoniker": "..\\..\\..\\AppData\\Local\\SourceServer\\70e037a3d8d76580957af57d3c43723272f9de44c3c194934e4a911a24121155\\src\\LiveChartsCore\\Kernel\\Providers\\DataFactory.cs",
@@ -333,25 +335,24 @@
               "RelativeToolTip": "..\\..\\..\\AppData\\Local\\SourceServer\\70e037a3d8d76580957af57d3c43723272f9de44c3c194934e4a911a24121155\\src\\LiveChartsCore\\Kernel\\Providers\\DataFactory.cs",
               "ViewState": "AgIAAEwBAAAAAAAAAAAWwFQBAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-21T15:49:58.125Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-21T15:49:58.125Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 0,
               "Title": "BatteryEMS.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\BatteryEMS.cs",
               "RelativeDocumentMoniker": "BatteryEMS.cs",
               "ToolTip": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\BatteryEMS.cs",
               "RelativeToolTip": "BatteryEMS.cs",
-              "ViewState": "AgIAABoAAAAAAAAAAADgvzIAAAAQAAAAAAAAAA==",
+              "ViewState": "AgIAACgAAAAAAAAAAAAmwEMAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-01-21T14:06:18.215Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 21,
               "Title": "App.axaml.cs",
               "DocumentMoniker": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulatorGUI\\App.axaml.cs",
               "RelativeDocumentMoniker": "..\\BatterySimulatorGUI\\App.axaml.cs",
@@ -359,8 +360,7 @@
               "RelativeToolTip": "..\\BatterySimulatorGUI\\App.axaml.cs",
               "ViewState": "AgIAAAcAAAAAAAAAAAAxwBoAAAAmAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-01-21T09:52:19.296Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-01-21T09:52:19.296Z"
             }
           ]
         }
