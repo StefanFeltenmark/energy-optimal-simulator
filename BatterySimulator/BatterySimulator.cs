@@ -13,7 +13,7 @@ namespace BatterySimulator
         private DataRecorder _recorder;
         private BatteryEMS _ems;
         private IBatteryPlanner _planner;
-        private TimeSeries _priceForecast;
+        private IPriceForecaster _priceForecaster;
         private DateTime _end;
         private DateTime _start;
         private bool _simulationEnabled;
@@ -64,11 +64,12 @@ namespace BatterySimulator
             set => _time = value;
         }
 
-        public TimeSeries PriceForecast
+        public IPriceForecaster PriceForecaster
         {
-            get => _priceForecast;
-            set => _priceForecast = value;
+            get => _priceForecaster;
+            set => _priceForecaster = value;
         }
+
 
         public void SetUp(int nHours, int deltaSeconds)
         {
@@ -87,7 +88,8 @@ namespace BatterySimulator
             market.Ts.EnergyBuyPrice = market.Ts.EnergySellPrice + TimeSeries.CreateTimeSeries(market.Ts.EnergySellPrice.TimePoints(),spread);
 
             // exakt 
-            _priceForecast = market.Ts.EnergySellPrice;
+            _priceForecaster = new PriceForecaster(market.Ts.EnergyBuyPrice);
+            _priceForecaster.UpdateForecast(_start, TimeSpan.FromHours(nHours), TimeSpan.FromMinutes(15));
 
             Battery b = new Battery
             {
@@ -113,7 +115,8 @@ namespace BatterySimulator
             //_planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
 
             _planner = new PriceLevelPlanner(b);
-            ((PriceLevelPlanner)_planner).EnergyPriceForecast = _priceForecast;
+            ((PriceLevelPlanner)_planner).EnergyPriceForecast = _priceForecaster.PriceForecast;
+
             _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
 
         }
@@ -127,11 +130,11 @@ namespace BatterySimulator
                 _ems.SetChargeLevel(_planner.GetPlannedProduction(TimeProvider.GetTime()));
                 
                 // Update state
-                _ems.UpdateState(TimeProvider.GetTime());
+                await _ems.UpdateState(TimeProvider.GetTime());
 
                 Console.Out.WriteLine($"{TimeProvider.GetTime()}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
 
-                Thread.Sleep(500);
+                Thread.Sleep(200);
 
                 if (_isRealTime)
                 {

@@ -13,13 +13,15 @@ namespace BatterySimulator
         private Battery _battery;
         private Random _r = new Random(297349);
         private TimeSeries _energyPriceForecastForecast;
-        private double _buyPriceLevel;
-        private double _sellPriceLevel;
+        private Percentage _buyPriceThreshold;
+        private  Percentage _sellPriceThreshold;
 
         public PriceLevelPlanner(Battery battery)
         {
             _plan = new TimeSeries();
             _battery = battery;
+            _buyPriceThreshold = new Percentage(10);
+            _sellPriceThreshold = new Percentage(10);
         }
 
         public TimeSeries Plan
@@ -34,17 +36,18 @@ namespace BatterySimulator
             set => _energyPriceForecastForecast = value;
         }
 
-        public double BuyPriceLevel
+        public Percentage BuyPriceThreshold
         {
-            get => _buyPriceLevel;
-            set => _buyPriceLevel = value;
+            get => _buyPriceThreshold;
+            set => _buyPriceThreshold = value;
         }
 
-        public double SellPriceLevel
+        public Percentage SellPriceThreshold
         {
-            get => _sellPriceLevel;
-            set => _sellPriceLevel = value;
+            get => _sellPriceThreshold;
+            set => _sellPriceThreshold = value;
         }
+
 
         public Power GetPlannedProduction(DateTime time)
         {
@@ -60,8 +63,8 @@ namespace BatterySimulator
             double maxPrice = _energyPriceForecastForecast.Values().Max();
             double minPrice = _energyPriceForecastForecast.Values().Min();
 
-            _buyPriceLevel = minPrice + 0.1 * (maxPrice - minPrice);
-            _sellPriceLevel = maxPrice - 0.1 * (maxPrice - minPrice);
+            var buyat = minPrice + _buyPriceThreshold.ToFraction() * (maxPrice - minPrice);
+            var sellat = maxPrice - _sellPriceThreshold.ToFraction() * (maxPrice - minPrice);
 
             PlanningPeriod planningPeriod = new PlanningPeriod(planStart, resolution, nPeriods);
             foreach (PlanningInterval simulationInterval in planningPeriod.Intervals)
@@ -69,11 +72,11 @@ namespace BatterySimulator
                 double prod = 0.0;
                 double price = _energyPriceForecastForecast[simulationInterval.Start];
 
-                if(price <= _buyPriceLevel)
+                if(price <= buyat)
                 {
                     prod = _battery.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
                 }
-                else if (price > _sellPriceLevel)
+                else if (price > sellat)
                 {
                     prod = -_battery.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
                 }

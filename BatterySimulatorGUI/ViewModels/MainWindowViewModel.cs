@@ -34,14 +34,14 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _netChargevalues;
         private DateTime _simulationTime;
         private int _nHours;
-        private int _maxItems = 40;
+        private int _maxItems = 200;
         
         public MainWindowViewModel()
         {
             _simulator = new BatterySimulator.BatterySimulator();
             _nHours = 24;
 
-            _simulator.SetUp(_nHours , 300);
+            _simulator.SetUp(_nHours , 100);
 
             _simulator.Recorder.EnergyContent.MaxItems = _maxItems;
             _SoCvalues = new ObservableCollection<DateTimePoint>();
@@ -129,7 +129,7 @@ namespace BatterySimulatorGUI.ViewModels
             _price.Clear();
             while (t < toTime)
             {
-                _price.Add(new DateTimePoint(t, _simulator.PriceForecast[t]));
+                _price.Add(new DateTimePoint(t, _simulator.PriceForecaster.PriceForecast[t]));
                 t += TimeSpan.FromMinutes(15);
             }
         }
@@ -175,10 +175,7 @@ namespace BatterySimulatorGUI.ViewModels
                     XAxes[0].MinLimit = _SoCvalues.First().DateTime.Ticks;
                     XAxes[0].MaxLimit = _SoCvalues.Last().DateTime.Ticks;
 
-                    //SetPrice(_SoCvalues.First().DateTime, _SoCvalues.Last().DateTime);
-                    //XAxes[0].MaxLimit = null;
-                    //XAxes[0].MinLimit = null;
-                    
+                   
                 }
                 
             }
@@ -192,21 +189,7 @@ namespace BatterySimulatorGUI.ViewModels
             return date.ToShortTimeString();
         }
 
-        private static double[] GetSeparators()
-        {
-            var now = DateTime.Now;
-
-            return
-            [
-                now.AddSeconds(-25).Ticks,
-                now.AddSeconds(-20).Ticks,
-                now.AddSeconds(-15).Ticks,
-                now.AddSeconds(-10).Ticks,
-                now.AddSeconds(-5).Ticks,
-                now.Ticks
-            ];
-        }
-
+        
         public Axis[] XAxes { get; set; }
             =
             [
@@ -215,7 +198,8 @@ namespace BatterySimulatorGUI.ViewModels
                   ShowSeparatorLines = true,
                   TicksAtCenter = false,
                   SeparatorsAtCenter = false,
-                  UnitWidth = TimeSpan.FromSeconds(1).Ticks
+                  UnitWidth = TimeSpan.FromSeconds(1).Ticks,
+                  TextSize = 20
                 },
                
             ];
@@ -226,12 +210,12 @@ namespace BatterySimulatorGUI.ViewModels
                 new Axis
                 {
                     Name = "SoC (%)",
-                    NamePaint = new SolidColorPaint(SKColors.White), 
+                    
                     MinLimit = 0, 
                     MaxLimit = 100,
 
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 
-                    TextSize = 10,
+                    TextSize = 20,
 
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
                     { 
@@ -246,10 +230,9 @@ namespace BatterySimulatorGUI.ViewModels
                 new Axis
                 {
                     Name = "Net charge (MW)",
-                    NamePaint = new SolidColorPaint(SKColors.White), 
                     
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 
-                    TextSize = 10,
+                    TextSize = 20,
 
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
                     { 
@@ -259,7 +242,7 @@ namespace BatterySimulatorGUI.ViewModels
                 },
                 new Axis
                 {
-                Name = "Price",
+                    Name = "Price",
                 }
             ];
 
@@ -268,7 +251,7 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 new Axis
                 {
-                    Name = "Net charge (MW)",
+                    Name = "Price",
                     NamePaint = new SolidColorPaint(SKColors.White), 
                     
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 

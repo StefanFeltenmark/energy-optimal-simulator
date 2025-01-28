@@ -37,7 +37,7 @@ namespace BatterySimulator
 
         public Percentage GetSoC()
         {
-            var soc = _state.EnergyContent / _battery.CapacityE();
+            Percentage soc = _state.EnergyContent / _battery.CapacityE();
             return soc;
         }
 
@@ -46,6 +46,11 @@ namespace BatterySimulator
         {
             Time delta = new Time((time -_lastestTime).TotalHours, Units.Hour);
             
+            if(time == new DateTime(2025,1, 10, 19,15,0, DateTimeKind.Local))
+            {
+                ;
+            }
+
             _state.EnergyContent +=
                 _state.Charging * delta - _state.Discharging * delta;
 
@@ -55,7 +60,7 @@ namespace BatterySimulator
                 _state.EnergyContent = 0.0;
             }
 
-            if(_state.EnergyContent.Value > _battery.NominalEnergyCapacity.Value)
+            if(_state.EnergyContent > _battery.NominalEnergyCapacity)
             {
                 _state.EnergyContent = _battery.NominalEnergyCapacity;
             }
