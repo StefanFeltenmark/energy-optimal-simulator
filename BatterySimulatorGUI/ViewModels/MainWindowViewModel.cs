@@ -36,7 +36,7 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _pnlValues;
         private DateTime _simulationTime;
         private int _nHours;
-        private int _maxItems = 240;
+        private int _maxItems = 220;
         
         public MainWindowViewModel()
         {
@@ -143,14 +143,14 @@ namespace BatterySimulatorGUI.ViewModels
             _simulator.SimulationEnabled = true;
             _simulator.IsRealTime = false;
             SetPrice(_simulator.Start, _simulator.Start + TimeSpan.FromHours(24));
-            XAxes[0].MaxLimit = (_simulator.Start + TimeSpan.FromHours(6)).Ticks;
-            XAxes[0].MinLimit = _simulator.Start.Ticks;
-            XAxes[0].ForceStepToMin = false;
-            XAxes[0].MinStep = TimeSpan.FromSeconds(600).Ticks;
+            timeAxis[0].MaxLimit = (_simulator.Start + TimeSpan.FromHours(6)).Ticks;
+            timeAxis[0].MinLimit = _simulator.Start.Ticks;
+            timeAxis[0].ForceStepToMin = false;
+            timeAxis[0].MinStep = TimeSpan.FromSeconds(600).Ticks;
             await Task.Run(_simulator.Simulate);
         }
 
-        public void SetPrice(DateTime fromTime, DateTime toTime)
+        private void SetPrice(DateTime fromTime, DateTime toTime)
         {
             DateTime t = fromTime;
             _price.Clear();
@@ -199,8 +199,8 @@ namespace BatterySimulatorGUI.ViewModels
                 {
                     _SoCvalues.RemoveAt(0);
 
-                    XAxes[0].MinLimit = _SoCvalues.First().DateTime.Ticks;
-                    XAxes[0].MaxLimit = _SoCvalues.Last().DateTime.Ticks;
+                    timeAxis[0].MinLimit = _SoCvalues.First().DateTime.Ticks;
+                    timeAxis[0].MaxLimit = _SoCvalues.Last().DateTime.Ticks;
                 }
                 
             }
@@ -237,7 +237,7 @@ namespace BatterySimulatorGUI.ViewModels
         }
 
         
-        public Axis[] XAxes { get; set; }
+        public Axis[] timeAxis { get; set; }
             =
             [
                 new DateTimeAxis(TimeSpan.FromSeconds(1),Formatter)
@@ -245,8 +245,8 @@ namespace BatterySimulatorGUI.ViewModels
                   ShowSeparatorLines = true,
                   TicksAtCenter = false,
                   SeparatorsAtCenter = false,
-                  UnitWidth = TimeSpan.FromSeconds(1).Ticks,
-                  TextSize = 20
+                 // UnitWidth = TimeSpan.FromSeconds(1).Ticks,
+                  TextSize = 12
                 },
                
             ];

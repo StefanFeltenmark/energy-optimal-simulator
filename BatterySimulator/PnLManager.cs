@@ -1,10 +1,4 @@
-﻿using Powel.Optimal.MultiAsset.Domain.General.Data;
-using Powel.Optimal.MultiAsset.Domain.Quantities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
@@ -46,16 +40,16 @@ namespace BatterySimulator
 
         public void UpdatePnL(DateTime t, UnitPrice buyPrice, UnitPrice sellPrice)
         {
-            Energy boughtEnergy;
-            Energy soldEnergy;
+            Energy boughtEnergy = 0;
+            Energy soldEnergy = 0;
             Power netCharge = new Power(_recorder.NetCharge[t], Units.MegaWatt);
             Time delta = new Time((t - _latestTime).TotalHours, Units.Hour);
-            if(netCharge.Value < 0)
+            if(netCharge.Value < -0.001)
             {
                 soldEnergy = (-netCharge*delta).ToUnit(Units.MegaWattHour);
                 boughtEnergy = new Energy(0);
             }
-            else
+            else if(netCharge.Value > 0.0001)
             {
                 soldEnergy = new Energy(0);
                 boughtEnergy = (netCharge*delta).ToUnit(Units.MegaWattHour);

@@ -47,31 +47,31 @@
         </StackPanel>
 
             
-                        <TextBlock Grid.Row="1" Grid.Column="1" Margin="320 5" VerticalAlignment="Center" FontSize="20" Text="{Binding SimulationTime, Mode = OneWay}"></TextBlock>
-                        <Border Grid.Column="2" Grid.Row="2" Background="White"
-                                BorderBrush="Black"
-                                BorderThickness="2"
-                                CornerRadius="3"
-                                Padding="10" Margin="10">
-                            <lvc:CartesianChart 
-                            x:Name ="batteryEnergy"
-                            Series="{Binding SoC}"
-                            XAxes="{Binding XAxes}"
-                            YAxes="{Binding SoCAxes}">
-                        </lvc:CartesianChart>
-				        </Border>
-                        <Border Grid.Column="1" Grid.Row="3" Background="White"
-                                BorderBrush="Black"
-                                BorderThickness="2"
-                                CornerRadius="3"
-                                Padding="10" Margin="10">
-                            <lvc:CartesianChart
-                                x:Name ="batteryCharging"
-                                Series="{Binding NetCharge}"
-                                XAxes="{Binding XAxes}"
-                                YAxes="{Binding netChargeAxes}">
-                            </lvc:CartesianChart>
-                        </Border>
+        <TextBlock Grid.Row="1" Grid.Column="1" Margin="320 5" VerticalAlignment="Center" FontSize="20" Text="{Binding SimulationTime, Mode = OneWay}"></TextBlock>
+        <Border Grid.Column="2" Grid.Row="2" Background="White"
+                BorderBrush="Black"
+                BorderThickness="2"
+                CornerRadius="3"
+                Padding="10" Margin="10">
+            <lvc:CartesianChart 
+            x:Name ="batteryEnergy"
+            Series="{Binding SoC}"
+            XAxes="{Binding timeAxis}"
+            YAxes="{Binding SoCAxes}">
+        </lvc:CartesianChart>
+		</Border>
+        <Border Grid.Column="1" Grid.Row="3" Background="White"
+                BorderBrush="Black"
+                BorderThickness="2"
+                CornerRadius="3"
+                Padding="10" Margin="10">
+            <lvc:CartesianChart
+                x:Name ="batteryCharging"
+                Series="{Binding NetCharge}"
+                XAxes="{Binding timeAxis}"
+                YAxes="{Binding netChargeAxes}">
+            </lvc:CartesianChart>
+        </Border>
         <Border Grid.Column="1" Grid.Row="4" Background="White"
                 BorderBrush="Black"
                 BorderThickness="2"
@@ -80,7 +80,7 @@
             <lvc:CartesianChart
                 x:Name ="pnl"
                 Series="{Binding PnlSeries}"
-                XAxes="{Binding XAxes}"
+                XAxes="{Binding timeAxis}"
                 YAxes="{Binding pnlAxes}">
             </lvc:CartesianChart>
         </Border>
