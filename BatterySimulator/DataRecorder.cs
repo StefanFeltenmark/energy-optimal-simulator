@@ -10,6 +10,8 @@ namespace BatterySimulator
         private ObservableTimeSeries _SoC = new ObservableTimeSeries();
         private ObservableTimeSeries _energyContent = new ObservableTimeSeries();
         private ObservableTimeSeries _netCharge = new ObservableTimeSeries();
+        private ObservableTimeSeries _charging = new ObservableTimeSeries();
+        private ObservableTimeSeries _discharging = new ObservableTimeSeries();
         
 
         private int _updated;
@@ -41,7 +43,18 @@ namespace BatterySimulator
             get => _SoC;
         }
 
-      
+        public ObservableTimeSeries Charging
+        {
+            get => _charging;
+            
+        }
+
+        public ObservableTimeSeries Discharging
+        {
+            get => _discharging;
+            
+        }
+
 
         public virtual void Subscribe(IObservable<BatteryState> provider)
         {
@@ -67,6 +80,8 @@ namespace BatterySimulator
                 _energyContent.Add(_timeProvider.GetTime(), value.EnergyContent.Value);
                 _SoC.Add(_timeProvider.GetTime(), value.SoC.Value);
                 _netCharge.Add(_timeProvider.GetTime(), value.Charging.Value-value.Discharging.Value);
+                _charging.Add(_timeProvider.GetTime(), value.Charging.Value);
+                _discharging.Add(_timeProvider.GetTime(), -value.Discharging.Value);
                 Updated = _updated + 1;
             }
         }

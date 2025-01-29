@@ -19,6 +19,7 @@ namespace BatterySimulator
         private DateTime _start;
         private bool _simulationEnabled;
         private EnergyMarket _market;
+        private Battery _battery;
 
         public BatterySimulator()
         {
@@ -78,6 +79,12 @@ namespace BatterySimulator
             set => _pnlManager = value;
         }
 
+        public Battery Battery1
+        {
+            get => _battery;
+            set => _battery = value;
+        }
+
 
         public void SetUp(int nHours, int deltaSeconds)
         {
@@ -91,7 +98,7 @@ namespace BatterySimulator
             Random r = new Random(456345);
 
             _market = new EnergyMarket(Guid.NewGuid(), "EPEX Intraday");
-            _market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(100).Select(d=>d*10.0).ToArray(),_start, TimeSpan.FromMinutes(15));
+            _market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(100).Select(d=>d*100.0 + 20).ToArray(),_start, TimeSpan.FromMinutes(15));
             double spread = 0.01;
             _market.Ts.EnergyBuyPrice = _market.Ts.EnergySellPrice + TimeSeries.CreateTimeSeries(_market.Ts.EnergySellPrice.TimePoints(),spread);
 
@@ -99,24 +106,24 @@ namespace BatterySimulator
             _priceForecaster = new PriceForecaster(_market.Ts.EnergyBuyPrice, a: 0, b: 0);
             _priceForecaster.UpdateForecast(_start, TimeSpan.FromHours(nHours), TimeSpan.FromMinutes(15));
 
-            Battery b = new Battery
+            Battery1 = new Battery
             {
                 NominalChargeCapacity = new Power(10,Units.MegaWatt),
                 NominalEnergyCapacity =  new Energy(10, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
                 InitialSoHe = new Percentage(100)
             };
-            b.ChargeEfficiency = 0.95;
-            b.DischargeEfficiency = 0.95;
+            Battery1.ChargeEfficiency = 0.95;
+            Battery1.DischargeEfficiency = 0.95;
 
             BatteryState initialState = new BatteryState
             {
-                EnergyContent = new Energy(50, Units.MegaWattHour),
-                Capacity = new Energy(100, Units.MegaWattHour)
+                EnergyContent = new Energy(5, Units.MegaWattHour),
+                Capacity = new Energy(10, Units.MegaWattHour)
             };
 
 
-            _ems = new BatteryEMS(b, initialState, _start);
+            _ems = new BatteryEMS(Battery1, initialState, _start);
 
             Recorder.Subscribe(_ems);
 
@@ -124,7 +131,7 @@ namespace BatterySimulator
             //_planner = new RandomBatteryPlanner(b);
             //_planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
 
-            _planner = new PriceLevelPlanner(b);
+            _planner = new PriceLevelPlanner(Battery1);
             ((PriceLevelPlanner)_planner).EnergyPriceForecast = _priceForecaster.PriceForecast;
 
             _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);

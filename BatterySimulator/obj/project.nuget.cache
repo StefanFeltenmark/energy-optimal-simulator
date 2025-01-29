@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "T2KYnE/v6g4=",
+  "dgSpecHash": "NYYCmuXby5I=",
   "success": true,
   "projectFilePath": "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\BatterySimulator\\BatterySimulator.csproj",
   "expectedPackageFiles": [
@@ -127,6 +127,12 @@
     "C:\\Users\\stefan.feltenmark\\.nuget\\packages\\system.xml.xpath.xmldocument\\4.3.0\\system.xml.xpath.xmldocument.4.3.0.nupkg.sha512"
   ],
   "logs": [
+    {
+      "code": "NU1900",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://nuget.pkg.github.com/Volue/index.json."
+    },
     {
       "code": "NU1701",
       "level": "Warning",

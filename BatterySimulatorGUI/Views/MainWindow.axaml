@@ -66,8 +66,8 @@
                 CornerRadius="3"
                 Padding="10" Margin="10">
             <lvc:CartesianChart
-                x:Name ="batteryCharging"
-                Series="{Binding NetCharge}"
+                x:Name ="BatteryCharging"
+                Series="{Binding Charging}"
                 XAxes="{Binding timeAxis}"
                 YAxes="{Binding netChargeAxes}">
             </lvc:CartesianChart>
