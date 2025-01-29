@@ -244,7 +244,7 @@ namespace BatterySimulatorGUI.ViewModels
                     _SoCvalues.RemoveAt(0);
 
                     timeAxis[0].MinLimit = _SoCvalues.First().DateTime.Ticks;
-                    timeAxis[0].MaxLimit = _SoCvalues.Last().DateTime.Ticks;
+                    timeAxis[0].MaxLimit = _SoCvalues.Last().DateTime.Add(TimeSpan.FromHours(4)).Ticks;
                 }
                 
             }
