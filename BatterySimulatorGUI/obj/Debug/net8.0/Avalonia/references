@@ -42,7 +42,8 @@ C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.configuration.bi
 C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.configuration\7.0.0\lib\net7.0\Microsoft.Extensions.Configuration.dll
 C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.configuration.fileextensions\7.0.0\lib\net7.0\Microsoft.Extensions.Configuration.FileExtensions.dll
 C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.configuration.json\7.0.0\lib\net7.0\Microsoft.Extensions.Configuration.Json.dll
-C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\6.0.0\lib\net6.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\9.0.1\lib\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.dependencyinjection\9.0.1\lib\net8.0\Microsoft.Extensions.DependencyInjection.dll
 C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.diagnostics.healthchecks.abstractions\6.0.22\lib\net6.0\Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll
 C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.diagnostics.healthchecks\6.0.22\lib\net6.0\Microsoft.Extensions.Diagnostics.HealthChecks.dll
 C:\Users\stefan.feltenmark\.nuget\packages\microsoft.extensions.fileproviders.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.FileProviders.Abstractions.dll
@@ -65,12 +66,12 @@ C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.11\ref\net8.0\mscorl
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.11\ref\net8.0\netstandard.dll
 C:\Users\stefan.feltenmark\.nuget\packages\newtonsoft.json.bson\1.0.2\lib\netstandard2.0\Newtonsoft.Json.Bson.dll
 C:\Users\stefan.feltenmark\.nuget\packages\newtonsoft.json\13.0.3\lib\net6.0\Newtonsoft.Json.dll
-C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.dynphydroplantopt\2.0.0.486-alpha\lib\netstandard2.0\Powel.Optimal.DynPHydroPlantOpt.dll
+C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.dynphydroplantopt\2.0.0.497-alpha\lib\netstandard2.0\Powel.Optimal.DynPHydroPlantOpt.dll
 C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.log.client\1.15.0.571\lib\net6.0\Powel.Optimal.Log.Client.dll
-C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.domain\2.0.0.486-alpha\lib\net48\Powel.Optimal.MultiAsset.Domain.dll
-C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.infrastructure\2.0.0.486-alpha\lib\net48\Powel.Optimal.MultiAsset.Infrastructure.dll
-C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.ops.core\2.0.0.486-alpha\lib\net48\Powel.Optimal.MultiAsset.OPS.Core.dll
-C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.utility\2.0.0.486-alpha\lib\net48\Powel.Optimal.MultiAsset.Utility.dll
+C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.domain\2.0.0.497-alpha\lib\net48\Powel.Optimal.MultiAsset.Domain.dll
+C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.infrastructure\2.0.0.497-alpha\lib\net48\Powel.Optimal.MultiAsset.Infrastructure.dll
+C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.ops.core\2.0.0.497-alpha\lib\net48\Powel.Optimal.MultiAsset.OPS.Core.dll
+C:\Users\stefan.feltenmark\.nuget\packages\powel.optimal.multiasset.utility\2.0.0.497-alpha\lib\net48\Powel.Optimal.MultiAsset.Utility.dll
 C:\Users\stefan.feltenmark\.nuget\packages\protobuf-net\2.4.0\lib\netcoreapp2.1\protobuf-net.dll
 C:\Users\stefan.feltenmark\.nuget\packages\reactiveui\20.1.1\lib\net8.0\ReactiveUI.dll
 C:\Users\stefan.feltenmark\.nuget\packages\serilog\2.10.0\lib\netstandard2.1\Serilog.dll

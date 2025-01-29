@@ -4,14 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="BatterySimulatorGUI.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/favicons/favicon.ico"
         Title="Volue Battery Simulator"
-        Width="1600"
-        Height="900"
-        Position="800 200">
+        Width="2000"
+        Height="1200"
+        Position="900 80">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,

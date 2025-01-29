@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
@@ -77,11 +78,11 @@ namespace BatterySimulator
         {
             lock (Sync)
             {
-                _energyContent.Add(_timeProvider.GetTime(), value.EnergyContent.Value);
+                _energyContent.Add(_timeProvider.GetTime(), value.EnergyContent.ConvertToUnit(Units.MegaWattHour).Value);
                 _SoC.Add(_timeProvider.GetTime(), value.SoC.Value);
-                _netCharge.Add(_timeProvider.GetTime(), value.Charging.Value-value.Discharging.Value);
-                _charging.Add(_timeProvider.GetTime(), value.Charging.Value);
-                _discharging.Add(_timeProvider.GetTime(), -value.Discharging.Value);
+                _netCharge.Add(_timeProvider.GetTime(), value.Charging.ConvertToUnit(Units.MegaWatt).Value-value.Discharging.ConvertToUnit(Units.MegaWatt).Value);
+                _charging.Add(_timeProvider.GetTime(), value.Charging.ConvertToUnit(Units.MegaWatt).Value);
+                _discharging.Add(_timeProvider.GetTime(), -value.Discharging.ConvertToUnit(Units.MegaWatt).Value);
                 Updated = _updated + 1;
             }
         }

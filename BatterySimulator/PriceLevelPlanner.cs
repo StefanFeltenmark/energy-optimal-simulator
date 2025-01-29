@@ -10,19 +10,21 @@ namespace BatterySimulator
     public class PriceLevelPlanner : IBatteryPlanner
     {
         private TimeSeries _plan;
-        private Battery _battery;
+        private Battery? _battery;
         private Random _r = new Random(297349);
         private TimeSeries _energyPriceForecastForecast;
         private Percentage _buyPriceThreshold;
         private  Percentage _sellPriceThreshold;
+        private TimeSpan _lookaAhead;
 
-        public PriceLevelPlanner(Battery battery)
+        public PriceLevelPlanner()
         {
             _plan = new TimeSeries();
-            _battery = battery;
             _buyPriceThreshold = new Percentage(15);
             _sellPriceThreshold = new Percentage(15);
+            _lookaAhead = TimeSpan.FromHours(6);
         }
+
 
         public TimeSeries Plan
         {
@@ -48,20 +50,31 @@ namespace BatterySimulator
             set => _sellPriceThreshold = value;
         }
 
+        public Battery Battery1
+        {
+            get => _battery;
+            set => _battery = value;
+        }
+
+        public TimeSpan LookaAhead
+        {
+            get => _lookaAhead;
+            set => _lookaAhead = value;
+        }
+
 
         public Power GetPlannedProduction(DateTime time)
         {
             return new Power(_plan[time], Units.MegaWatt);
         }
 
-        public void UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
+        public async Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
         {
             // update
             _plan = new TimeSeries(true, true);
             
-
-            double maxPrice = _energyPriceForecastForecast.Values().Max();
-            double minPrice = _energyPriceForecastForecast.Values().Min();
+            double maxPrice = _energyPriceForecastForecast.GetSubSeries(planStart,planStart+LookaAhead).Values().Max();
+            double minPrice = _energyPriceForecastForecast.GetSubSeries(planStart,planStart+LookaAhead).Values().Min();
 
             var buyat = minPrice + _buyPriceThreshold.ToFraction() * (maxPrice - minPrice);
             var sellat = maxPrice - _sellPriceThreshold.ToFraction() * (maxPrice - minPrice);
@@ -74,11 +87,11 @@ namespace BatterySimulator
 
                 if(price <= buyat)
                 {
-                    prod = _battery.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
+                    prod = Battery1.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
                 }
                 else if (price > sellat)
                 {
-                    prod = -_battery.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
+                    prod = -Battery1.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
                 }
                 
                 _plan.SetValueAt(simulationInterval.Start, prod);

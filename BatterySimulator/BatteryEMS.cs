@@ -46,8 +46,8 @@ namespace BatterySimulator
 
             if(delta.Value <= 0.00001) return;
             
-            _state.Charging = (_state.SetPoint.Value > 0)?  new Power(_state.SetPoint.Value, Units.MegaWatt):0.0;
-            _state.Discharging = (_state.SetPoint.Value < 0)? new Power(-_state.SetPoint.Value, Units.MegaWatt):0.0;
+            _state.Charging = (_state.SetPoint.Value > 0)?  _state.SetPoint:0.0;
+            _state.Discharging = (_state.SetPoint.Value < 0)? -_state.SetPoint:0.0;
 
             // At most one of charging and discharging is non-zero
             Energy deltaMinus = _state.Discharging * delta;
@@ -59,22 +59,18 @@ namespace BatterySimulator
             Energy deltaBattery = deltaPlusBattery - deltaMinusBattery;
 
             
-            
-
             // Truncate to limits
-            if (_state.EnergyContent + deltaBattery < new Energy(0.0))
+            if (_state.EnergyContent + deltaBattery <= new Energy(0.0))
             {
                 Power toGrid = _state.EnergyContent*_battery.DischargeEfficiency/delta;
-                _state.Discharging = new Power(toGrid.Value/1000000, Units.MegaWatt); // temporary
-                
-                _state.EnergyContent = new Energy(0, Units.MegaWattHour);
+                _state.Discharging = toGrid;
+                _state.EnergyContent = 0;
             }
-            else if(_state.EnergyContent + deltaBattery > _battery.NominalEnergyCapacity)
+            else if(_state.EnergyContent + deltaBattery >= _battery.NominalEnergyCapacity)
             {
                 Power fromGrid = (_battery.NominalEnergyCapacity-_state.EnergyContent) /(_battery.ChargeEfficiency*delta);
-                _state.Charging = new Power(fromGrid.Value/1000000, Units.MegaWatt); // temporary
-                
-                _state.EnergyContent = _battery.NominalEnergyCapacity.ConvertToUnit(Units.MegaWattHour);
+                _state.Charging = fromGrid;
+                _state.EnergyContent = _battery.NominalEnergyCapacity;
             }
             else
             {

@@ -3,6 +3,7 @@ using Powel.Optimal.MultiAsset.Domain.Common.Market;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
+using System;
 
 namespace BatterySimulator
 {
@@ -20,9 +21,11 @@ namespace BatterySimulator
         private bool _simulationEnabled;
         private EnergyMarket _market;
         private Battery _battery;
+        private TimeSpan _sleepTime;
 
-        public BatterySimulator()
+        public BatterySimulator(IBatteryPlanner planner)
         {
+            _planner = planner;
         }
 
         public bool IsRealTime
@@ -85,6 +88,12 @@ namespace BatterySimulator
             set => _battery = value;
         }
 
+        public TimeSpan SleepTime
+        {
+            get => _sleepTime;
+            set => _sleepTime = value;
+        }
+
 
         public void SetUp(int nHours, int deltaSeconds)
         {
@@ -92,18 +101,21 @@ namespace BatterySimulator
             _end = _start + TimeSpan.FromHours(nHours);
             TimeSpan delta = TimeSpan.FromSeconds(deltaSeconds);
             TimeProvider = new SimulationTimeProvider(_start, delta);
+            TimeSpan marketResolution = TimeSpan.FromMinutes(15);
+
+            int nPeriods = nHours * 60 / 15;
 
             _recorder = new DataRecorder(TimeProvider);
 
             Random r = new Random(456345);
 
             _market = new EnergyMarket(Guid.NewGuid(), "EPEX Intraday");
-            _market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(100).Select(d=>d*100.0 + 20).ToArray(),_start, TimeSpan.FromMinutes(15));
+            _market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(nPeriods).Select(d=>d*100.0 + 20).ToArray(),_start, marketResolution);
             double spread = 0.01;
             _market.Ts.EnergyBuyPrice = _market.Ts.EnergySellPrice + TimeSeries.CreateTimeSeries(_market.Ts.EnergySellPrice.TimePoints(),spread);
 
-            // exakt 
-            _priceForecaster = new PriceForecaster(_market.Ts.EnergyBuyPrice, a: 0, b: 0);
+            // exact 
+            _priceForecaster = new PriceForecaster(_market.Ts.EnergyBuyPrice, a: 1, b: 1);
             _priceForecaster.UpdateForecast(_start, TimeSpan.FromHours(nHours), TimeSpan.FromMinutes(15));
 
             Battery1 = new Battery
@@ -111,10 +123,10 @@ namespace BatterySimulator
                 NominalChargeCapacity = new Power(10,Units.MegaWatt),
                 NominalEnergyCapacity =  new Energy(10, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
-                InitialSoHe = new Percentage(100)
+                InitialSoHe = new Percentage(100),
+                ChargeEfficiency = 0.95,
+                DischargeEfficiency = 0.95
             };
-            Battery1.ChargeEfficiency = 0.95;
-            Battery1.DischargeEfficiency = 0.95;
 
             BatteryState initialState = new BatteryState
             {
@@ -128,16 +140,18 @@ namespace BatterySimulator
             Recorder.Subscribe(_ems);
 
             // Generate a random plan or policy
-            //_planner = new RandomBatteryPlanner(b);
-            //_planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
-
-            _planner = new PriceLevelPlanner(Battery1);
-            ((PriceLevelPlanner)_planner).EnergyPriceForecast = _priceForecaster.PriceForecast;
-
-            _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
+            
+            if (_planner is PriceLevelPlanner planner)
+            {
+                planner.EnergyPriceForecast = _priceForecaster.PriceForecast;
+                planner.Battery1 = _battery;
+                planner.LookaAhead = TimeSpan.FromHours(6);
+            }
 
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
+
+            _sleepTime = TimeSpan.FromMilliseconds(200);
 
         }
 
@@ -145,10 +159,21 @@ namespace BatterySimulator
         {
             var priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWattHour);
             DateTime t = TimeProvider.GetTime();
+            TimeSpan replanningInterval = TimeSpan.FromMinutes(60);
             
+            _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
+            
+            DateTime lastPlanning = t;
+
             while(t < _end && SimulationEnabled)
             {
-               
+
+                if (t - lastPlanning >= replanningInterval)
+                {
+                    await Console.Out.WriteLineAsync($"Replanning...");
+                    _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 168);
+                    lastPlanning = t;
+                }
 
                 // Implement plan/policy
                 _ems.SetChargeLevel(_planner.GetPlannedProduction(t));
@@ -158,7 +183,7 @@ namespace BatterySimulator
 
                 await Console.Out.WriteLineAsync($"{t}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
 
-                Thread.Sleep(200);
+                Thread.Sleep((int) _sleepTime.TotalMilliseconds);
 
                 if (_isRealTime)
                 {

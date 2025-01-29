@@ -88,9 +88,13 @@
               "target": "Package",
               "version": "[2.0.0-rc5, )"
             },
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[9.0.1, )"
+            },
             "Powel.Optimal.MultiAsset.Domain": {
               "target": "Package",
-              "version": "[2.0.0.486-alpha, )"
+              "version": "[2.0.0.497-alpha, )"
             }
           },
           "imports": [
@@ -161,9 +165,13 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[9.0.1, )"
+            },
             "Powel.Optimal.MultiAsset.Domain": {
               "target": "Package",
-              "version": "[2.0.0.486-alpha, )"
+              "version": "[2.0.0.497-alpha, )"
             }
           },
           "imports": [

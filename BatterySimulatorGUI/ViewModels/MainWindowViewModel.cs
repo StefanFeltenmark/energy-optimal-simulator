@@ -34,9 +34,10 @@ namespace BatterySimulatorGUI.ViewModels
         private int _nHours;
         private int _maxItems = 180;
         
-        public MainWindowViewModel()
+        public MainWindowViewModel(BatterySimulator.BatterySimulator simulator)
         {
-            _simulator = new BatterySimulator.BatterySimulator();
+            _simulator = simulator;
+            //_simulator = new BatterySimulator.BatterySimulator();
             _nHours = 48;
             _simulator.SetUp(_nHours , 120);
 
@@ -83,6 +84,8 @@ namespace BatterySimulatorGUI.ViewModels
                 Name = "Charge",
                 Stroke = new SolidColorPaint(SKColors.LightBlue) { StrokeThickness = 3 }, 
                 Padding = 0,
+                MaxBarWidth = double.MaxValue,
+                IgnoresBarPosition = true,
                 Fill = null,
                 IsVisibleAtLegend = true,
                 ScalesYAt = 0
@@ -99,8 +102,7 @@ namespace BatterySimulatorGUI.ViewModels
                 Stroke = new SolidColorPaint(SKColors.LightGreen) { StrokeThickness = 3 },
                 Padding = 0,
                 Fill = null,
-                //GeometryFill = null,
-                //GeometryStroke = null,
+                MaxBarWidth = double.MaxValue,
                 IsVisibleAtLegend = true,
                 ScalesYAt = 0
             });
@@ -109,7 +111,7 @@ namespace BatterySimulatorGUI.ViewModels
             _chargingSeries.Add(new StepLineSeries<DateTimePoint>
             {
                 Values = _price,
-                Name = "Price",
+                Name = "Price (€/MWh)",
                 Stroke = new SolidColorPaint(SKColors.Red) { StrokeThickness = 2 }, 
                 Fill = null,
                 GeometryFill = null,
@@ -127,8 +129,8 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 Values = _pnlValues,
                 Name = "PnL (€)",
-                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 3 }, 
-                Fill = null,
+                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 2 }, 
+                Fill = new SolidColorPaint(SKColors.LightGreen) { StrokeThickness = 2 }, 
                 GeometryFill = null,
                 GeometryStroke = null,
                 IsVisibleAtLegend = true,
@@ -181,12 +183,15 @@ namespace BatterySimulatorGUI.ViewModels
         {
             _simulator.SimulationEnabled = true;
             _simulator.IsRealTime = false;
-            SetPrice(_simulator.Start, _simulator.Start + TimeSpan.FromHours(24));
+            SetPrice(_simulator.Start, _simulator.Start + TimeSpan.FromHours(_nHours));
             timeAxis[0].MaxLimit = (_simulator.Start + TimeSpan.FromHours(6)).Ticks;
             timeAxis[0].MinLimit = _simulator.Start.Ticks;
             timeAxis[0].ForceStepToMin = false;
             timeAxis[0].MinStep = TimeSpan.FromSeconds(600).Ticks;
             await Task.Run(_simulator.Simulate);
+
+            // Simulator finished
+            _simulator.SimulationEnabled = false;
         }
 
         private void SetPrice(DateTime fromTime, DateTime toTime)
@@ -206,23 +211,23 @@ namespace BatterySimulatorGUI.ViewModels
             _simulator.SimulationEnabled = false;
         }
 
-        private void NetCharge_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            var series = sender as ObservableTimeSeries;
-            if (e.Action == NotifyCollectionChangedAction.Add)
-            {
-                foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
-                {
-                    _netChargevalues.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
-                }
+        //private void NetCharge_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        //{
+        //    var series = sender as ObservableTimeSeries;
+        //    if (e.Action == NotifyCollectionChangedAction.Add)
+        //    {
+        //        foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
+        //        {
+        //            _netChargevalues.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
+        //        }
 
-                if (_netChargevalues.Count > _maxItems)
-                {
-                    _netChargevalues.RemoveAt(0);
-                }
+        //        if (_netChargevalues.Count > _maxItems)
+        //        {
+        //            _netChargevalues.RemoveAt(0);
+        //        }
                 
-            }
-        }
+        //    }
+        //}
 
         private void SoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
@@ -285,7 +290,7 @@ namespace BatterySimulatorGUI.ViewModels
                   TicksAtCenter = false,
                   SeparatorsAtCenter = false,
                  // UnitWidth = TimeSpan.FromSeconds(1).Ticks,
-                  TextSize = 12
+                  TextSize = 16
                 },
                
             ];
@@ -301,7 +306,7 @@ namespace BatterySimulatorGUI.ViewModels
                     MaxLimit = 100,
 
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 
-                    TextSize = 20,
+                    TextSize = 16,
 
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
                     { 
@@ -318,7 +323,7 @@ namespace BatterySimulatorGUI.ViewModels
                     Name = "Net charge (MW)",
                     
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 
-                    TextSize = 20,
+                    TextSize = 16,
 
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
                     { 
@@ -328,7 +333,8 @@ namespace BatterySimulatorGUI.ViewModels
                 },
                 new Axis
                 {
-                    Name = "Price",
+                    Name = "Price (€/MWh)",
+                    TextSize = 16,
                 }
             ];
 
@@ -337,10 +343,10 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 new Axis
                 {
-                    Name = "PnL",
+                    Name = "PnL (€)",
                     
                     LabelsPaint = new SolidColorPaint(SKColors.Green), 
-                    TextSize = 20,
+                    TextSize = 16,
 
                     SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) 
                     { 

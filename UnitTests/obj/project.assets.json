@@ -246,20 +246,39 @@
           "buildTransitive/net6.0/_._": {}
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions/6.0.0": {
+      "Microsoft.Extensions.DependencyInjection/9.0.1": {
         "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.1"
+        },
         "compile": {
-          "lib/net6.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net6.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.dll": {
             "related": ".xml"
           }
         },
         "build": {
-          "buildTransitive/netcoreapp3.1/_._": {}
+          "buildTransitive/net8.0/_._": {}
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions/9.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/_._": {}
         }
       },
       "Microsoft.Extensions.Diagnostics.HealthChecks/6.0.22": {
@@ -845,11 +864,11 @@
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Domain/2.0.0.486-alpha": {
+      "Powel.Optimal.MultiAsset.Domain/2.0.0.497-alpha": {
         "type": "package",
         "dependencies": {
-          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.486-alpha",
-          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.486-alpha",
+          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.497-alpha",
+          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.497-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0"
         },
@@ -860,7 +879,7 @@
           "lib/net48/Powel.Optimal.MultiAsset.Domain.dll": {}
         }
       },
-      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.486-alpha": {
+      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.497-alpha": {
         "type": "package",
         "compile": {
           "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll": {}
@@ -869,7 +888,7 @@
           "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll": {}
         }
       },
-      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.486-alpha": {
+      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.497-alpha": {
         "type": "package",
         "dependencies": {
           "Microsoft.Extensions.Configuration": "7.0.0",
@@ -886,14 +905,14 @@
           "lib/net48/Powel.Optimal.MultiAsset.Infrastructure.dll": {}
         }
       },
-      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.486-alpha": {
+      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.497-alpha": {
         "type": "package",
         "dependencies": {
           "MathNet.Numerics.Signed": "4.15.0",
           "Microsoft.AspNet.WebApi.Core": "5.3.0",
           "Newtonsoft.Json": "13.0.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.486-alpha",
-          "Powel.Optimal.MultiAsset.Utility": "2.0.0.486-alpha",
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.497-alpha",
+          "Powel.Optimal.MultiAsset.Utility": "2.0.0.497-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0",
           "protobuf-net": "2.4.0"
@@ -905,11 +924,11 @@
           "lib/net48/Powel.Optimal.MultiAsset.OPS.Core.dll": {}
         }
       },
-      "Powel.Optimal.MultiAsset.Utility/2.0.0.486-alpha": {
+      "Powel.Optimal.MultiAsset.Utility/2.0.0.497-alpha": {
         "type": "package",
         "dependencies": {
           "EPPlus": "4.5.3.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.486-alpha",
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.497-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0"
         },
@@ -2453,7 +2472,8 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
-          "Powel.Optimal.MultiAsset.Domain": "2.0.0.486-alpha"
+          "Microsoft.Extensions.DependencyInjection": "9.0.1",
+          "Powel.Optimal.MultiAsset.Domain": "2.0.0.497-alpha"
         },
         "compile": {
           "bin/placeholder/BatterySimulator.dll": {}
@@ -2787,27 +2807,62 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.Extensions.DependencyInjection.Abstractions/6.0.0": {
-      "sha512": "xlzi2IYREJH3/m6+lUrQlujzX8wDitm4QGnUu6kUXTQAWPuZY8i+ticFJbzfqaetLA6KR/rO6Ew/HuYD+bxifg==",
+    "Microsoft.Extensions.DependencyInjection/9.0.1": {
+      "sha512": "qZI42ASAe3hr2zMSA6UjM92pO1LeDq5DcwkgSowXXPY8I56M76pEKrnmsKKbxagAf39AJxkH2DY4sb72ixyOrg==",
       "type": "package",
-      "path": "microsoft.extensions.dependencyinjection.abstractions/6.0.0",
+      "path": "microsoft.extensions.dependencyinjection/9.0.1",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
         "LICENSE.TXT",
+        "PACKAGE.md",
         "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/Microsoft.Extensions.DependencyInjection.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
+        "buildTransitive/netcoreapp2.0/Microsoft.Extensions.DependencyInjection.targets",
+        "lib/net462/Microsoft.Extensions.DependencyInjection.dll",
+        "lib/net462/Microsoft.Extensions.DependencyInjection.xml",
+        "lib/net8.0/Microsoft.Extensions.DependencyInjection.dll",
+        "lib/net8.0/Microsoft.Extensions.DependencyInjection.xml",
+        "lib/net9.0/Microsoft.Extensions.DependencyInjection.dll",
+        "lib/net9.0/Microsoft.Extensions.DependencyInjection.xml",
+        "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.dll",
+        "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.xml",
+        "lib/netstandard2.1/Microsoft.Extensions.DependencyInjection.dll",
+        "lib/netstandard2.1/Microsoft.Extensions.DependencyInjection.xml",
+        "microsoft.extensions.dependencyinjection.9.0.1.nupkg.sha512",
+        "microsoft.extensions.dependencyinjection.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "Microsoft.Extensions.DependencyInjection.Abstractions/9.0.1": {
+      "sha512": "Tr74eP0oQ3AyC24ch17N8PuEkrPbD0JqIfENCYqmgKYNOmL8wQKzLJu3ObxTUDrjnn4rHoR1qKa37/eQyHmCDA==",
+      "type": "package",
+      "path": "microsoft.extensions.dependencyinjection.abstractions/9.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/Microsoft.Extensions.DependencyInjection.Abstractions.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
         "buildTransitive/netcoreapp2.0/Microsoft.Extensions.DependencyInjection.Abstractions.targets",
-        "buildTransitive/netcoreapp3.1/_._",
-        "lib/net461/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
-        "lib/net461/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
-        "lib/net6.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
-        "lib/net6.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net462/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net462/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
         "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
         "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
         "lib/netstandard2.1/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
         "lib/netstandard2.1/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
-        "microsoft.extensions.dependencyinjection.abstractions.6.0.0.nupkg.sha512",
+        "microsoft.extensions.dependencyinjection.abstractions.9.0.1.nupkg.sha512",
         "microsoft.extensions.dependencyinjection.abstractions.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -3444,10 +3499,10 @@
         "powel.optimal.log.client.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.Domain/2.0.0.486-alpha": {
-      "sha512": "Aqeu+bPx5avTrKom6XWZBiQMQgrFtduIjBkIXDFQBxqNLYXnDTf+1kBgjxzJl+a/YyrNjgaVheazLT/USgrBjg==",
+    "Powel.Optimal.MultiAsset.Domain/2.0.0.497-alpha": {
+      "sha512": "8mhx+fnujaZe7boYQHIOprqVib0NDxQdDwmMDqrlIvlVrMC9KavjgajhlJp59/PZ8xBxGoN+8EzVFtNWzwRTpQ==",
       "type": "package",
-      "path": "powel.optimal.multiasset.domain/2.0.0.486-alpha",
+      "path": "powel.optimal.multiasset.domain/2.0.0.497-alpha",
       "files": [
         ".nupkg.metadata",
         "content/ProtocolBuffersConfiguration.tt",
@@ -3457,51 +3512,51 @@
         "contentFiles/any/net48/Serialization.tt",
         "contentFiles/any/net48/Serialization.txt",
         "lib/net48/Powel.Optimal.MultiAsset.Domain.dll",
-        "powel.optimal.multiasset.domain.2.0.0.486-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.domain.2.0.0.497-alpha.nupkg.sha512",
         "powel.optimal.multiasset.domain.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.486-alpha": {
-      "sha512": "MxqCagkinBl3A/UJ+7yQwnyrOI3DQPstcycUHvRZ3RKL4C79s40b1xbjwcnUyXZLTEv3F2xtbIdhq04AKXS0ew==",
+    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.497-alpha": {
+      "sha512": "75D7S3EkiMZSIwTT3l5C1BpiWroSBKvCZmygzEBoT4EbzgtxLwSXTxo6bouKzydPQuuqraK4CCXCXujtTQ0ELw==",
       "type": "package",
-      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.486-alpha",
+      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.497-alpha",
       "files": [
         ".nupkg.metadata",
         "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll",
-        "powel.optimal.multiasset.dynphydroplantopt.2.0.0.486-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.dynphydroplantopt.2.0.0.497-alpha.nupkg.sha512",
         "powel.optimal.multiasset.dynphydroplantopt.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.486-alpha": {
-      "sha512": "GoRmX6Gi4Kv01EdD+zKSHrlhZoBjLaD/8+53kc2NKZdRNsjdVCf3sUMM1J5Er2JCh2JjQY+JXZ2DIypFgvnjmg==",
+    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.497-alpha": {
+      "sha512": "e8TpRUceodRnrAtKp1u1ZmcIdbvxpHMseRG33wd5TzzmCUAP8TwkwvwDREJPjUJgVoIGsKoOrKh8vAK2PCZ5cg==",
       "type": "package",
-      "path": "powel.optimal.multiasset.infrastructure/2.0.0.486-alpha",
+      "path": "powel.optimal.multiasset.infrastructure/2.0.0.497-alpha",
       "files": [
         ".nupkg.metadata",
         "lib/net48/Powel.Optimal.MultiAsset.Infrastructure.dll",
-        "powel.optimal.multiasset.infrastructure.2.0.0.486-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.infrastructure.2.0.0.497-alpha.nupkg.sha512",
         "powel.optimal.multiasset.infrastructure.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.486-alpha": {
-      "sha512": "7zA+el9DGoy42Eb5/wxSXchvtCW20axi3IAE1iZuBQh9tPAMvTCNqm1gkMEd8cIpTsCrFX1/wq77PB5Nu0H/GQ==",
+    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.497-alpha": {
+      "sha512": "KNoXVoZGNftgfJGXp+qeQTePmU/rDTd1opVb1gDwrfwpX6zzTFGU7gqfVzq4RM2NtppCrdH08BrfvywOSMhj5A==",
       "type": "package",
-      "path": "powel.optimal.multiasset.ops.core/2.0.0.486-alpha",
+      "path": "powel.optimal.multiasset.ops.core/2.0.0.497-alpha",
       "files": [
         ".nupkg.metadata",
         "lib/net48/Powel.Optimal.MultiAsset.OPS.Core.dll",
-        "powel.optimal.multiasset.ops.core.2.0.0.486-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.ops.core.2.0.0.497-alpha.nupkg.sha512",
         "powel.optimal.multiasset.ops.core.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.Utility/2.0.0.486-alpha": {
-      "sha512": "l3VP6LYJqEIRABHF/bwAyYAbTKIJSJQ90e+jXzXwS1nBvaQ6C9jiHM5CCA4FqU/WfERhM9o7zBg59hunlIKFAQ==",
+    "Powel.Optimal.MultiAsset.Utility/2.0.0.497-alpha": {
+      "sha512": "gvOq3fe69i+ZabzsPdZOk7y9h02yKDwJ8MVVzIJdyvJ7MOKnlxhbSAa2vvMDY5YQb8AkD6LJU0r0+fuGwwuLfw==",
       "type": "package",
-      "path": "powel.optimal.multiasset.utility/2.0.0.486-alpha",
+      "path": "powel.optimal.multiasset.utility/2.0.0.497-alpha",
       "files": [
         ".nupkg.metadata",
         "lib/net48/Powel.Optimal.MultiAsset.Utility.dll",
-        "powel.optimal.multiasset.utility.2.0.0.486-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.utility.2.0.0.497-alpha.nupkg.sha512",
         "powel.optimal.multiasset.utility.nuspec"
       ]
     },
@@ -7200,8 +7255,9 @@
   "projectFileDependencyGroups": {
     "net8.0": [
       "BatterySimulator >= 1.0.0",
+      "Microsoft.Extensions.DependencyInjection >= 9.0.1",
       "Microsoft.NET.Test.Sdk >= 17.12.0",
-      "Powel.Optimal.MultiAsset.Domain >= 2.0.0.486-alpha",
+      "Powel.Optimal.MultiAsset.Domain >= 2.0.0.497-alpha",
       "xunit >= 2.9.3"
     ]
   },
@@ -7261,13 +7317,17 @@
       "net8.0": {
         "targetAlias": "net8.0",
         "dependencies": {
+          "Microsoft.Extensions.DependencyInjection": {
+            "target": "Package",
+            "version": "[9.0.1, )"
+          },
           "Microsoft.NET.Test.Sdk": {
             "target": "Package",
             "version": "[17.12.0, )"
           },
           "Powel.Optimal.MultiAsset.Domain": {
             "target": "Package",
-            "version": "[2.0.0.486-alpha, )"
+            "version": "[2.0.0.497-alpha, )"
           },
           "xunit": {
             "target": "Package",
@@ -7296,10 +7356,10 @@
   },
   "logs": [
     {
-      "code": "NU1900",
+      "code": "Undefined",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://nuget.pkg.github.com/Volue/index.json."
+      "message": "No Authorization header detected"
     },
     {
       "code": "NU1701",
@@ -7315,7 +7375,7 @@
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'Powel.Optimal.MultiAsset.Domain 2.0.0.486-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "message": "Package 'Powel.Optimal.MultiAsset.Domain 2.0.0.497-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
       "libraryId": "Powel.Optimal.MultiAsset.Domain",
       "targetGraphs": [
         "net8.0"
@@ -7325,7 +7385,7 @@
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'Powel.Optimal.MultiAsset.Infrastructure 2.0.0.486-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "message": "Package 'Powel.Optimal.MultiAsset.Infrastructure 2.0.0.497-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
       "libraryId": "Powel.Optimal.MultiAsset.Infrastructure",
       "targetGraphs": [
         "net8.0"
@@ -7335,7 +7395,7 @@
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'Powel.Optimal.MultiAsset.OPS.Core 2.0.0.486-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "message": "Package 'Powel.Optimal.MultiAsset.OPS.Core 2.0.0.497-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
       "libraryId": "Powel.Optimal.MultiAsset.OPS.Core",
       "targetGraphs": [
         "net8.0"
@@ -7345,7 +7405,7 @@
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'Powel.Optimal.MultiAsset.Utility 2.0.0.486-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "message": "Package 'Powel.Optimal.MultiAsset.Utility 2.0.0.497-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
       "libraryId": "Powel.Optimal.MultiAsset.Utility",
       "targetGraphs": [
         "net8.0"
