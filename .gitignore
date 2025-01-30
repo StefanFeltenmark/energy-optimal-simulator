@@ -1,2 +1,8 @@
 
 BatterySimulator/.vs/BatterySimulator/FileContentIndex/
+
+*.db
+
+*.db-shm
+
+*.db-wal
