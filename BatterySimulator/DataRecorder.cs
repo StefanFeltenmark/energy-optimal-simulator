@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
@@ -10,6 +11,8 @@ namespace BatterySimulator
         private ObservableTimeSeries _SoC = new ObservableTimeSeries();
         private ObservableTimeSeries _energyContent = new ObservableTimeSeries();
         private ObservableTimeSeries _netCharge = new ObservableTimeSeries();
+        private ObservableTimeSeries _charging = new ObservableTimeSeries();
+        private ObservableTimeSeries _discharging = new ObservableTimeSeries();
         
 
         private int _updated;
@@ -41,7 +44,18 @@ namespace BatterySimulator
             get => _SoC;
         }
 
-      
+        public ObservableTimeSeries Charging
+        {
+            get => _charging;
+            
+        }
+
+        public ObservableTimeSeries Discharging
+        {
+            get => _discharging;
+            
+        }
+
 
         public virtual void Subscribe(IObservable<BatteryState> provider)
         {
@@ -64,9 +78,11 @@ namespace BatterySimulator
         {
             lock (Sync)
             {
-                _energyContent.Add(_timeProvider.GetTime(), value.EnergyContent.Value);
+                _energyContent.Add(_timeProvider.GetTime(), value.EnergyContent.ConvertToUnit(Units.MegaWattHour).Value);
                 _SoC.Add(_timeProvider.GetTime(), value.SoC.Value);
-                _netCharge.Add(_timeProvider.GetTime(), value.Charging.Value-value.Discharging.Value);
+                _netCharge.Add(_timeProvider.GetTime(), value.Charging.ConvertToUnit(Units.MegaWatt).Value-value.Discharging.ConvertToUnit(Units.MegaWatt).Value);
+                _charging.Add(_timeProvider.GetTime(), value.Charging.ConvertToUnit(Units.MegaWatt).Value);
+                _discharging.Add(_timeProvider.GetTime(), -value.Discharging.ConvertToUnit(Units.MegaWatt).Value);
                 Updated = _updated + 1;
             }
         }

@@ -3,6 +3,16 @@ BatterySimulator/.vs/BatterySimulator/FileContentIndex/
 
 *.db
 
-*.db-shm
-
 *.db-wal
+
+*.v2
+
+BatterySimulator/.vs/BatterySimulator/v17/
+
+*.dll
+
+*.pdb
+
+*.cache
+
+*.exe

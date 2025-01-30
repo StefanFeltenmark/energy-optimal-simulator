@@ -11,12 +11,13 @@ namespace BatterySimulator
     public class BatteryState
     {
         
-        private Energy _energyContent;
-        private Energy _capacity;
-        private Power _chargeCapacity;
-        private Power _charging;
-        private Power _discharging;
-        private Percentage _SoC;
+        private Energy _energyContent = new Energy(0,Units.MegaWattHour);
+        private Energy _capacity = new Energy(0, Units.MegaWattHour);
+        private Power _setPoint = new Power(0, Units.MegaWatt);
+        private Power _chargeCapacity = new Power(0, Units.MegaWatt);
+        private Power _charging = new Power(0, Units.MegaWatt);
+        private Power _discharging = new Power(0, Units.MegaWatt);
+        private Percentage _SoC = new Percentage(0);
 
         public Energy EnergyContent
         {
@@ -52,6 +53,12 @@ namespace BatterySimulator
         {
             get => _SoC;
             set => _SoC = value;
+        }
+
+        public Power SetPoint
+        {
+            get => _setPoint;
+            set => _setPoint = value;
         }
     }
 }

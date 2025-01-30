@@ -6,6 +6,6 @@ public interface IBatteryPlanner
 {
     Power GetPlannedProduction(DateTime time);
 
-    void UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods);
+    Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods);
 
 }

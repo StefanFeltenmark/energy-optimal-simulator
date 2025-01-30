@@ -18,6 +18,7 @@ namespace BatterySimulator
         public PriceForecaster(TimeSeries truePrice, double a = 0.1, double b = 5.0)
         {
             _priceForecast = new TimeSeries();
+            _priceForecast.IsBreakPointSeries = true;
             _truePrice = truePrice;
             _a = a;
             _b = b;
