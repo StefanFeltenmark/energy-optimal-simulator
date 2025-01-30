@@ -4,17 +4,19 @@ using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
-    public class DataRecorder : IObserver<BatteryState>, INotifyPropertyChanged
+    public class BatteryDataRecorder : IObserver<BatteryState>, INotifyPropertyChanged
     {
         private IDisposable unsubscriber;
         private ITimeProvider _timeProvider;
         private ObservableTimeSeries _SoC = new ObservableTimeSeries();
         private ObservableTimeSeries _energyContent = new ObservableTimeSeries();
         private ObservableTimeSeries _netCharge = new ObservableTimeSeries();
-        private ObservableTimeSeries _charging = new ObservableTimeSeries();
-        private ObservableTimeSeries _discharging = new ObservableTimeSeries();
-        
+        private ObservableTimeSeries _chargingGrid = new ObservableTimeSeries();
+        private ObservableTimeSeries _dischargingGrid = new ObservableTimeSeries();
+        private ObservableTimeSeries _chargingBattery = new ObservableTimeSeries();
+        private ObservableTimeSeries _dischargingBattery = new ObservableTimeSeries();
 
+        
         private int _updated;
         public int Updated
         {
@@ -23,38 +25,24 @@ namespace BatterySimulator
 
         public object Sync { get; } = new object();
 
-        public DataRecorder(ITimeProvider timeProvider)
+        public BatteryDataRecorder(ITimeProvider timeProvider)
         {
             _timeProvider = timeProvider;
-
         }
 
-        public ObservableTimeSeries EnergyContent
-        {
-            get => _energyContent;
-        }
+        public ObservableTimeSeries EnergyContent => _energyContent;
 
-        public ObservableTimeSeries NetCharge
-        {
-            get => _netCharge;
-        }
+        public ObservableTimeSeries NetCharge => _netCharge;
 
-        public ObservableTimeSeries SoC
-        {
-            get => _SoC;
-        }
+        public ObservableTimeSeries SoC => _SoC;
 
-        public ObservableTimeSeries Charging
-        {
-            get => _charging;
-            
-        }
+        public ObservableTimeSeries ChargingGrid => _chargingGrid;
 
-        public ObservableTimeSeries Discharging
-        {
-            get => _discharging;
-            
-        }
+        public ObservableTimeSeries DischargingGrid => _dischargingGrid;
+
+        public ObservableTimeSeries ChargingBattery => _chargingBattery;
+
+        public ObservableTimeSeries DischargingBattery => _dischargingBattery;
 
 
         public virtual void Subscribe(IObservable<BatteryState> provider)
@@ -80,9 +68,11 @@ namespace BatterySimulator
             {
                 _energyContent.Add(_timeProvider.GetTime(), value.EnergyContent.ConvertToUnit(Units.MegaWattHour).Value);
                 _SoC.Add(_timeProvider.GetTime(), value.SoC.Value);
-                _netCharge.Add(_timeProvider.GetTime(), value.Charging.ConvertToUnit(Units.MegaWatt).Value-value.Discharging.ConvertToUnit(Units.MegaWatt).Value);
-                _charging.Add(_timeProvider.GetTime(), value.Charging.ConvertToUnit(Units.MegaWatt).Value);
-                _discharging.Add(_timeProvider.GetTime(), -value.Discharging.ConvertToUnit(Units.MegaWatt).Value);
+                _netCharge.Add(_timeProvider.GetTime(), value.ChargingGrid.ConvertToUnit(Units.MegaWatt).Value-value.DischargingGrid.ConvertToUnit(Units.MegaWatt).Value);
+                _chargingGrid.Add(_timeProvider.GetTime(), value.ChargingGrid.ConvertToUnit(Units.MegaWatt).Value);
+                _dischargingGrid.Add(_timeProvider.GetTime(), -value.DischargingGrid.ConvertToUnit(Units.MegaWatt).Value);
+                _chargingBattery.Add(_timeProvider.GetTime(), value.ChargingBattery.ConvertToUnit(Units.MegaWatt).Value);
+                _dischargingBattery.Add(_timeProvider.GetTime(), -value.DischargingBattery.ConvertToUnit(Units.MegaWatt).Value);
                 Updated = _updated + 1;
             }
         }
@@ -99,7 +89,7 @@ namespace BatterySimulator
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (EqualityComparer<T>.Default.Equals(field, value)) return false;
             field = value;

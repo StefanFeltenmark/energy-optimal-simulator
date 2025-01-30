@@ -9,9 +9,9 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/favicons/favicon.ico"
         Title="Volue Battery Simulator"
-        Width="2000"
-        Height="1200"
-        Position="900 80">
+        Width="1600"
+        Height="900"
+        Position="100 80">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -29,7 +29,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Border Grid.Column="1" Grid.Row="0" Background="DarkSlateGray"
@@ -42,8 +42,11 @@
 
         <StackPanel Grid.Column="0" Grid.Row="1">
             <ToggleButton Margin="5 5" Click="Button_OnClick_Run" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="DarkSlateGray">Start simulation</ToggleButton>
+            <ToggleButton Margin="5 5" Click="Button_Restart" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="DarkSlateGray">Restart</ToggleButton>
             <TextBlock Margin="5 5">Time step (s.)</TextBlock>
             <TextBox  Margin="5 5" Watermark="Enter simulation time step" Text="{Binding TimeStepSeconds , UpdateSourceTrigger=LostFocus}" ></TextBox>
+            <TextBlock Margin="5 5">Delay (ms.)</TextBlock>
+            <TextBox  Margin="5 5" Watermark="Enter simulation delay" Text="{Binding TimeDelay , UpdateSourceTrigger=LostFocus}" ></TextBox>
         </StackPanel>
 
             

@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using BatterySimulator;
+using Xunit;
 using Xunit.Abstractions;
 
 
@@ -17,7 +18,8 @@ namespace UnitTests
         public void TestSimulator()
         {
 
-            BatterySimulator.BatterySimulator simulator = new BatterySimulator.BatterySimulator();
+            IBatteryPlanner planner = new RandomBatteryPlanner();
+            BatterySimulator.BatterySimulator simulator = new BatterySimulator.BatterySimulator(planner);
 
             simulator.Simulate();
 

@@ -8,10 +8,10 @@ namespace BatterySimulator
         ObservableTimeSeries _buyCost;
         ObservableTimeSeries _profit;
         ObservableTimeSeries _accProfit;
-        DataRecorder _recorder;
+        BatteryDataRecorder _recorder;
         DateTime _latestTime;
 
-        public PnLManager(DataRecorder recorder)
+        public PnLManager(BatteryDataRecorder recorder)
         {
             _sellIncome = new ObservableTimeSeries();
             _buyCost = new ObservableTimeSeries();
