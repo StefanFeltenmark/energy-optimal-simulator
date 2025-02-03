@@ -20,7 +20,7 @@ namespace BatterySimulatorGUI.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
-        private BatterySimulator.BatterySimulator _simulator;
+        private BatterySimulator.BatterySimulator? _simulator;
         private ObservableCollection<ISeries> _socSeries;
         private ObservableCollection<ISeries> _chargingSeries;
         private ObservableCollection<ISeries> _chargeSeries;
@@ -33,10 +33,17 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _chargeValues;
         private ObservableCollection<DateTimePoint> _dischargeValues;
         private ObservableCollection<DateTimePoint> _pnlValues;
+        
         private DateTime _simulationTime;
+        private MonetaryAmount _currentPnL;
         private TimeSpan _visibleHorizon;
         private int _nHours;
         private int _maxItems = 180;
+
+        public MainWindowViewModel()
+        {
+            
+        }
         
         public MainWindowViewModel(BatterySimulator.BatterySimulator simulator)
         {
@@ -75,10 +82,10 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 Values = _chargeValues,
                 Name = "Charge",
-                Stroke = new SolidColorPaint(SKColors.Blue) { StrokeThickness = 1 }, 
+                Stroke = new SolidColorPaint(SKColors.LightBlue) { StrokeThickness = 1 }, 
                 Padding = 0,
                 MaxBarWidth = double.MaxValue,
-                IgnoresBarPosition = false,
+                IgnoresBarPosition = true,
                 Fill = new SolidColorPaint(SKColors.LightBlue),
                 IsVisibleAtLegend = false,
                 ScalesYAt = 0
@@ -90,7 +97,7 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 Values = _dischargeValues,
                 Name = "Discharge",
-                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 1 },
+                Stroke = new SolidColorPaint(SKColors.LightGreen) { StrokeThickness = 1 },
                 Padding = 0,
                 Fill =  new SolidColorPaint(SKColors.LightGreen),
                 MaxBarWidth = double.MaxValue,
@@ -191,10 +198,17 @@ namespace BatterySimulatorGUI.ViewModels
         }
 
         
+        public MonetaryAmount CurrentPnL
+        {
+            get => _currentPnL;
+            private set => this.RaiseAndSetIfChanged(ref _currentPnL, value); 
+        
+        }
+
         public DateTime SimulationTime
         {
-            get => _simulationTime; 
-            set => this.RaiseAndSetIfChanged(ref _simulationTime, value); 
+            get => _simulationTime;
+            private set => this.RaiseAndSetIfChanged(ref _simulationTime, value); 
         }
 
         public ObservableCollection<ISeries> SoC => _socSeries;
@@ -208,7 +222,7 @@ namespace BatterySimulatorGUI.ViewModels
 
         public async Task ReStartSimulation()
         {
-            _simulator.SetUp(_nHours , 300);
+            _simulator?.SetUp(_nHours , 300);
             
             ManageHandlers();
 
@@ -251,7 +265,7 @@ namespace BatterySimulatorGUI.ViewModels
 
         public void StopSimulation()
         {
-            _simulator.SimulationEnabled = false;
+            if (_simulator != null) _simulator.SimulationEnabled = false;
         }
 
         private void SoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -279,6 +293,7 @@ namespace BatterySimulatorGUI.ViewModels
         private void AccProfit_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             Update(sender, e, _pnlValues);
+            CurrentPnL = new MonetaryAmount(_simulator.PnlManager.AccProfit.Last().Value, Currencies.Euro);
         }
 
         private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values)

@@ -76,7 +76,7 @@ namespace BatterySimulator
             set => _priceForecaster = value;
         }
 
-        public PnLManager PnlManager
+        public PnLManager? PnlManager
         {
             get => _pnlManager;
             set => _pnlManager = value;
