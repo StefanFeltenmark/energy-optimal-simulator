@@ -4,6 +4,9 @@ using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
 using System;
+using BatterySimulator.Interfaces;
+using BatteryPomaPlanner;
+
 
 namespace BatterySimulator
 {
@@ -124,12 +127,16 @@ namespace BatterySimulator
 
             Battery1 = new Battery
             {
+                Id = Guid.NewGuid(),
+                Name = "Battery1",
                 NominalChargeCapacity = new Power(10,Units.MegaWatt),
                 NominalEnergyCapacity =  new Energy(20, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
                 InitialSoHe = new Percentage(100),
-                ChargeEfficiency = 0.95,
-                DischargeEfficiency = 0.95
+                InitialCapacityC = new Power(10,Units.MegaWatt),
+                InitialCapacityE = new Energy(20, Units.MegaWattHour),
+                ChargeEfficiency = new DimensionlessQuantity(0.95),
+                DischargeEfficiency = new DimensionlessQuantity(0.95)
             };
 
             BatteryState initialState = new BatteryState
@@ -150,6 +157,10 @@ namespace BatterySimulator
                 planner.Battery1 = _battery;
                 planner.LookaAhead = TimeSpan.FromHours(4);
             }
+            else if(_planner is PomaPlanner pomaPlanner)
+            {
+                pomaPlanner.SetUp(_battery, _market);
+            }
 
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
@@ -164,7 +175,7 @@ namespace BatterySimulator
             DateTime t = TimeProvider.GetTime();
             TimeSpan replanningInterval = TimeSpan.FromMinutes(60);
             
-            _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
+            await _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 8);
             
             DateTime lastPlanning = t;
 
@@ -174,7 +185,7 @@ namespace BatterySimulator
                 if (t - lastPlanning >= replanningInterval)
                 {
                     await Console.Out.WriteLineAsync($"Replanning...");
-                    _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 168);
+                    _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 8);
                     lastPlanning = t;
                 }
 

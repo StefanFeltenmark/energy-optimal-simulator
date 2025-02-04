@@ -1,4 +1,5 @@
 ﻿using BatterySimulator;
+using BatterySimulator.Interfaces;
 using Xunit;
 using Xunit.Abstractions;
 

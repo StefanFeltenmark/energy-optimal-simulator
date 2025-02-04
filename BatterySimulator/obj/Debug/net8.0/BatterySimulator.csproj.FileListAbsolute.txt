@@ -11,3 +11,8 @@ C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\o
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\obj\Debug\net8.0\refint\BatterySimulator.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\obj\Debug\net8.0\BatterySimulator.pdb
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\obj\Debug\net8.0\ref\BatterySimulator.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\bin\Debug\net8.0\BatteryPomaPlanner.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\bin\Debug\net8.0\BatterySimulator.Interfaces.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\bin\Debug\net8.0\BatterySimulator.Interfaces.pdb
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\bin\Debug\net8.0\BatteryPomaPlanner.pdb
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulator\obj\Debug\net8.0\BatteryS.A453BE8F.Up2Date

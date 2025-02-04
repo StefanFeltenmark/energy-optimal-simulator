@@ -1,6 +1,6 @@
 ﻿using Powel.Optimal.MultiAsset.Domain.Quantities;
 
-namespace BatterySimulator;
+namespace BatterySimulator.Interfaces;
 
 public interface IBatteryPlanner
 {

@@ -1,4 +1,5 @@
 ﻿
+using BatterySimulator.Interfaces;
 using Powel.Optimal.MultiAsset.Domain.Common;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;

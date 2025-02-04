@@ -8,8 +8,10 @@
     ".NETCoreApp,Version=v8.0": {
       "BatteryPomaPlanner/1.0.0": {
         "dependencies": {
+          "BatterySimulator.Interfaces": "1.0.0",
           "Microsoft.IdentityModel.Clients.ActiveDirectory": "5.3.0",
-          "Powel.Optimal.MultiAsset.Domain": "2.0.0.497-alpha"
+          "Powel.Optimal.MultiAsset.Domain": "2.0.0.508-alpha",
+          "Serilog": "4.2.1-dev-02337"
         },
         "runtime": {
           "BatteryPomaPlanner.dll": {}
@@ -461,7 +463,7 @@
           "Microsoft.AspNetCore.Http.Features": "3.1.32",
           "Microsoft.Extensions.Diagnostics.HealthChecks": "6.0.22",
           "Newtonsoft.Json": "13.0.3",
-          "Serilog": "2.10.0",
+          "Serilog": "4.2.1-dev-02337",
           "Serilog.Sinks.Async": "1.5.0",
           "Serilog.Sinks.Console": "4.0.0",
           "Serilog.Sinks.File": "5.0.0",
@@ -474,29 +476,29 @@
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Domain/2.0.0.497-alpha": {
+      "Powel.Optimal.MultiAsset.Domain/2.0.0.508-alpha": {
         "dependencies": {
-          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.497-alpha",
-          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.497-alpha",
+          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.508-alpha",
+          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.508-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Domain.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.497"
+            "fileVersion": "2.0.0.508"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.497-alpha": {
+      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.508-alpha": {
         "runtime": {
           "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.497"
+            "fileVersion": "2.0.0.508"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.497-alpha": {
+      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.508-alpha": {
         "dependencies": {
           "Microsoft.Extensions.Configuration": "7.0.0",
           "Microsoft.Extensions.Configuration.Binder": "7.0.4",
@@ -508,17 +510,17 @@
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Infrastructure.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.497"
+            "fileVersion": "2.0.0.508"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.497-alpha": {
+      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.508-alpha": {
         "dependencies": {
           "MathNet.Numerics.Signed": "4.15.0",
           "Microsoft.AspNet.WebApi.Core": "5.3.0",
           "Newtonsoft.Json": "13.0.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.497-alpha",
-          "Powel.Optimal.MultiAsset.Utility": "2.0.0.497-alpha",
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.508-alpha",
+          "Powel.Optimal.MultiAsset.Utility": "2.0.0.508-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0",
           "protobuf-net": "2.4.0"
@@ -526,21 +528,21 @@
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.OPS.Core.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.497"
+            "fileVersion": "2.0.0.508"
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Utility/2.0.0.497-alpha": {
+      "Powel.Optimal.MultiAsset.Utility/2.0.0.508-alpha": {
         "dependencies": {
           "EPPlus": "4.5.3.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.497-alpha",
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.508-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0"
         },
         "runtime": {
           "lib/net48/Powel.Optimal.MultiAsset.Utility.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.497"
+            "fileVersion": "2.0.0.508"
           }
         }
       },
@@ -603,17 +605,17 @@
       "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {},
       "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {},
       "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {},
-      "Serilog/2.10.0": {
+      "Serilog/4.2.1-dev-02337": {
         "runtime": {
-          "lib/netstandard2.1/Serilog.dll": {
-            "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.10.0.0"
+          "lib/net8.0/Serilog.dll": {
+            "assemblyVersion": "4.2.0.0",
+            "fileVersion": "4.2.0.0"
           }
         }
       },
       "Serilog.Sinks.Async/1.5.0": {
         "dependencies": {
-          "Serilog": "2.10.0"
+          "Serilog": "4.2.1-dev-02337"
         },
         "runtime": {
           "lib/netstandard2.0/Serilog.Sinks.Async.dll": {
@@ -624,7 +626,7 @@
       },
       "Serilog.Sinks.Console/4.0.0": {
         "dependencies": {
-          "Serilog": "2.10.0"
+          "Serilog": "4.2.1-dev-02337"
         },
         "runtime": {
           "lib/net5.0/Serilog.Sinks.Console.dll": {
@@ -635,7 +637,7 @@
       },
       "Serilog.Sinks.File/5.0.0": {
         "dependencies": {
-          "Serilog": "2.10.0"
+          "Serilog": "4.2.1-dev-02337"
         },
         "runtime": {
           "lib/net5.0/Serilog.Sinks.File.dll": {
@@ -1612,6 +1614,17 @@
             "fileVersion": "4.6.24705.1"
           }
         }
+      },
+      "BatterySimulator.Interfaces/1.0.0": {
+        "dependencies": {
+          "Powel.Optimal.MultiAsset.Domain": "2.0.0.508-alpha"
+        },
+        "runtime": {
+          "BatterySimulator.Interfaces.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -1873,40 +1886,40 @@
       "path": "powel.optimal.log.client/1.15.0.571",
       "hashPath": "powel.optimal.log.client.1.15.0.571.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Domain/2.0.0.497-alpha": {
+    "Powel.Optimal.MultiAsset.Domain/2.0.0.508-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-8mhx+fnujaZe7boYQHIOprqVib0NDxQdDwmMDqrlIvlVrMC9KavjgajhlJp59/PZ8xBxGoN+8EzVFtNWzwRTpQ==",
-      "path": "powel.optimal.multiasset.domain/2.0.0.497-alpha",
-      "hashPath": "powel.optimal.multiasset.domain.2.0.0.497-alpha.nupkg.sha512"
+      "sha512": "sha512-QzLilPcDt5hBREL0Im19JSjS3cprC2ZSlum33aRw/9rlQT/yGkyMsKhmHQAf3qdHb9+XDwNYsMLfIO53mPtARA==",
+      "path": "powel.optimal.multiasset.domain/2.0.0.508-alpha",
+      "hashPath": "powel.optimal.multiasset.domain.2.0.0.508-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.497-alpha": {
+    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.508-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-75D7S3EkiMZSIwTT3l5C1BpiWroSBKvCZmygzEBoT4EbzgtxLwSXTxo6bouKzydPQuuqraK4CCXCXujtTQ0ELw==",
-      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.497-alpha",
-      "hashPath": "powel.optimal.multiasset.dynphydroplantopt.2.0.0.497-alpha.nupkg.sha512"
+      "sha512": "sha512-x8rRZXQV9ZIQawygBqk9po3EAeZVlrMG4uwObYDKigcBeWhpyaIssaTmiv0g2WlE686h4WqQ6QcXcp8XpdKSpg==",
+      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.508-alpha",
+      "hashPath": "powel.optimal.multiasset.dynphydroplantopt.2.0.0.508-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.497-alpha": {
+    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.508-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-e8TpRUceodRnrAtKp1u1ZmcIdbvxpHMseRG33wd5TzzmCUAP8TwkwvwDREJPjUJgVoIGsKoOrKh8vAK2PCZ5cg==",
-      "path": "powel.optimal.multiasset.infrastructure/2.0.0.497-alpha",
-      "hashPath": "powel.optimal.multiasset.infrastructure.2.0.0.497-alpha.nupkg.sha512"
+      "sha512": "sha512-Aq/SJgFalyfwFUFRj+sEL18R5plc+x2qrnXQRcQ5TmGHFvemx2/+kaYyjISKSZNhQy3iy+iB/9+HDobG9tuUiw==",
+      "path": "powel.optimal.multiasset.infrastructure/2.0.0.508-alpha",
+      "hashPath": "powel.optimal.multiasset.infrastructure.2.0.0.508-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.497-alpha": {
+    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.508-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-KNoXVoZGNftgfJGXp+qeQTePmU/rDTd1opVb1gDwrfwpX6zzTFGU7gqfVzq4RM2NtppCrdH08BrfvywOSMhj5A==",
-      "path": "powel.optimal.multiasset.ops.core/2.0.0.497-alpha",
-      "hashPath": "powel.optimal.multiasset.ops.core.2.0.0.497-alpha.nupkg.sha512"
+      "sha512": "sha512-BMyZ3L87dseflv+Mi9bRMyebhb5ey8caYFR4Y8gYiQ8PmF76/9MRsDh2iYIAWBPecbGbqDlc9vfLohG6Uf/Kog==",
+      "path": "powel.optimal.multiasset.ops.core/2.0.0.508-alpha",
+      "hashPath": "powel.optimal.multiasset.ops.core.2.0.0.508-alpha.nupkg.sha512"
     },
-    "Powel.Optimal.MultiAsset.Utility/2.0.0.497-alpha": {
+    "Powel.Optimal.MultiAsset.Utility/2.0.0.508-alpha": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-gvOq3fe69i+ZabzsPdZOk7y9h02yKDwJ8MVVzIJdyvJ7MOKnlxhbSAa2vvMDY5YQb8AkD6LJU0r0+fuGwwuLfw==",
-      "path": "powel.optimal.multiasset.utility/2.0.0.497-alpha",
-      "hashPath": "powel.optimal.multiasset.utility.2.0.0.497-alpha.nupkg.sha512"
+      "sha512": "sha512-C9mUVwZbEzhVSAN45gT7pqd28WzVVLDIvDqUhbubEU9Wp/C5iochpRvcT7g9FY1zBNecUScbIEsME/1b6t9lQw==",
+      "path": "powel.optimal.multiasset.utility/2.0.0.508-alpha",
+      "hashPath": "powel.optimal.multiasset.utility.2.0.0.508-alpha.nupkg.sha512"
     },
     "protobuf-net/2.4.0": {
       "type": "package",
@@ -2027,12 +2040,12 @@
       "path": "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
       "hashPath": "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
     },
-    "Serilog/2.10.0": {
+    "Serilog/4.2.1-dev-02337": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA==",
-      "path": "serilog/2.10.0",
-      "hashPath": "serilog.2.10.0.nupkg.sha512"
+      "sha512": "sha512-Z/9dysE96W13j3hezabI2tFwQ/uNfqt/c5UBaj72BLFxP/R3MorhJy16xXC99uRg8+8c7W2sdB25yXLZWuE2rg==",
+      "path": "serilog/4.2.1-dev-02337",
+      "hashPath": "serilog.4.2.1-dev-02337.nupkg.sha512"
     },
     "Serilog.Sinks.Async/1.5.0": {
       "type": "package",
@@ -2677,6 +2690,11 @@
       "sha512": "sha512-A/uxsWi/Ifzkmd4ArTLISMbfFs6XpRPsXZonrIqyTY70xi8t+mDtvSM5Os0RqyRDobjMBwIDHDL4NOIbkDwf7A==",
       "path": "system.xml.xpath.xmldocument/4.3.0",
       "hashPath": "system.xml.xpath.xmldocument.4.3.0.nupkg.sha512"
+    },
+    "BatterySimulator.Interfaces/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }
