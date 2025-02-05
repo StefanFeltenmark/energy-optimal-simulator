@@ -17,6 +17,6 @@ BatterySimulator/.vs/BatterySimulator/v17/
 
 *.exe
 
-*.bin
-
 *.db-shm
+
+*.bin

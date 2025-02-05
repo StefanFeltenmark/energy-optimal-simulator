@@ -8,7 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
-    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.497-alpha" />
+    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.508-alpha" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BatteryPomaPlanner\BatteryPomaPlanner.csproj" />
+    <ProjectReference Include="..\BatterySimulator.Interfaces\BatterySimulator.Interfaces.csproj" />
+    <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 ﻿
+using BatterySimulator.Interfaces;
 using Powel.Optimal.MultiAsset.Domain.Common;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
@@ -10,6 +11,7 @@ namespace BatterySimulator
     public class RandomBatteryPlanner : IBatteryPlanner
     {
         private TimeSeries _plan;
+        private TimeSeries _plannedSoc;
         private Battery? _battery;
         private Random _r = new Random(297349);
 
@@ -33,6 +35,14 @@ namespace BatterySimulator
         public Power GetPlannedProduction(DateTime time)
         {
             return new Power(_plan[time], Units.MegaWatt);
+        }
+
+        public TimeSeries PlannedSoC { get; set; }
+
+        public TimeSeries PlannedSoc
+        {
+            get => _plannedSoc;
+            set => _plannedSoc = value;
         }
 
         public async Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)

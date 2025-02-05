@@ -4,14 +4,18 @@ using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
 using System;
+using BatterySimulator.Interfaces;
+using BatteryPomaPlanner;
+using Domain;
+
 
 namespace BatterySimulator
 {
     public class BatterySimulator : IDisposable
     {
-        private SimulationTimeProvider _time;
+        private SimulationTimeProvider _timeProvider;
         private bool _isRealTime;
-        private DataRecorder _recorder;
+        private BatteryDataRecorder _recorder;
         private BatteryEMS _ems;
         private IBatteryPlanner _planner;
         private IPriceForecaster _priceForecaster;
@@ -34,7 +38,7 @@ namespace BatterySimulator
             set => _isRealTime = value;
         }
 
-        public DataRecorder Recorder
+        public BatteryDataRecorder Recorder
         {
             get => _recorder;
             
@@ -66,8 +70,8 @@ namespace BatterySimulator
 
         public SimulationTimeProvider TimeProvider
         {
-            get => _time;
-            set => _time = value;
+            get => _timeProvider;
+            set => _timeProvider = value;
         }
 
         public IPriceForecaster PriceForecaster
@@ -76,7 +80,7 @@ namespace BatterySimulator
             set => _priceForecaster = value;
         }
 
-        public PnLManager PnlManager
+        public PnLManager? PnlManager
         {
             get => _pnlManager;
             set => _pnlManager = value;
@@ -97,61 +101,90 @@ namespace BatterySimulator
 
         public void SetUp(int nHours, int deltaSeconds)
         {
-            _start = new DateTime(2025, 1, 10, 9,0,0, DateTimeKind.Local); 
+            _start = new DateTime(2018, 1, 1, 9,0,0, DateTimeKind.Local); 
             _end = _start + TimeSpan.FromHours(nHours);
             TimeSpan delta = TimeSpan.FromSeconds(deltaSeconds);
             TimeProvider = new SimulationTimeProvider(_start, delta);
-            TimeSpan marketResolution = TimeSpan.FromMinutes(15);
-
-            int nPeriods = nHours * 60 / 15;
-
-            _recorder = new DataRecorder(TimeProvider);
-
-            Random r = new Random(456345);
+            
+            _recorder = new BatteryDataRecorder(_timeProvider);
 
             _market = new EnergyMarket(Guid.NewGuid(), "EPEX Intraday");
-            _market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(nPeriods).Select(d=>d*100.0 + 20).ToArray(),_start, marketResolution);
+
+            //
+            string filename = "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\Data\\Prices\\elspot-prices_2018_hourly_eur.csv";
+          
+            var prices  = SpotPriceReader.ReadFile(filename);
+            _market.Ts.EnergySellPrice = prices["SE3"];
+            _market.Ts.EnergySellPrice.IsBreakPointSeries = true;
+           
+            //_market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(nPeriods).Select(d=>d*100.0 + 20).ToArray(),_start, marketResolution);
             double spread = 0.01;
             _market.Ts.EnergyBuyPrice = _market.Ts.EnergySellPrice + TimeSeries.CreateTimeSeries(_market.Ts.EnergySellPrice.TimePoints(),spread);
 
+            
             // exact 
-            _priceForecaster = new PriceForecaster(_market.Ts.EnergyBuyPrice, a: 1, b: 1);
+            _priceForecaster = new PriceForecaster(_market.Ts.EnergyBuyPrice, a: 0, b: 0);
             _priceForecaster.UpdateForecast(_start, TimeSpan.FromHours(nHours), TimeSpan.FromMinutes(15));
 
-            Battery1 = new Battery
+            _battery = new Battery
             {
+                Id = Guid.NewGuid(),
+                Name = "Battery1",
                 NominalChargeCapacity = new Power(10,Units.MegaWatt),
-                NominalEnergyCapacity =  new Energy(10, Units.MegaWattHour),
+                NominalEnergyCapacity =  new Energy(20, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
                 InitialSoHe = new Percentage(100),
-                ChargeEfficiency = 0.95,
-                DischargeEfficiency = 0.95
+                InitialCapacityC = new Power(10,Units.MegaWatt),
+                InitialCapacityE = new Energy(20, Units.MegaWattHour),
+                ChargeEfficiency = new DimensionlessQuantity(0.99),
+                DischargeEfficiency = new DimensionlessQuantity(0.99),
+                MaxNumberOfEfcPerHour = 100, 
+                InitialSoC = new Percentage(50)
             };
+
+            
+            PriceUnit priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWatt);
+            _battery.DischargePoints =
+            [
+                new ChargePoint(new Power(0, Units.MegaWatt), new UnitPrice(0, priceUnit)),
+                new ChargePoint(new Power(10, Units.MegaWatt), new UnitPrice(0, priceUnit))
+            ];
+            _battery.ChargePoints =
+            [
+                new ChargePoint(new Power(0, Units.MegaWatt), new UnitPrice(0, priceUnit)),
+                new ChargePoint(new Power(10, Units.MegaWatt), new UnitPrice(0, priceUnit))
+            ];
+
 
             BatteryState initialState = new BatteryState
             {
-                EnergyContent = new Energy(5, Units.MegaWattHour),
-                Capacity = new Energy(10, Units.MegaWattHour)
+                EnergyContent = new Energy(10, Units.MegaWattHour),
+                Capacity = new Energy(20, Units.MegaWattHour)
             };
 
 
             _ems = new BatteryEMS(Battery1, initialState, _start);
 
-            Recorder.Subscribe(_ems);
-
-            // Generate a random plan or policy
+            _recorder.Subscribe(_ems);
             
+
+            // Generate a plan
             if (_planner is PriceLevelPlanner planner)
             {
                 planner.EnergyPriceForecast = _priceForecaster.PriceForecast;
                 planner.Battery1 = _battery;
-                planner.LookaAhead = TimeSpan.FromHours(6);
+                planner.LookaAhead = TimeSpan.FromHours(4);
+            }
+            else if(_planner is PomaPlanner pomaPlanner)
+            {
+                pomaPlanner.SetUp(_battery, _market);
+                pomaPlanner.Subscribe(_ems);
             }
 
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
 
-            _sleepTime = TimeSpan.FromMilliseconds(200);
+            _sleepTime = TimeSpan.FromMilliseconds(500);
 
         }
 
@@ -159,9 +192,9 @@ namespace BatterySimulator
         {
             var priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWattHour);
             DateTime t = TimeProvider.GetTime();
-            TimeSpan replanningInterval = TimeSpan.FromMinutes(60);
+            TimeSpan replanningInterval = TimeSpan.FromMinutes(120);
             
-            _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 168);
+            await _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 24);
             
             DateTime lastPlanning = t;
 
@@ -171,12 +204,12 @@ namespace BatterySimulator
                 if (t - lastPlanning >= replanningInterval)
                 {
                     await Console.Out.WriteLineAsync($"Replanning...");
-                    _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 168);
+                    _planner.UpdatePlan(t + TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(15), 24);
                     lastPlanning = t;
                 }
 
                 // Implement plan/policy
-                _ems.SetChargeLevel(_planner.GetPlannedProduction(t));
+                _ems.SetChargeLevel(-_planner.GetPlannedProduction(t));
                 
                 // Update state
                 await _ems.UpdateState(t);
@@ -197,6 +230,8 @@ namespace BatterySimulator
 
                 t = TimeProvider.GetTime();
             }
+
+
 
         }
 

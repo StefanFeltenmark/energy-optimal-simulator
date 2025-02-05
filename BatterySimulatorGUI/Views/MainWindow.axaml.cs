@@ -23,12 +23,29 @@ namespace BatterySimulatorGUI.Views
             if (button.IsChecked.HasValue && button.IsChecked.Value)
             {
                 vm.StartSimulation();
-                button.Content = "Stop simulation";
+                button.Content = "Stop";
             }
             else
             {
                 vm.StopSimulation();
-                button.Content = "Start simulation";
+                button.Content = "Start";
+            }
+        }
+
+        private void Button_Restart(object? sender, RoutedEventArgs e)
+        {
+            var vm = (MainWindowViewModel)DataContext;
+            var button = (ToggleButton)sender;
+            
+            if (button.IsChecked.HasValue && button.IsChecked.Value)
+            {
+                vm.ReStartSimulation();
+                button.Content = "Stop";
+            }
+            else
+            {
+                vm.StopSimulation();
+                button.Content = "Restart";
             }
         }
     }

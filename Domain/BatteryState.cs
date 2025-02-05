@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Powel.Optimal.MultiAsset.Domain.Quantities;
+﻿using Powel.Optimal.MultiAsset.Domain.Quantities;
 
-
-namespace BatterySimulator
+namespace Domain
 {
     public class BatteryState
     {
@@ -15,8 +9,10 @@ namespace BatterySimulator
         private Energy _capacity = new Energy(0, Units.MegaWattHour);
         private Power _setPoint = new Power(0, Units.MegaWatt);
         private Power _chargeCapacity = new Power(0, Units.MegaWatt);
-        private Power _charging = new Power(0, Units.MegaWatt);
-        private Power _discharging = new Power(0, Units.MegaWatt);
+        private Power _chargingGridGrid = new Power(0, Units.MegaWatt);
+        private Power _dischargingGridGrid = new Power(0, Units.MegaWatt);
+        private Power _chargingBattery = new Power(0, Units.MegaWatt);
+        private Power _dischargingBattery = new Power(0, Units.MegaWatt);
         private Percentage _SoC = new Percentage(0);
 
         public Energy EnergyContent
@@ -31,16 +27,16 @@ namespace BatterySimulator
             set => _capacity = value;
         }
 
-        public Power Charging
+        public Power ChargingGrid
         {
-            get => _charging;
-            set => _charging = value;
+            get => _chargingGridGrid;
+            set => _chargingGridGrid = value;
         }
 
-        public Power Discharging
+        public Power DischargingGrid
         {
-            get => _discharging;
-            set => _discharging = value;
+            get => _dischargingGridGrid;
+            set => _dischargingGridGrid = value;
         }
 
         public Power ChargeCapacity
@@ -59,6 +55,18 @@ namespace BatterySimulator
         {
             get => _setPoint;
             set => _setPoint = value;
+        }
+
+        public Power ChargingBattery
+        {
+            get => _chargingBattery;
+            set => _chargingBattery = value;
+        }
+
+        public Power DischargingBattery
+        {
+            get => _dischargingBattery;
+            set => _dischargingBattery = value;
         }
     }
 }

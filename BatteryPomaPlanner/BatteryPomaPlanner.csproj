@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.3.0" />
+    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.508-alpha" />
+    <PackageReference Include="Serilog" Version="4.2.1-dev-02337" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BatterySimulator.Interfaces\BatterySimulator.Interfaces.csproj" />
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+  </ItemGroup>
+
+</Project>

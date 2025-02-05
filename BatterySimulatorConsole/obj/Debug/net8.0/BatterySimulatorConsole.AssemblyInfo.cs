@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BatterySimulatorConsole")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e42ae83ce43912cabd85ad469864d82e8e7feeea")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+65e1c1575fad0a1cbdc9e2c095d00f430a52595b")]
 [assembly: System.Reflection.AssemblyProductAttribute("BatterySimulatorConsole")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BatterySimulatorConsole")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

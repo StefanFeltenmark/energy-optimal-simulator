@@ -4,10 +4,15 @@ using Powel.Optimal.MultiAsset.Domain.General.Data;
 
 namespace BatterySimulator
 {
-    public class ObservableTimeSeries : INotifyCollectionChanged, IReadOnlyCollection<KeyValuePair<DateTime,double>>
+    public class ObservableTimeSeries : TimeSeries, INotifyCollectionChanged, IReadOnlyCollection<KeyValuePair<DateTime,double>>
     {
         private TimeSeries _ts;
         private int _maxItems;
+
+        public ObservableTimeSeries(TimeSeries ts)
+        {
+            _ts = ts;
+        }
 
         public ObservableTimeSeries(double defaultvalue = 0.0, bool isBreakpoint = true)
         {

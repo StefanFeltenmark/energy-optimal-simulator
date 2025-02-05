@@ -1,4 +1,5 @@
-﻿using Powel.Optimal.MultiAsset.Domain.Quantities;
+﻿using Domain;
+using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
@@ -8,10 +9,10 @@ namespace BatterySimulator
         ObservableTimeSeries _buyCost;
         ObservableTimeSeries _profit;
         ObservableTimeSeries _accProfit;
-        DataRecorder _recorder;
+        BatteryDataRecorder _recorder;
         DateTime _latestTime;
 
-        public PnLManager(DataRecorder recorder)
+        public PnLManager(BatteryDataRecorder recorder)
         {
             _sellIncome = new ObservableTimeSeries();
             _buyCost = new ObservableTimeSeries();

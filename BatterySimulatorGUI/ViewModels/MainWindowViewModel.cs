@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 using BatterySimulator;
+using Domain;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
+using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.Painting.Effects;
@@ -18,34 +21,47 @@ namespace BatterySimulatorGUI.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
-        private BatterySimulator.BatterySimulator _simulator;
+        private BatterySimulator.BatterySimulator? _simulator;
         private ObservableCollection<ISeries> _socSeries;
         private ObservableCollection<ISeries> _chargingSeries;
         private ObservableCollection<ISeries> _chargeSeries;
         private ObservableCollection<ISeries> _dischargeSeries;
         private ObservableCollection<ISeries> _pnlSeries;
         private ObservableCollection<DateTimePoint> _SoCvalues;
-        private ObservableCollection<DateTimePoint> _price;
+        private ObservableCollection<DateTimePoint> _priceForecast;
+        private ObservableCollection<DateTimePoint> _realizedPrice;
         private ObservableCollection<DateTimePoint> _netChargevalues;
         private ObservableCollection<DateTimePoint> _chargeValues;
         private ObservableCollection<DateTimePoint> _dischargeValues;
         private ObservableCollection<DateTimePoint> _pnlValues;
+        
         private DateTime _simulationTime;
+        private MonetaryAmount _currentPnL;
+        private TimeSpan _visibleHorizon;
         private int _nHours;
         private int _maxItems = 180;
+
+        public MainWindowViewModel()
+        {
+            
+        }
         
         public MainWindowViewModel(BatterySimulator.BatterySimulator simulator)
         {
             _simulator = simulator;
-            //_simulator = new BatterySimulator.BatterySimulator();
-            _nHours = 48;
-            _simulator.SetUp(_nHours , 120);
+            
+            _nHours = 168;
+            _simulator.SetUp(_nHours , 300);
 
-            _simulator.Recorder.PropertyChanged += Recorder_PropertyChanged;
+            _visibleHorizon = TimeSpan.FromHours(6);
+
+            ManageHandlers();
+
+            // Calculate max items
+            _maxItems = (int) (_visibleHorizon.TotalMinutes / _simulator.Delta.TotalMinutes);
 
             _simulator.Recorder.SoC.MaxItems = _maxItems;
             _SoCvalues = new ObservableCollection<DateTimePoint>();
-            _simulator.Recorder.SoC.CollectionChanged += SoC_CollectionChanged;
             _socSeries = new ObservableCollection<ISeries>();
             _socSeries.Add(new LineSeries<DateTimePoint>
             {
@@ -58,60 +74,57 @@ namespace BatterySimulatorGUI.ViewModels
                 IsVisibleAtLegend = true
             });
 
-            //_simulator.Recorder.NetCharge.MaxItems = 100;
-            //_netChargevalues = new ObservableCollection<DateTimePoint>();
-            //_simulator.Recorder.NetCharge.CollectionChanged += NetCharge_CollectionChanged;
-            _chargingSeries = new ObservableCollection<ISeries>();
-            //_chargingSeries.Add(new ColumnSeries<DateTimePoint>
-            //{
-            //    Values = _netChargevalues,
-            //    Name = "Net charge",
-            //    Stroke = new SolidColorPaint(SKColors.Blue) { StrokeThickness = 3 }, 
-            //    Fill = null,
-            //    //GeometryFill = null,
-            //    //GeometryStroke = null,
-            //    IsVisibleAtLegend = true,
-            //    ScalesYAt = 0
-            //});
 
-            _simulator.Recorder.Charging.MaxItems = 100;
+            
+            _simulator.Recorder.ChargingGrid.MaxItems = _maxItems;
             _chargeValues = new ObservableCollection<DateTimePoint>();
-            _simulator.Recorder.Charging.CollectionChanged += Charging_CollectionChanged;
-           
+            _chargingSeries = new ObservableCollection<ISeries>();
             _chargingSeries.Add(new ColumnSeries<DateTimePoint>
             {
                 Values = _chargeValues,
                 Name = "Charge",
-                Stroke = new SolidColorPaint(SKColors.LightBlue) { StrokeThickness = 3 }, 
+                Stroke = new SolidColorPaint(SKColors.LightBlue) { StrokeThickness = 1 }, 
                 Padding = 0,
                 MaxBarWidth = double.MaxValue,
                 IgnoresBarPosition = true,
-                Fill = null,
-                IsVisibleAtLegend = true,
+                Fill = new SolidColorPaint(SKColors.LightBlue),
+                IsVisibleAtLegend = false,
                 ScalesYAt = 0
             });
 
-            _simulator.Recorder.Discharging.MaxItems = 100;
+            _simulator.Recorder.DischargingGrid.MaxItems = _maxItems;
             _dischargeValues = new ObservableCollection<DateTimePoint>();
-            _simulator.Recorder.Discharging.CollectionChanged += Discharging_CollectionChanged;
-           
             _chargingSeries.Add(new ColumnSeries<DateTimePoint>
             {
                 Values = _dischargeValues,
                 Name = "Discharge",
-                Stroke = new SolidColorPaint(SKColors.LightGreen) { StrokeThickness = 3 },
+                Stroke = new SolidColorPaint(SKColors.LightGreen) { StrokeThickness = 1 },
                 Padding = 0,
-                Fill = null,
+                Fill =  new SolidColorPaint(SKColors.LightGreen),
                 MaxBarWidth = double.MaxValue,
+                IgnoresBarPosition = true,
                 IsVisibleAtLegend = true,
                 ScalesYAt = 0
             });
 
-            _price = new ObservableCollection<DateTimePoint>();
+            _priceForecast = new ObservableCollection<DateTimePoint>();
             _chargingSeries.Add(new StepLineSeries<DateTimePoint>
             {
-                Values = _price,
-                Name = "Price (€/MWh)",
+                Values = _priceForecast,
+                Name = "PriceForecast",
+                Stroke = new SolidColorPaint(SKColors.LightPink) { StrokeThickness = 2 }, 
+                Fill = null,
+                GeometryFill = null,
+                GeometryStroke = null,
+                IsVisibleAtLegend = true,
+                ScalesYAt = 1
+            });
+
+            _realizedPrice = new ObservableCollection<DateTimePoint>();
+            _chargingSeries.Add(new StepLineSeries<DateTimePoint>
+            {
+                Values = _realizedPrice,
+                Name = "Price",
                 Stroke = new SolidColorPaint(SKColors.Red) { StrokeThickness = 2 }, 
                 Fill = null,
                 GeometryFill = null,
@@ -122,9 +135,6 @@ namespace BatterySimulatorGUI.ViewModels
             
             _pnlSeries = new ObservableCollection<ISeries>();
             _pnlValues = new ObservableCollection<DateTimePoint>();
-
-            _simulator.PnlManager.AccProfit.CollectionChanged += AccProfit_CollectionChanged;
-
             PnlSeries.Add(new LineSeries<DateTimePoint>
             {
                 Values = _pnlValues,
@@ -137,19 +147,43 @@ namespace BatterySimulatorGUI.ViewModels
                 ScalesYAt = 0
             });
 
-            _simulator.TimeProvider.PropertyChanged += TimeProvider_PropertyChanged;
+           
             _simulationTime = _simulator.TimeProvider.GetTime();
 
             netChargeAxes[0].MaxLimit = _simulator.Battery1.CapacityC().ConvertToUnit( Units.MegaWatt).Value + 1;
             netChargeAxes[0].MinLimit = -_simulator.Battery1.CapacityC().ConvertToUnit( Units.MegaWatt).Value - 1;
+
         }
 
-        private void Discharging_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private void ManageHandlers(bool subScribe = true)
+        {
+            // Event handlers
+            if (subScribe)
+            {
+                _simulator.Recorder.PropertyChanged += Recorder_PropertyChanged;
+                _simulator.Recorder.SoC.CollectionChanged += SoC_CollectionChanged;
+                _simulator.Recorder.ChargingGrid.CollectionChanged += ChargingGridCollectionChanged;
+                _simulator.Recorder.DischargingGrid.CollectionChanged += DischargingGridCollectionChanged;
+                _simulator.TimeProvider.PropertyChanged += TimeProvider_PropertyChanged;
+                _simulator.PnlManager.AccProfit.CollectionChanged += AccProfit_CollectionChanged;
+            }
+            else
+            {
+                _simulator.Recorder.PropertyChanged -= Recorder_PropertyChanged;
+                _simulator.Recorder.SoC.CollectionChanged -= SoC_CollectionChanged;
+                _simulator.Recorder.ChargingGrid.CollectionChanged -= ChargingGridCollectionChanged;
+                _simulator.Recorder.DischargingGrid.CollectionChanged -= DischargingGridCollectionChanged;
+                _simulator.TimeProvider.PropertyChanged -= TimeProvider_PropertyChanged;
+                _simulator.PnlManager.AccProfit.CollectionChanged -= AccProfit_CollectionChanged;
+            }
+        }
+
+        private void DischargingGridCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             Update(sender, e, _dischargeValues);
         }
 
-        private void Charging_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private void ChargingGridCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             Update(sender, e, _chargeValues);
         }
@@ -165,17 +199,40 @@ namespace BatterySimulatorGUI.ViewModels
         }
 
         
+        public MonetaryAmount CurrentPnL
+        {
+            get => _currentPnL;
+            private set => this.RaiseAndSetIfChanged(ref _currentPnL, value); 
+        
+        }
+
         public DateTime SimulationTime
         {
-            get => _simulationTime; 
-            set => this.RaiseAndSetIfChanged(ref _simulationTime, value); 
+            get => _simulationTime;
+            private set => this.RaiseAndSetIfChanged(ref _simulationTime, value); 
         }
 
         public ObservableCollection<ISeries> SoC => _socSeries;
+
         public ObservableCollection<ISeries> Charging => _chargingSeries;
 
         public async Task StartSimulation()
         {
+            await Task.Run(ReadData);
+        }
+
+        public async Task ReStartSimulation()
+        {
+            _simulator?.SetUp(_nHours , 300);
+            
+            ManageHandlers();
+
+            _SoCvalues.Clear();
+            _chargeValues.Clear();
+            _dischargeValues.Clear();
+            _pnlValues.Clear();
+            _priceForecast.Clear();
+
             await Task.Run(ReadData);
         }
 
@@ -184,10 +241,11 @@ namespace BatterySimulatorGUI.ViewModels
             _simulator.SimulationEnabled = true;
             _simulator.IsRealTime = false;
             SetPrice(_simulator.Start, _simulator.Start + TimeSpan.FromHours(_nHours));
-            timeAxis[0].MaxLimit = (_simulator.Start + TimeSpan.FromHours(6)).Ticks;
+            timeAxis[0].MaxLimit = (_simulator.Start + _visibleHorizon).Ticks;
             timeAxis[0].MinLimit = _simulator.Start.Ticks;
             timeAxis[0].ForceStepToMin = false;
-            timeAxis[0].MinStep = TimeSpan.FromSeconds(600).Ticks;
+            timeAxis[0].MinStep = TimeSpan.FromSeconds(60).Ticks;
+           
             await Task.Run(_simulator.Simulate);
 
             // Simulator finished
@@ -197,10 +255,10 @@ namespace BatterySimulatorGUI.ViewModels
         private void SetPrice(DateTime fromTime, DateTime toTime)
         {
             DateTime t = fromTime;
-            _price.Clear();
+            _priceForecast.Clear();
             while (t < toTime)
             {
-                _price.Add(new DateTimePoint(t, _simulator.PriceForecaster.PriceForecast[t]));
+                _priceForecast.Add(new DateTimePoint(t, _simulator.PriceForecaster.PriceForecast[t]));
                 t += TimeSpan.FromMinutes(15);
             }
         }
@@ -208,30 +266,13 @@ namespace BatterySimulatorGUI.ViewModels
 
         public void StopSimulation()
         {
-            _simulator.SimulationEnabled = false;
+            if (_simulator != null) _simulator.SimulationEnabled = false;
         }
-
-        //private void NetCharge_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        //{
-        //    var series = sender as ObservableTimeSeries;
-        //    if (e.Action == NotifyCollectionChangedAction.Add)
-        //    {
-        //        foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
-        //        {
-        //            _netChargevalues.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
-        //        }
-
-        //        if (_netChargevalues.Count > _maxItems)
-        //        {
-        //            _netChargevalues.RemoveAt(0);
-        //        }
-                
-        //    }
-        //}
 
         private void SoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             var series = sender as ObservableTimeSeries;
+            
             if (e.Action == NotifyCollectionChangedAction.Add)
             {
                 foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
@@ -254,6 +295,7 @@ namespace BatterySimulatorGUI.ViewModels
         private void AccProfit_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             Update(sender, e, _pnlValues);
+            CurrentPnL = new MonetaryAmount(_simulator.PnlManager.AccProfit.Last().Value, Currencies.Euro);
         }
 
         private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values)
@@ -284,15 +326,17 @@ namespace BatterySimulatorGUI.ViewModels
         public Axis[] timeAxis { get; set; }
             =
             [
-                new DateTimeAxis(TimeSpan.FromSeconds(1),Formatter)
+                new DateTimeAxis(TimeSpan.FromSeconds(300),Formatter)
                 {
                   ShowSeparatorLines = true,
                   TicksAtCenter = false,
                   SeparatorsAtCenter = false,
-                 // UnitWidth = TimeSpan.FromSeconds(1).Ticks,
+                  MinLimit = new DateTime(2025,1,20,0,0,0).Ticks,
+                  MaxLimit = (new DateTime(2025,1,20,0,0,0) + TimeSpan.FromHours(12)).Ticks,
+                  MinStep = TimeSpan.FromMinutes(5).Ticks,
                   TextSize = 16
                 },
-               
+                
             ];
            
         public Axis[] SoCAxes { get; set; }
@@ -335,6 +379,7 @@ namespace BatterySimulatorGUI.ViewModels
                 {
                     Name = "Price (€/MWh)",
                     TextSize = 16,
+                    Position = AxisPosition.End,
                 }
             ];
 
@@ -370,10 +415,22 @@ namespace BatterySimulatorGUI.ViewModels
             }
         }
 
+        public string TimeDelay
+        {
+            get => _simulator.SleepTime.TotalMilliseconds.ToString();
+            set
+            {
+                int nMilleSecs = 100;
+                bool ok = int.TryParse(value, out nMilleSecs);
+                if (ok)
+                {
+                    _simulator.SleepTime = TimeSpan.FromMilliseconds(nMilleSecs);
+                }
+            }
+        }
+
         public ObservableCollection<ISeries> PnlSeries => _pnlSeries;
 
-        public ObservableCollection<ISeries> ChargeSeries => _chargeSeries;
-
-        public ObservableCollection<ISeries> DischargeSeries => _dischargeSeries;
+       
     }
 }
