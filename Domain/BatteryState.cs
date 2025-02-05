@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Powel.Optimal.MultiAsset.Domain.Quantities;
+﻿using Powel.Optimal.MultiAsset.Domain.Quantities;
 
-
-namespace BatterySimulator
+namespace Domain
 {
     public class BatteryState
     {

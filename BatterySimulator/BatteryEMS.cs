@@ -1,4 +1,5 @@
-﻿using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
+﻿using Domain;
+using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 

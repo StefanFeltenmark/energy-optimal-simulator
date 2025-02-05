@@ -6,6 +6,7 @@ using Powel.Optimal.MultiAsset.Domain.Quantities;
 using System;
 using BatterySimulator.Interfaces;
 using BatteryPomaPlanner;
+using Domain;
 
 
 namespace BatterySimulator
@@ -125,7 +126,7 @@ namespace BatterySimulator
             _priceForecaster = new PriceForecaster(_market.Ts.EnergyBuyPrice, a: 0, b: 0);
             _priceForecaster.UpdateForecast(_start, TimeSpan.FromHours(nHours), TimeSpan.FromMinutes(15));
 
-            Battery1 = new Battery
+            _battery = new Battery
             {
                 Id = Guid.NewGuid(),
                 Name = "Battery1",
@@ -135,9 +136,25 @@ namespace BatterySimulator
                 InitialSoHe = new Percentage(100),
                 InitialCapacityC = new Power(10,Units.MegaWatt),
                 InitialCapacityE = new Energy(20, Units.MegaWattHour),
-                ChargeEfficiency = new DimensionlessQuantity(0.95),
-                DischargeEfficiency = new DimensionlessQuantity(0.95)
+                ChargeEfficiency = new DimensionlessQuantity(0.99),
+                DischargeEfficiency = new DimensionlessQuantity(0.99),
+                MaxNumberOfEfcPerHour = 100, 
+                InitialSoC = new Percentage(50)
             };
+
+            
+            PriceUnit priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWatt);
+            _battery.DischargePoints =
+            [
+                new ChargePoint(new Power(0, Units.MegaWatt), new UnitPrice(0, priceUnit)),
+                new ChargePoint(new Power(10, Units.MegaWatt), new UnitPrice(0, priceUnit))
+            ];
+            _battery.ChargePoints =
+            [
+                new ChargePoint(new Power(0, Units.MegaWatt), new UnitPrice(0, priceUnit)),
+                new ChargePoint(new Power(10, Units.MegaWatt), new UnitPrice(0, priceUnit))
+            ];
+
 
             BatteryState initialState = new BatteryState
             {
@@ -149,6 +166,7 @@ namespace BatterySimulator
             _ems = new BatteryEMS(Battery1, initialState, _start);
 
             _recorder.Subscribe(_ems);
+            
 
             // Generate a plan
             if (_planner is PriceLevelPlanner planner)
@@ -160,12 +178,13 @@ namespace BatterySimulator
             else if(_planner is PomaPlanner pomaPlanner)
             {
                 pomaPlanner.SetUp(_battery, _market);
+                pomaPlanner.Subscribe(_ems);
             }
 
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
 
-            _sleepTime = TimeSpan.FromMilliseconds(200);
+            _sleepTime = TimeSpan.FromMilliseconds(500);
 
         }
 
@@ -173,9 +192,9 @@ namespace BatterySimulator
         {
             var priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWattHour);
             DateTime t = TimeProvider.GetTime();
-            TimeSpan replanningInterval = TimeSpan.FromMinutes(60);
+            TimeSpan replanningInterval = TimeSpan.FromMinutes(120);
             
-            await _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 8);
+            await _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 24);
             
             DateTime lastPlanning = t;
 
@@ -185,12 +204,12 @@ namespace BatterySimulator
                 if (t - lastPlanning >= replanningInterval)
                 {
                     await Console.Out.WriteLineAsync($"Replanning...");
-                    _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 8);
+                    _planner.UpdatePlan(t + TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(15), 24);
                     lastPlanning = t;
                 }
 
                 // Implement plan/policy
-                _ems.SetChargeLevel(_planner.GetPlannedProduction(t));
+                _ems.SetChargeLevel(-_planner.GetPlannedProduction(t));
                 
                 // Update state
                 await _ems.UpdateState(t);

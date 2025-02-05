@@ -1,4 +1,5 @@
-﻿using Powel.Optimal.MultiAsset.Domain.Quantities;
+﻿using Domain;
+using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {

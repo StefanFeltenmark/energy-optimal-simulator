@@ -30,3 +30,5 @@ C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatteryPomaPlanner
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatteryPomaPlanner\obj\Debug\net8.0\refint\BatteryPomaPlanner.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatteryPomaPlanner\obj\Debug\net8.0\BatteryPomaPlanner.pdb
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatteryPomaPlanner\obj\Debug\net8.0\ref\BatteryPomaPlanner.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatteryPomaPlanner\bin\Debug\net8.0\Domain.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatteryPomaPlanner\bin\Debug\net8.0\Domain.pdb

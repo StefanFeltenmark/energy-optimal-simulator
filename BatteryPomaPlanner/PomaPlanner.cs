@@ -1,4 +1,6 @@
-﻿using BatterySimulator.Interfaces;
+﻿using BatterySimulator;
+using BatterySimulator.Interfaces;
+using Domain;
 using OfficeOpenXml.ConditionalFormatting;
 using Powel.Optimal.MultiAsset.Domain;
 using Powel.Optimal.MultiAsset.Domain.Common;
@@ -12,16 +14,21 @@ using Powel.Optimal.MultiAsset.Infrastructure;
 
 namespace BatteryPomaPlanner
 {
-    public class PomaPlanner : IBatteryPlanner
+    public class PomaPlanner : IBatteryPlanner, IObserver<BatteryState>
     {
         private ILogger _logger;
         private PomaServiceClient _multiAssetService;
         private MultiAssetData _data;
+        private PomaSolutionSet? _solution;
         private TimeSeries _plan;
         private Battery _battery;
         private EnergyMarket _market;
         private Guid _optimizationId;
+        private BatteryState? _currentState;
+        private IDisposable unsubscriber;
+        private ObservableTimeSeries _plannedSoC;
         
+
         public PomaPlanner()
         {
             _logger = new NullLogger();
@@ -29,6 +36,7 @@ namespace BatteryPomaPlanner
             _plan = new TimeSeries();
             _data = new MultiAssetData();
             _optimizationId = Guid.NewGuid();
+            _plannedSoC = new ObservableTimeSeries();
         }
 
         public void SetUp(Battery battery, EnergyMarket market)
@@ -60,13 +68,17 @@ namespace BatteryPomaPlanner
             market.Ts.PowerLoad = new TimeSeries();
 
             market.EnergyProviders = new List<EnergyProvider>();
-            BatteryEnergyProvider provider = new BatteryEnergyProvider(market.Id, _battery.Id);
-            provider.Battery = _battery;
-            provider.EnergyMarket = market;
-            provider.Availability = new TimeSeries();
+            BatteryEnergyProvider provider = new BatteryEnergyProvider(market.Id, _battery.Id)
+            {
+                Battery = _battery,
+                EnergyMarket = market,
+                Availability = new TimeSeries()
+            };
             provider.Availability.DefaultValue = 1;
             provider.MaxDelivery = new TimeSeries();
-            provider.MaxDelivery.DefaultValue = 1000;
+            provider.MaxDelivery.DefaultValue = 100;
+            provider.MinDelivery = new TimeSeries();
+            provider.MinDelivery.DefaultValue = -100;
             
             market.EnergyProviders.Add(provider);
 
@@ -95,9 +107,9 @@ namespace BatteryPomaPlanner
             _battery.Ts.SocSoftMax = new TimeSeries();
             _battery.Ts.SocSoftMax.DefaultValue = 1;
             _battery.Ts.SocSoftMin = new TimeSeries();
-
-
-            
+            _battery.FinalSocMax = new Percentage(100);
+            _battery.FinalSocMin = new Percentage(50);
+         //   _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWatt));
 
             _data.CommonData.Parameters.CaseName = "BatterySimulation";
             _data.OptimizationId = _optimizationId;
@@ -115,6 +127,12 @@ namespace BatteryPomaPlanner
             set => _battery = value;
         }
 
+        public ObservableTimeSeries PlannedSoC
+        {
+            get => _plannedSoC;
+            set => _plannedSoC = value;
+        }
+
         private async Task<PomaSolutionSet> CallMultiAssetService(MultiAssetData options)
         {
             return await _multiAssetService.Run<PomaSolutionSet>("api/hydroThermal/start", options);
@@ -125,16 +143,54 @@ namespace BatteryPomaPlanner
             return new Power(_plan[time], Units.MegaWatt);
         }
 
+       
+
         public async Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
         {
             _data.CommonData.PlanPeriod = new PlanningPeriod(planStart, resolution, nPeriods);
             _data.CommonData.EnergyMarketPeriod = _data.CommonData.PlanPeriod;
 
-            PomaSolutionSet solution = await CallMultiAssetService(_data);
+            if(_currentState != null)
+            {
+                _battery.InitialSoC = _currentState.SoC;
+            }
+
+            _solution = await CallMultiAssetService(_data); 
 
             // update plan
-            _plan = solution.Solution.BatterySolution.NetCharge[_battery];
+            _plan = _solution.Solution.BatterySolution.NetCharge[_battery];
 
+            _plannedSoC = _solution.Solution.BatterySolution.SOC[_battery];
+
+        }
+
+     
+
+        public void OnError(Exception error)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnNext(BatteryState value)
+        {
+            _currentState = value;
+        }
+
+        public virtual void Subscribe(IObservable<BatteryState> provider)
+        {
+            if (provider != null)
+                unsubscriber = provider.Subscribe(this);
+        }
+
+        public void OnCompleted()
+        {
+            this.Unsubscribe();
+            
+        }
+
+        protected virtual void Unsubscribe()
+        {
+            unsubscriber.Dispose();
         }
     }
 }

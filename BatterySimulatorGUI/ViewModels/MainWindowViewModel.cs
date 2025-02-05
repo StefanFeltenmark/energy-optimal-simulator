@@ -6,6 +6,7 @@ using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 using BatterySimulator;
+using Domain;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Measure;
@@ -271,6 +272,7 @@ namespace BatterySimulatorGUI.ViewModels
         private void SoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             var series = sender as ObservableTimeSeries;
+            
             if (e.Action == NotifyCollectionChangedAction.Add)
             {
                 foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())

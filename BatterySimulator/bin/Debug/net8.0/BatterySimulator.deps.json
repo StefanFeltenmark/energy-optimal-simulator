@@ -10,6 +10,7 @@
         "dependencies": {
           "BatteryPomaPlanner": "1.0.0",
           "BatterySimulator.Interfaces": "1.0.0",
+          "Domain": "1.0.0",
           "Microsoft.Extensions.DependencyInjection": "9.0.1",
           "Powel.Optimal.MultiAsset.Domain": "2.0.0.508-alpha"
         },
@@ -1629,6 +1630,7 @@
       "BatteryPomaPlanner/1.0.0": {
         "dependencies": {
           "BatterySimulator.Interfaces": "1.0.0",
+          "Domain": "1.0.0",
           "Microsoft.IdentityModel.Clients.ActiveDirectory": "5.3.0",
           "Powel.Optimal.MultiAsset.Domain": "2.0.0.508-alpha",
           "Serilog": "4.2.1-dev-02337"
@@ -1646,6 +1648,17 @@
         },
         "runtime": {
           "BatterySimulator.Interfaces.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Domain/1.0.0": {
+        "dependencies": {
+          "Powel.Optimal.MultiAsset.Domain": "2.0.0.508-alpha"
+        },
+        "runtime": {
+          "Domain.dll": {
             "assemblyVersion": "1.0.0",
             "fileVersion": "1.0.0.0"
           }
@@ -2729,6 +2742,11 @@
       "sha512": ""
     },
     "BatterySimulator.Interfaces/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Domain/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

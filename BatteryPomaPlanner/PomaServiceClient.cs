@@ -43,7 +43,7 @@ namespace BatteryPomaPlanner
                        MaxConnectionsPerServer = 1}))
             {
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-protobuf"));
-                client.Timeout = TimeSpan.FromMinutes(1);
+                client.Timeout = TimeSpan.FromMinutes(10);
                 
                 client.BaseAddress = new Uri(_baseAddress);
                 

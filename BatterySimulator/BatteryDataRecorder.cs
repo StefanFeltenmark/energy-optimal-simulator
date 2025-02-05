@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Domain;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
@@ -77,7 +78,7 @@ namespace BatterySimulator
             }
         }
 
-        public virtual void Unsubscribe()
+        protected virtual void Unsubscribe()
         {
             unsubscriber.Dispose();
         }

@@ -85,3 +85,5 @@ C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorCo
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\bin\Debug\net8.0\BatterySimulator.Interfaces.dll
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\bin\Debug\net8.0\BatteryPomaPlanner.pdb
 C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\bin\Debug\net8.0\BatterySimulator.Interfaces.pdb
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\bin\Debug\net8.0\Domain.dll
+C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\BatterySimulatorConsole\bin\Debug\net8.0\Domain.pdb
