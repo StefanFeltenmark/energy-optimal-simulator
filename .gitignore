@@ -20,3 +20,5 @@ BatterySimulator/.vs/BatterySimulator/v17/
 *.db-shm
 
 *.bin
+
+BatteryPomaPlanner/bin/Debug/net8.0/

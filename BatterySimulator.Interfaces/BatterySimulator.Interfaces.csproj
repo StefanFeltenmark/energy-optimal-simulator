@@ -10,4 +10,8 @@
     <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.508-alpha" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+  </ItemGroup>
+
 </Project>

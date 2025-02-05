@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v8.0": {
       "BatterySimulator.Interfaces/1.0.0": {
         "dependencies": {
+          "Domain": "1.0.0",
           "Powel.Optimal.MultiAsset.Domain": "2.0.0.508-alpha"
         },
         "runtime": {
@@ -1201,6 +1202,17 @@
             "fileVersion": "4.6.24705.1"
           }
         }
+      },
+      "Domain/1.0.0": {
+        "dependencies": {
+          "Powel.Optimal.MultiAsset.Domain": "2.0.0.508-alpha"
+        },
+        "runtime": {
+          "Domain.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -2056,6 +2068,11 @@
       "sha512": "sha512-A/uxsWi/Ifzkmd4ArTLISMbfFs6XpRPsXZonrIqyTY70xi8t+mDtvSM5Os0RqyRDobjMBwIDHDL4NOIbkDwf7A==",
       "path": "system.xml.xpath.xmldocument/4.3.0",
       "hashPath": "system.xml.xpath.xmldocument.4.3.0.nupkg.sha512"
+    },
+    "Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }

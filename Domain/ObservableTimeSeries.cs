@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Specialized;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
 
 namespace BatterySimulator
@@ -52,6 +53,16 @@ namespace BatterySimulator
         {
             get => _maxItems;
             set => _maxItems = value;
+        }
+
+        public TimeSeries Series
+        {
+            get => _ts;
+            set
+            {
+                _ts = value;
+                CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            }
         }
     }
 }

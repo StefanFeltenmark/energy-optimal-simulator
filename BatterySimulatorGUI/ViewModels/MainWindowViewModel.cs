@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel.Design.Serialization;
 using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,6 +29,8 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<ISeries> _dischargeSeries;
         private ObservableCollection<ISeries> _pnlSeries;
         private ObservableCollection<DateTimePoint> _SoCvalues;
+        private ObservableCollection<DateTimePoint> _SoCPlanValues;
+
         private ObservableCollection<DateTimePoint> _priceForecast;
         private ObservableCollection<DateTimePoint> _realizedPrice;
         private ObservableCollection<DateTimePoint> _netChargevalues;
@@ -69,6 +72,18 @@ namespace BatterySimulatorGUI.ViewModels
                 Name = "SoC",
                 Stroke = new SolidColorPaint(SKColors.Blue) { StrokeThickness = 2 }, 
                 Fill = new SolidColorPaint(SKColors.LightBlue) { StrokeThickness = 2 }, 
+                GeometryFill = null,
+                GeometryStroke = null,
+                IsVisibleAtLegend = true
+            });
+
+            _SoCPlanValues = new ObservableCollection<DateTimePoint>();
+            _socSeries.Add(new LineSeries<DateTimePoint>
+            {
+                Values = _SoCPlanValues,
+                Name = "SoC plan",
+                Stroke = new SolidColorPaint(SKColors.LightBlue) { StrokeThickness = 1 }, 
+                Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null,
                 IsVisibleAtLegend = true
@@ -166,6 +181,7 @@ namespace BatterySimulatorGUI.ViewModels
                 _simulator.Recorder.DischargingGrid.CollectionChanged += DischargingGridCollectionChanged;
                 _simulator.TimeProvider.PropertyChanged += TimeProvider_PropertyChanged;
                 _simulator.PnlManager.AccProfit.CollectionChanged += AccProfit_CollectionChanged;
+                _simulator.Planner.PlannedSoC.CollectionChanged += PlannedSoC_CollectionChanged;
             }
             else
             {
@@ -175,6 +191,20 @@ namespace BatterySimulatorGUI.ViewModels
                 _simulator.Recorder.DischargingGrid.CollectionChanged -= DischargingGridCollectionChanged;
                 _simulator.TimeProvider.PropertyChanged -= TimeProvider_PropertyChanged;
                 _simulator.PnlManager.AccProfit.CollectionChanged -= AccProfit_CollectionChanged;
+            }
+        }
+
+        private void PlannedSoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            ObservableTimeSeries? series = sender as ObservableTimeSeries;
+
+            DateTime t = _simulationTime;
+            _SoCPlanValues.Clear();
+            DateTime toDate = series.Series.GetLastTimePoint();
+            while (t < toDate)
+            {
+                _SoCPlanValues.Add(new DateTimePoint(t, series[t]));
+                t += TimeSpan.FromMinutes(15);
             }
         }
 
@@ -211,6 +241,8 @@ namespace BatterySimulatorGUI.ViewModels
             get => _simulationTime;
             private set => this.RaiseAndSetIfChanged(ref _simulationTime, value); 
         }
+
+        public ObservableCollection<ISeries> PnlSeries => _pnlSeries;
 
         public ObservableCollection<ISeries> SoC => _socSeries;
 
@@ -295,7 +327,7 @@ namespace BatterySimulatorGUI.ViewModels
         private void AccProfit_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             Update(sender, e, _pnlValues);
-            CurrentPnL = new MonetaryAmount(_simulator.PnlManager.AccProfit.Last().Value, Currencies.Euro);
+         //   CurrentPnL = new MonetaryAmount(_simulator.PnlManager.AccProfit.Last().Value, Currencies.Euro);
         }
 
         private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values)
@@ -429,7 +461,7 @@ namespace BatterySimulatorGUI.ViewModels
             }
         }
 
-        public ObservableCollection<ISeries> PnlSeries => _pnlSeries;
+        
 
        
     }

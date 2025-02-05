@@ -7,7 +7,7 @@ public interface IBatteryPlanner
 {
     Power GetPlannedProduction(DateTime time);
 
-    TimeSeries PlannedSoC { get; }
+    ObservableTimeSeries PlannedSoC { get; }
 
     Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods);
 

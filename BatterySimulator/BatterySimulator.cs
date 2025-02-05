@@ -98,6 +98,12 @@ namespace BatterySimulator
             set => _sleepTime = value;
         }
 
+        public IBatteryPlanner Planner
+        {
+            get => _planner;
+            set => _planner = value;
+        }
+
 
         public void SetUp(int nHours, int deltaSeconds)
         {
@@ -134,8 +140,8 @@ namespace BatterySimulator
                 NominalEnergyCapacity =  new Energy(20, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
                 InitialSoHe = new Percentage(100),
-                InitialCapacityC = new Power(10,Units.MegaWatt),
-                InitialCapacityE = new Energy(20, Units.MegaWattHour),
+                //InitialCapacityC = new Power(10,Units.MegaWatt),
+                //InitialCapacityE = new Energy(20, Units.MegaWattHour),
                 ChargeEfficiency = new DimensionlessQuantity(0.99),
                 DischargeEfficiency = new DimensionlessQuantity(0.99),
                 MaxNumberOfEfcPerHour = 100, 
@@ -194,7 +200,7 @@ namespace BatterySimulator
             DateTime t = TimeProvider.GetTime();
             TimeSpan replanningInterval = TimeSpan.FromMinutes(120);
             
-            await _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 24);
+            await _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 48);
             
             DateTime lastPlanning = t;
 
@@ -204,7 +210,7 @@ namespace BatterySimulator
                 if (t - lastPlanning >= replanningInterval)
                 {
                     await Console.Out.WriteLineAsync($"Replanning...");
-                    _planner.UpdatePlan(t + TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(15), 24);
+                    _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 48);
                     lastPlanning = t;
                 }
 

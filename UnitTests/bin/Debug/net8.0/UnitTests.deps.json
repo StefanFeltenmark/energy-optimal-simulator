@@ -1973,6 +1973,7 @@
       },
       "BatterySimulator.Interfaces/1.0.0": {
         "dependencies": {
+          "Domain": "1.0.0",
           "Powel.Optimal.MultiAsset.Domain": "2.0.0.508-alpha"
         },
         "runtime": {

@@ -14,7 +14,7 @@ namespace BatterySimulator
         private Battery? _battery;
         private Random _r = new Random(297349);
         private TimeSeries _energyPriceForecastForecast;
-        private TimeSeries _plannedSoC;
+        private ObservableTimeSeries _plannedSoC;
         private Percentage _buyPriceThreshold;
         private  Percentage _sellPriceThreshold;
         private TimeSpan _lookaAhead;
@@ -25,7 +25,7 @@ namespace BatterySimulator
             _buyPriceThreshold = new Percentage(15);
             _sellPriceThreshold = new Percentage(15);
             _lookaAhead = TimeSpan.FromHours(6);
-            _plannedSoC = new TimeSeries();
+            _plannedSoC = new ObservableTimeSeries();
         }
 
 
@@ -71,7 +71,7 @@ namespace BatterySimulator
             return new Power(_plan[time], Units.MegaWatt);
         }
 
-        public TimeSeries PlannedSoC { get; set; }
+        public ObservableTimeSeries PlannedSoC { get; set; }
 
         public async Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
         {

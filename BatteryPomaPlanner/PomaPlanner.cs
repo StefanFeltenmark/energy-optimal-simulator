@@ -160,7 +160,7 @@ namespace BatteryPomaPlanner
             // update plan
             _plan = _solution.Solution.BatterySolution.NetCharge[_battery];
 
-            _plannedSoC = _solution.Solution.BatterySolution.SOC[_battery];
+            _plannedSoC.Series = _solution.Solution.BatterySolution.SOC[_battery];
 
         }
 
