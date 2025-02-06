@@ -155,7 +155,10 @@ namespace BatteryPomaPlanner
                 _battery.InitialSoC = _currentState.SoC;
             }
 
+            _data.OptimizationId = Guid.NewGuid();
             _solution = await CallMultiAssetService(_data); 
+          
+          //_solution = CallMultiAssetService(_data).Result; 
 
             // update plan
             _plan = _solution.Solution.BatterySolution.NetCharge[_battery];

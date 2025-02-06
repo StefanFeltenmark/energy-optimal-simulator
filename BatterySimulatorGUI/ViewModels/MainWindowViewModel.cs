@@ -82,7 +82,7 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 Values = _SoCPlanValues,
                 Name = "SoC plan",
-                Stroke = new SolidColorPaint(SKColors.LightBlue) { StrokeThickness = 1 }, 
+                Stroke = new SolidColorPaint(SKColors.Orange) { StrokeThickness = 2 }, 
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null,
@@ -203,7 +203,7 @@ namespace BatterySimulatorGUI.ViewModels
             DateTime toDate = series.Series.GetLastTimePoint();
             while (t < toDate)
             {
-                _SoCPlanValues.Add(new DateTimePoint(t, series[t]));
+                _SoCPlanValues.Add(new DateTimePoint(t,100*series[t]));
                 t += TimeSpan.FromMinutes(15);
             }
         }

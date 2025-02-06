@@ -89,10 +89,13 @@ namespace BatteryPomaPlanner
         {
             var typeModel = TypeModel.Create();
 
+            typeModel.IncludeDateTimeKind = true;
+
             foreach (var relation in ProtocolBuffersConfiguration.Relations)
             {
                 typeModel[relation.BaseClass].AddSubType(relation.Index, relation.DerivedClass);
             }
+            RuntimeTypeModel.Default.IncludeDateTimeKind = true;
 
             return typeModel;
         }

@@ -142,8 +142,8 @@ namespace BatterySimulator
                 InitialSoHe = new Percentage(100),
                 //InitialCapacityC = new Power(10,Units.MegaWatt),
                 //InitialCapacityE = new Energy(20, Units.MegaWattHour),
-                ChargeEfficiency = new DimensionlessQuantity(0.99),
-                DischargeEfficiency = new DimensionlessQuantity(0.99),
+                ChargeEfficiency = new DimensionlessQuantity(0.95),
+                DischargeEfficiency = new DimensionlessQuantity(0.95),
                 MaxNumberOfEfcPerHour = 100, 
                 InitialSoC = new Percentage(50)
             };
@@ -190,7 +190,7 @@ namespace BatterySimulator
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
 
-            _sleepTime = TimeSpan.FromMilliseconds(500);
+            _sleepTime = TimeSpan.FromMilliseconds(400);
 
         }
 
@@ -198,10 +198,11 @@ namespace BatterySimulator
         {
             var priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWattHour);
             DateTime t = TimeProvider.GetTime();
-            TimeSpan replanningInterval = TimeSpan.FromMinutes(120);
+            TimeSpan replanningInterval = TimeSpan.FromMinutes(180);
             
-            await _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 48);
-            
+            var planningTask = _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 32);
+            await planningTask;
+
             DateTime lastPlanning = t;
 
             while(t < _end && SimulationEnabled)
@@ -209,8 +210,14 @@ namespace BatterySimulator
 
                 if (t - lastPlanning >= replanningInterval)
                 {
-                    await Console.Out.WriteLineAsync($"Replanning...");
-                    _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 48);
+                    Console.Out.WriteLine($"Replanning...");
+
+                    if (planningTask.IsCompleted)
+                    {
+                        planningTask = _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 32);
+                        await planningTask;
+                    }
+
                     lastPlanning = t;
                 }
 
