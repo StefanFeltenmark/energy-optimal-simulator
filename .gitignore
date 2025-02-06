@@ -22,3 +22,23 @@ BatterySimulator/.vs/BatterySimulator/v17/
 *.bin
 
 BatteryPomaPlanner/bin/Debug/net8.0/
+
+BatterySimulator.Interfaces/obj/
+
+BatteryPomaPlanner/obj/
+
+UnitTests/obj/
+
+UnitTests/bin/Debug/net8.0/
+
+BatterySimulatorGUI/obj/Debug/net8.0/
+
+Domain/obj/Debug/net8.0/
+
+*.props
+
+BatterySimulatorConsole/obj/
+
+BatterySimulatorGUI/obj/
+
+BatterySimulator/obj/
