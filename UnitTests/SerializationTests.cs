@@ -31,11 +31,19 @@ namespace UnitTests
         [Fact]
         public void ProtobufSerializesDataCorrectly2()
         {
+
+            string path = "C:\\temp\\Simulator";
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
             const string protobufFileName = "ProtoBuf.bin";
 
            var data = GetData();
 
-            MultiAssetData recovered = null;
+            MultiAssetData? recovered = null;
 
             var settings1 = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto, Formatting = Formatting.Indented };
 
@@ -72,12 +80,12 @@ namespace UnitTests
 
             if (!json1.Equals(json2))
             {
-                File.WriteAllText(@"ProtobufSerializesCorrectly1.json", json1);
-                File.WriteAllText(@"ProtobufSerializesCorrectly2.json", json2);
+                File.WriteAllText(Path.Combine(path,@"ProtobufSerializesCorrectly1.json"), json1);
+                File.WriteAllText(Path.Combine(path,@"ProtobufSerializesCorrectly2.json"), json2);
             }
             else
             {
-                File.WriteAllText(@"ProtobufSerializesCorrectly2.json", json2);
+                File.WriteAllText(Path.Combine(path, @"ProtobufSerializesCorrectly2.json"), json2);
             }
 
             Assert.Equal(json1, json2);
@@ -199,7 +207,8 @@ namespace UnitTests
             battery.Ts.SocSoftMin = new TimeSeries();
             battery.FinalSocMax = new Percentage(100);
             battery.FinalSocMin = new Percentage(0);
-        //    battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWatt));
+            battery.FinalStoragePrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
+         //   battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.Percent));
 
             data.CommonData.Parameters.CaseName = "BatterySimulation";
 
