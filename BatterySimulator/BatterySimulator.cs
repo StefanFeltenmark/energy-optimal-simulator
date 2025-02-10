@@ -1,9 +1,7 @@
-﻿using MathNet.Numerics.Random;
-using Powel.Optimal.MultiAsset.Domain.Common.Market;
+﻿using Powel.Optimal.MultiAsset.Domain.Common.Market;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
-using System;
 using BatterySimulator.Interfaces;
 using BatteryPomaPlanner;
 using Domain;

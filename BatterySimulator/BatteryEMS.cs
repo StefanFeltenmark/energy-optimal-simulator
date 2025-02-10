@@ -1,11 +1,12 @@
-﻿using Domain;
+﻿using BatterySimulator.Interfaces;
+using Domain;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 
 namespace BatterySimulator
 {
-    public class BatteryEMS : IObservable<BatteryState>
+    public class BatteryEMS : IBatteryEMS
     {
         private Battery _battery;
         private BatteryState _state;
