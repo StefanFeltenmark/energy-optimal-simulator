@@ -14,7 +14,7 @@ namespace BatterySimulator
         private SimulationTimeProvider _timeProvider;
         private bool _isRealTime;
         private BatteryDataRecorder _recorder;
-        private BatteryEMS _ems;
+        private IBatteryEMS _ems;
         private IBatteryPlanner _planner;
         private IPriceForecaster _priceForecaster;
         private PnLManager _pnlManager;
@@ -28,6 +28,7 @@ namespace BatterySimulator
         public BatterySimulator(IBatteryPlanner planner)
         {
             _planner = planner;
+            
         }
 
         public bool IsRealTime

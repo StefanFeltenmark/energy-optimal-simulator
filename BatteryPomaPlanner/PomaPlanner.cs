@@ -41,6 +41,8 @@ namespace BatteryPomaPlanner
 
         public void SetUp(Battery battery, EnergyMarket market)
         {
+            PriceUnit euroPerMwPerMinute = new PriceUnit(Currencies.Euro, Units.MegaWattPerMinute);
+
             _battery = battery;
             _data.EnergyStorage = new EnergyStorageData
             {
@@ -65,6 +67,7 @@ namespace BatteryPomaPlanner
             market.Ts.EnergyDeficitPenaltyPrice.DefaultValue = 1000000;
             market.Ts.EnergySurplusPenaltyPrice = new TimeSeries();
             market.Ts.EnergySurplusPenaltyPrice.DefaultValue = 1000000;
+
             market.Ts.PowerLoad = new TimeSeries();
 
             market.EnergyProviders = new List<EnergyProvider>();
@@ -83,6 +86,7 @@ namespace BatteryPomaPlanner
             market.EnergyProviders.Add(provider);
 
             // Battery time series
+            _battery.RampCost = new UnitPrice(0.1, euroPerMwPerMinute);
             _battery.Ts.SocSoftMaxPenaltyPrice = new TimeSeries();
             _battery.Ts.SocSoftMinPenaltyPrice = new TimeSeries();
             _battery.Ts.SocSoftMaxPenaltyPrice.DefaultValue = 1000000;
@@ -156,6 +160,7 @@ namespace BatteryPomaPlanner
             }
 
             _data.OptimizationId = Guid.NewGuid();
+            
             _solution = await CallMultiAssetService(_data); 
           
           //_solution = CallMultiAssetService(_data).Result; 

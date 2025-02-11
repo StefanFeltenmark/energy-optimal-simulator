@@ -29,6 +29,7 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<ISeries> _dischargeSeries;
         private ObservableCollection<ISeries> _pnlSeries;
         private ObservableCollection<DateTimePoint> _SoCvalues;
+        
         private ObservableCollection<DateTimePoint> _SoCPlanValues;
 
         private ObservableCollection<DateTimePoint> _priceForecast;

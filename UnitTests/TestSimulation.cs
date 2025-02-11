@@ -20,6 +20,7 @@ namespace UnitTests
         {
 
             IBatteryPlanner planner = new RandomBatteryPlanner();
+            
             BatterySimulator.BatterySimulator simulator = new BatterySimulator.BatterySimulator(planner);
 
             simulator.Simulate();
