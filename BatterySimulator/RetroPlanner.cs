@@ -8,27 +8,29 @@ using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
-    public class PriceLevelPlanner : IBatteryPlanner
+    public class RetroPlanner : IBatteryPlanner
     {
         private TimeSeries _plan;
         private Battery? _battery;
         private Random _r = new Random(297349);
-        private TimeSeries _energyPriceForecastForecast;
+        private TimeSeries _historicPrices;
+        private TimeSeries _priceForecast;
         private ObservableTimeSeries _plannedSoC;
         private Percentage _buyPriceThreshold;
         private  Percentage _sellPriceThreshold;
-        private TimeSpan _lookaAhead;
+        private TimeSpan _lookBack;
 
-        public string Name => "PriceLevelPlanner";
+        public string Name => "RetroPlanner";
 
 
-        public PriceLevelPlanner()
+        public RetroPlanner()
         {
             _plan = new TimeSeries();
             _buyPriceThreshold = new Percentage(15);
             _sellPriceThreshold = new Percentage(15);
-            _lookaAhead = TimeSpan.FromHours(6);
+            _lookBack = TimeSpan.FromHours(6);
             _plannedSoC = new ObservableTimeSeries();
+            _priceForecast = new TimeSeries();
         }
 
 
@@ -38,10 +40,10 @@ namespace BatterySimulator
             set => _plan = value;
         }
 
-        public TimeSeries EnergyPriceForecast
+        public TimeSeries HistoricPrices
         {
-            get => _energyPriceForecastForecast;
-            set => _energyPriceForecastForecast = value;
+            get => _historicPrices;
+            set => _historicPrices = value;
         }
 
         public Percentage BuyPriceThreshold
@@ -62,10 +64,10 @@ namespace BatterySimulator
             set => _battery = value;
         }
 
-        public TimeSpan LookaAhead
+        public TimeSpan LookBack
         {
-            get => _lookaAhead;
-            set => _lookaAhead = value;
+            get => _lookBack;
+            set => _lookBack = value;
         }
 
 
@@ -79,13 +81,20 @@ namespace BatterySimulator
             get { return _plannedSoC; }
         }
 
+        public TimeSeries PriceForecast
+        {
+            get => _priceForecast;
+            set => _priceForecast = value;
+        }
+
         public async Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
         {
             // update
-            _plan = new TimeSeries(true, true);
             
-            double maxPrice = _energyPriceForecastForecast.GetSubSeries(planStart,planStart+LookaAhead).Values().Max();
-            double minPrice = _energyPriceForecastForecast.GetSubSeries(planStart,planStart+LookaAhead).Values().Min();
+            var newPlan = new TimeSeries(true, true);
+            
+            double maxPrice = _historicPrices.GetSubSeries(planStart-LookBack,planStart).Values().Max();
+            double minPrice = _historicPrices.GetSubSeries(planStart-LookBack,planStart).Values().Min();
 
             var buyat = minPrice + _buyPriceThreshold.ToFraction() * (maxPrice - minPrice);
             var sellat = maxPrice - _sellPriceThreshold.ToFraction() * (maxPrice - minPrice);
@@ -94,19 +103,21 @@ namespace BatterySimulator
             foreach (PlanningInterval simulationInterval in planningPeriod.Intervals)
             {
                 double prod = 0.0;
-                double price = _energyPriceForecastForecast[simulationInterval.Start];
+                double price = _priceForecast[simulationInterval.Start];
 
                 if(price <= buyat)
                 {
-                    prod = Battery1.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
+                    prod = -Battery1.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
                 }
                 else if (price > sellat)
                 {
-                    prod = -Battery1.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
+                    prod = Battery1.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
                 }
                 
-                _plan.SetValueAt(simulationInterval.Start, prod);
+                newPlan.SetValueAt(simulationInterval.Start, prod);
             }
+
+            _plan = newPlan;
         }
     }
 }

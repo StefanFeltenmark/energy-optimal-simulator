@@ -11,18 +11,18 @@ namespace BatterySimulator
 {
     public class BatterySimulator : IDisposable
     {
-        private SimulationTimeProvider _timeProvider;
+        private SimulationTimeProvider? _timeProvider;
         private bool _isRealTime;
-        private BatteryDataRecorder _recorder;
-        private IBatteryEMS _ems;
-        private IBatteryPlanner _planner;
-        private IPriceForecaster _priceForecaster;
-        private PnLManager _pnlManager;
+        private BatteryDataRecorder? _recorder;
+        private IBatteryEMS? _ems;
+        private IBatteryPlanner? _planner;
+        private IPriceForecaster? _priceForecaster;
+        private PnLManager? _pnlManager;
         private DateTime _end;
         private DateTime _start;
         private bool _simulationEnabled;
-        private EnergyMarket _market;
-        private Battery _battery;
+        private EnergyMarket? _market;
+        private Battery? _battery;
         private TimeSpan _sleepTime;
 
         public BatterySimulator(IBatteryPlanner planner)
@@ -37,11 +37,7 @@ namespace BatterySimulator
             set => _isRealTime = value;
         }
 
-        public BatteryDataRecorder Recorder
-        {
-            get => _recorder;
-            
-        }
+        public BatteryDataRecorder Recorder => _recorder;
 
         public bool SimulationEnabled
         {
@@ -106,7 +102,7 @@ namespace BatterySimulator
 
         public void SetUp(int nHours, int deltaSeconds)
         {
-            _start = new DateTime(2018, 1, 1, 9,0,0, DateTimeKind.Local); 
+            _start = new DateTime(2018, 1, 4, 9,0,0, DateTimeKind.Local); 
             _end = _start + TimeSpan.FromHours(nHours);
             TimeSpan delta = TimeSpan.FromSeconds(deltaSeconds);
             TimeProvider = new SimulationTimeProvider(_start, delta);
@@ -116,7 +112,7 @@ namespace BatterySimulator
             _market = new EnergyMarket(Guid.NewGuid(), "EPEX Intraday");
 
             //
-            string filename = "C:\\Users\\stefan.feltenmark\\Documents\\energy-optimal-simulator\\Data\\Prices\\elspot-prices_2018_hourly_eur.csv";
+            string filename = @"C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\Data\Prices\elspot-prices_2018_hourly_eur.csv";
           
             var prices  = SpotPriceReader.ReadFile(filename);
             _market.Ts.EnergySellPrice = prices["SE3"];
@@ -139,8 +135,6 @@ namespace BatterySimulator
                 NominalEnergyCapacity =  new Energy(20, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
                 InitialSoHe = new Percentage(100),
-                //InitialCapacityC = new Power(10,Units.MegaWatt),
-                //InitialCapacityE = new Energy(20, Units.MegaWattHour),
                 ChargeEfficiency = new DimensionlessQuantity(0.95),
                 DischargeEfficiency = new DimensionlessQuantity(0.95),
                 MaxNumberOfEfcPerHour = 100, 
@@ -174,22 +168,33 @@ namespace BatterySimulator
             
 
             // Generate a plan
-            if (_planner is PriceLevelPlanner planner)
+            if (_planner is PriceLevelPlanner priceLevelPlanner)
             {
-                planner.EnergyPriceForecast = _priceForecaster.PriceForecast;
-                planner.Battery1 = _battery;
-                planner.LookaAhead = TimeSpan.FromHours(4);
+                priceLevelPlanner.EnergyPriceForecast = _priceForecaster.PriceForecast;
+                priceLevelPlanner.Battery1 = _battery;
+                priceLevelPlanner.LookaAhead = TimeSpan.FromHours(4);
             }
             else if(_planner is PomaPlanner pomaPlanner)
             {
                 pomaPlanner.SetUp(_battery, _market);
                 pomaPlanner.Subscribe(_ems);
             }
+            if (_planner is RandomBatteryPlanner randomBatteryPlanner)
+            {
+                randomBatteryPlanner.Battery1 = _battery;
+            }
+            if (_planner is RetroPlanner retroPlanner)
+            {
+                retroPlanner.HistoricPrices = _market.Ts.EnergyBuyPrice;
+                retroPlanner.PriceForecast = _priceForecaster.PriceForecast;
+                retroPlanner.Battery1 = _battery;
+                retroPlanner.LookBack = TimeSpan.FromHours(24);
+            }
 
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
 
-            _sleepTime = TimeSpan.FromMilliseconds(400);
+            _sleepTime = TimeSpan.FromMilliseconds(250);
 
         }
 
@@ -236,7 +241,7 @@ namespace BatterySimulator
                 }
 
 
-                PnlManager.UpdatePnL(t, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
+                _pnlManager.UpdatePnL(t, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
                 
                 TimeProvider.Increment();
 

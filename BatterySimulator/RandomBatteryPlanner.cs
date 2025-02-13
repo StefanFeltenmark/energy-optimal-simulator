@@ -15,9 +15,12 @@ namespace BatterySimulator
         private Battery? _battery;
         private Random _r = new Random(297349);
 
+        public string Name => "RandomBatteryPlanner";
+
         public RandomBatteryPlanner()
         {
             _plan = new TimeSeries();
+            _plannedSoc = new ObservableTimeSeries();
         }
 
         public TimeSeries Plan
@@ -37,9 +40,9 @@ namespace BatterySimulator
             return new Power(_plan[time], Units.MegaWatt);
         }
 
-        public ObservableTimeSeries PlannedSoC { get; set; }
+        public ObservableTimeSeries PlannedSoC => _plannedSoc;
 
-       
+
 
         public async Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
         {

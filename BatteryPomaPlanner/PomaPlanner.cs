@@ -41,7 +41,7 @@ namespace BatteryPomaPlanner
 
         public void SetUp(Battery battery, EnergyMarket market)
         {
-            PriceUnit euroPerMwPerMinute = new PriceUnit(Currencies.Euro, Units.MegaWattPerMinute);
+            PriceUnit euroPerMw = new PriceUnit(Currencies.Euro, Units.MegaWatt);
 
             _battery = battery;
             _data.EnergyStorage = new EnergyStorageData
@@ -54,15 +54,15 @@ namespace BatteryPomaPlanner
             _data.CommonData = new CommonData();
             _market = market;
 
-            _data.CommonData.EnergyMarkets.Add(market);
+            _data.CommonData.EnergyMarkets.Add(_market);
 
             // Market data
-            market.Ts.EnergyBuyMax = new TimeSeries();
-            market.Ts.EnergyBuyMax.DefaultValue = 1000000;
-            market.Ts.EnergyBuyMin = new TimeSeries();
-            market.Ts.EnergySellMin = new TimeSeries();
-            market.Ts.EnergySellMax = new TimeSeries();
-            market.Ts.EnergySellMax.DefaultValue = 1000000;
+            market.Ts.PowerBuyMax = new TimeSeries();
+            market.Ts.PowerBuyMax.DefaultValue = 1000000;
+            market.Ts.PowerBuyMin = new TimeSeries();
+            market.Ts.PowerSellMin = new TimeSeries();
+            market.Ts.PowerSellMax = new TimeSeries();
+            market.Ts.PowerSellMax.DefaultValue = 1000000;
             market.Ts.EnergyDeficitPenaltyPrice = new TimeSeries();
             market.Ts.EnergyDeficitPenaltyPrice.DefaultValue = 1000000;
             market.Ts.EnergySurplusPenaltyPrice = new TimeSeries();
@@ -86,11 +86,11 @@ namespace BatteryPomaPlanner
             market.EnergyProviders.Add(provider);
 
             // Battery time series
-            _battery.RampCost = new UnitPrice(0.1, euroPerMwPerMinute);
+            _battery.RampCost = new UnitPrice(0.1, euroPerMw);
             _battery.Ts.SocSoftMaxPenaltyPrice = new TimeSeries();
             _battery.Ts.SocSoftMinPenaltyPrice = new TimeSeries();
-            _battery.Ts.SocSoftMaxPenaltyPrice.DefaultValue = 1000000;
-            _battery.Ts.SocSoftMinPenaltyPrice.DefaultValue = 1000000;
+            _battery.Ts.SocSoftMaxPenaltyPrice.DefaultValue = 1000;
+            _battery.Ts.SocSoftMinPenaltyPrice.DefaultValue = 1000;
             _battery.Ts.ChargeCost = new TimeSeries();
             _battery.Ts.DischargeCost = new TimeSeries();
             _battery.Ts.AvailabilityFlag = new TimeSeries();
@@ -109,15 +109,19 @@ namespace BatteryPomaPlanner
             _battery.Ts.SoftSchedule = new TimeSeries();
             _battery.Ts.SoftScheduleFlag = new TimeSeries();
             _battery.Ts.SocSoftMax = new TimeSeries();
-            _battery.Ts.SocSoftMax.DefaultValue = 1;
+            _battery.Ts.SocSoftMax.DefaultValue = 0.8;
             _battery.Ts.SocSoftMin = new TimeSeries();
+            _battery.Ts.SocSoftMin.DefaultValue = 0.2;
             _battery.FinalSocMax = new Percentage(100);
-            _battery.FinalSocMin = new Percentage(20);
-          //  _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.Percent));
+            _battery.FinalSocMin = new Percentage(0);
+            _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.Percent));
 
             _data.CommonData.Parameters.CaseName = "BatterySimulation";
             _data.OptimizationId = _optimizationId;
         }
+
+        public string Name => "POMA";
+
 
         public TimeSeries Plan
         {
@@ -163,7 +167,7 @@ namespace BatteryPomaPlanner
             
             _solution = await CallMultiAssetService(_data); 
           
-          //_solution = CallMultiAssetService(_data).Result; 
+            //_solution = CallMultiAssetService(_data).Result; 
 
             // update plan
             _plan = _solution.Solution.BatterySolution.NetCharge[_battery];

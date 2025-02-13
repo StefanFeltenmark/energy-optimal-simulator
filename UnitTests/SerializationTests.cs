@@ -153,12 +153,12 @@ namespace UnitTests
             data.CommonData.EnergyMarkets.Add(market);
 
             // Market data
-            market.Ts.EnergyBuyMax = new TimeSeries();
-            market.Ts.EnergyBuyMax.DefaultValue = 1000000;
-            market.Ts.EnergyBuyMin = new TimeSeries();
-            market.Ts.EnergySellMin = new TimeSeries();
-            market.Ts.EnergySellMax = new TimeSeries();
-            market.Ts.EnergySellMax.DefaultValue = 1000000;
+            market.Ts.PowerBuyMax = new TimeSeries();
+            market.Ts.PowerBuyMax.DefaultValue = 1000000;
+            market.Ts.PowerBuyMin = new TimeSeries();
+            market.Ts.PowerSellMin = new TimeSeries();
+            market.Ts.PowerSellMax = new TimeSeries();
+            market.Ts.PowerSellMax.DefaultValue = 1000000;
             market.Ts.EnergyDeficitPenaltyPrice = new TimeSeries();
             market.Ts.EnergyDeficitPenaltyPrice.DefaultValue = 1000000;
             market.Ts.EnergySurplusPenaltyPrice = new TimeSeries();
@@ -207,7 +207,7 @@ namespace UnitTests
             battery.Ts.SocSoftMin = new TimeSeries();
             battery.FinalSocMax = new Percentage(100);
             battery.FinalSocMin = new Percentage(0);
-            battery.FinalStoragePrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
+         //   battery.FinalStoragePrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
          //   battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.Percent));
 
             data.CommonData.Parameters.CaseName = "BatterySimulation";

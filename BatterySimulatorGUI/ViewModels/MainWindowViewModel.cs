@@ -40,7 +40,7 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _pnlValues;
         
         private DateTime _simulationTime;
-        private MonetaryAmount _currentPnL;
+        private string? _currentPnL;
         private TimeSpan _visibleHorizon;
         private int _nHours;
         private int _maxItems = 180;
@@ -54,7 +54,7 @@ namespace BatterySimulatorGUI.ViewModels
         {
             _simulator = simulator;
             
-            _nHours = 168;
+            _nHours = 336;
             _simulator.SetUp(_nHours , 300);
 
             _visibleHorizon = TimeSpan.FromHours(6);
@@ -141,7 +141,7 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 Values = _realizedPrice,
                 Name = "Price",
-                Stroke = new SolidColorPaint(SKColors.Red) { StrokeThickness = 2 }, 
+                Stroke = new SolidColorPaint(SKColors.Red) { StrokeThickness = 3 }, 
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null,
@@ -151,7 +151,7 @@ namespace BatterySimulatorGUI.ViewModels
             
             _pnlSeries = new ObservableCollection<ISeries>();
             _pnlValues = new ObservableCollection<DateTimePoint>();
-            PnlSeries.Add(new LineSeries<DateTimePoint>
+            PnlSeries.Add(new StepLineSeries<DateTimePoint>
             {
                 Values = _pnlValues,
                 Name = "PnL (€)",
@@ -230,9 +230,9 @@ namespace BatterySimulatorGUI.ViewModels
         }
 
         
-        public MonetaryAmount CurrentPnL
+        public string? CurrentPnL
         {
-            get => _currentPnL;
+            get => _currentPnL; // todo
             private set => this.RaiseAndSetIfChanged(ref _currentPnL, value); 
         
         }
@@ -328,7 +328,13 @@ namespace BatterySimulatorGUI.ViewModels
         private void AccProfit_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             Update(sender, e, _pnlValues);
-         //   CurrentPnL = new MonetaryAmount(_simulator.PnlManager.AccProfit.Last().Value, Currencies.Euro);
+
+            double val = 0.0;
+            if (_pnlValues.Any())
+            {
+                val = _pnlValues[_pnlValues.Count - 1].Value.Value;
+            }
+            CurrentPnL = (new MonetaryAmount(val, Currencies.Euro)).ToString(); // todo
         }
 
         private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values)

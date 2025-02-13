@@ -11,4 +11,6 @@ public interface IBatteryPlanner
 
     Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods);
 
+    string Name { get; }
+
 }
