@@ -2,12 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel.Design.Serialization;
-using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 using BatterySimulator;
-using Domain;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Measure;
@@ -41,6 +38,7 @@ namespace BatterySimulatorGUI.ViewModels
         
         private DateTime _simulationTime;
         private string? _currentPnL;
+        private string? _equivalentCycles;
         private TimeSpan _visibleHorizon;
         private int _nHours;
         private int _maxItems = 180;
@@ -54,7 +52,7 @@ namespace BatterySimulatorGUI.ViewModels
         {
             _simulator = simulator;
             
-            _nHours = 336;
+            _nHours = 1000;
             _simulator.SetUp(_nHours , 300);
 
             _visibleHorizon = TimeSpan.FromHours(6);
@@ -204,7 +202,7 @@ namespace BatterySimulatorGUI.ViewModels
             DateTime toDate = series.Series.GetLastTimePoint();
             while (t < toDate)
             {
-                _SoCPlanValues.Add(new DateTimePoint(t,100*series[t]));
+                _SoCPlanValues.Add(new DateTimePoint(t,100*series[t.ToUniversalTime()]));
                 t += TimeSpan.FromMinutes(15);
             }
         }
@@ -221,7 +219,11 @@ namespace BatterySimulatorGUI.ViewModels
 
         private void Recorder_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            
+            BatteryDataRecorder? recorder = sender as BatteryDataRecorder;
+            if (recorder != null)
+            {
+                EquivalentCycles = recorder.EquivalentCycles[_simulationTime].ToString("f2");
+            }
         }
 
         private void TimeProvider_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -234,6 +236,13 @@ namespace BatterySimulatorGUI.ViewModels
         {
             get => _currentPnL; // todo
             private set => this.RaiseAndSetIfChanged(ref _currentPnL, value); 
+        
+        }
+
+        public string? EquivalentCycles
+        {
+            get => _equivalentCycles; // todo
+            private set => this.RaiseAndSetIfChanged(ref _equivalentCycles, value); 
         
         }
 
@@ -291,7 +300,7 @@ namespace BatterySimulatorGUI.ViewModels
             _priceForecast.Clear();
             while (t < toTime)
             {
-                _priceForecast.Add(new DateTimePoint(t, _simulator.PriceForecaster.PriceForecast[t]));
+                _priceForecast.Add(new DateTimePoint(t.ToLocalTime(), _simulator.PriceForecaster.PriceForecast[t.ToUniversalTime()]));
                 t += TimeSpan.FromMinutes(15);
             }
         }
@@ -310,7 +319,7 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
                 {
-                    _SoCvalues.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
+                    _SoCvalues.Add(new DateTimePoint(datapoint.Key.ToLocalTime(), datapoint.Value));
                 }
 
                 if (_SoCvalues.Count > _maxItems)
@@ -344,7 +353,7 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
                 {
-                    values.Add(new DateTimePoint(datapoint.Key, datapoint.Value));
+                    values.Add(new DateTimePoint(datapoint.Key.ToLocalTime(), datapoint.Value));
                 }
 
                 if (values.Count > _maxItems)
