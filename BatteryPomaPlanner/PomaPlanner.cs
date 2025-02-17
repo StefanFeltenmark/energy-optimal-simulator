@@ -89,10 +89,12 @@ namespace BatteryPomaPlanner
             _battery.RampCost = new UnitPrice(0.1, euroPerMw);
             _battery.Ts.SocSoftMaxPenaltyPrice = new TimeSeries();
             _battery.Ts.SocSoftMinPenaltyPrice = new TimeSeries();
-            _battery.Ts.SocSoftMaxPenaltyPrice.DefaultValue = 1000;
-            _battery.Ts.SocSoftMinPenaltyPrice.DefaultValue = 1000;
+            _battery.Ts.SocSoftMaxPenaltyPrice.DefaultValue = 60;
+            _battery.Ts.SocSoftMinPenaltyPrice.DefaultValue = 60;
             _battery.Ts.ChargeCost = new TimeSeries();
+            _battery.Ts.ChargeCost.DefaultValue = 0.1;
             _battery.Ts.DischargeCost = new TimeSeries();
+            _battery.Ts.DischargeCost.DefaultValue = 0.1;
             _battery.Ts.AvailabilityFlag = new TimeSeries();
             _battery.Ts.AvailabilityFlag.DefaultValue = 1;
             _battery.Ts.AvailableEnergyPercent = new TimeSeries();
@@ -109,15 +111,17 @@ namespace BatteryPomaPlanner
             _battery.Ts.SoftSchedule = new TimeSeries();
             _battery.Ts.SoftScheduleFlag = new TimeSeries();
             _battery.Ts.SocSoftMax = new TimeSeries();
-            _battery.Ts.SocSoftMax.DefaultValue = 0.8;
+            _battery.Ts.SocSoftMax.DefaultValue = 0.85;
             _battery.Ts.SocSoftMin = new TimeSeries();
-            _battery.Ts.SocSoftMin.DefaultValue = 0.2;
+            _battery.Ts.SocSoftMin.DefaultValue = 0.15;
             _battery.FinalSocMax = new Percentage(100);
             _battery.FinalSocMin = new Percentage(0);
             _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.Percent));
 
             _data.CommonData.Parameters.CaseName = "BatterySimulation";
             _data.OptimizationId = _optimizationId;
+
+            _data.CommonData.SolveParameters.LogLevel = 2;
         }
 
         public string Name => "POMA";
@@ -148,7 +152,7 @@ namespace BatteryPomaPlanner
 
         public Power GetPlannedProduction(DateTime time)
         {
-            return new Power(_plan[time], Units.MegaWatt);
+            return new Power(_plan[time.ToUniversalTime()], Units.MegaWatt);
         }
 
        
