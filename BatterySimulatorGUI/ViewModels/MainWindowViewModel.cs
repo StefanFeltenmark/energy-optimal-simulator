@@ -232,7 +232,7 @@ namespace BatterySimulatorGUI.ViewModels
         
         public string? CurrentPnL
         {
-            get => _currentPnL; // todo
+            get => _currentPnL; 
             private set => this.RaiseAndSetIfChanged(ref _currentPnL, value); 
         
         }
@@ -334,7 +334,7 @@ namespace BatterySimulatorGUI.ViewModels
             {
                 val = _pnlValues[_pnlValues.Count - 1].Value.Value;
             }
-            CurrentPnL = (new MonetaryAmount(val, Currencies.Euro)).ToString(); // todo
+            CurrentPnL = (new MonetaryAmount(val, Currencies.Euro)).ToString("f0"); 
         }
 
         private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values)

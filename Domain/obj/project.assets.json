@@ -563,11 +563,11 @@
           }
         }
       },
-      "Powel.Optimal.MultiAsset.Domain/2.0.0.530-alpha": {
+      "Powel.Optimal.MultiAsset.Domain/2.0.0.533-alpha": {
         "type": "package",
         "dependencies": {
-          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.530-alpha",
-          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.530-alpha",
+          "Powel.Optimal.MultiAsset.DynPHydroPlantOpt": "2.0.0.533-alpha",
+          "Powel.Optimal.MultiAsset.OPS.Core": "2.0.0.533-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0"
         },
@@ -578,7 +578,7 @@
           "lib/net48/Powel.Optimal.MultiAsset.Domain.dll": {}
         }
       },
-      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.530-alpha": {
+      "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.533-alpha": {
         "type": "package",
         "compile": {
           "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll": {}
@@ -587,7 +587,7 @@
           "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll": {}
         }
       },
-      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.530-alpha": {
+      "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.533-alpha": {
         "type": "package",
         "dependencies": {
           "Microsoft.Extensions.Configuration": "7.0.0",
@@ -604,14 +604,14 @@
           "lib/net48/Powel.Optimal.MultiAsset.Infrastructure.dll": {}
         }
       },
-      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.530-alpha": {
+      "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.533-alpha": {
         "type": "package",
         "dependencies": {
           "MathNet.Numerics.Signed": "4.15.0",
           "Microsoft.AspNet.WebApi.Core": "5.3.0",
           "Newtonsoft.Json": "13.0.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.530-alpha",
-          "Powel.Optimal.MultiAsset.Utility": "2.0.0.530-alpha",
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.533-alpha",
+          "Powel.Optimal.MultiAsset.Utility": "2.0.0.533-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0",
           "protobuf-net": "2.4.0"
@@ -623,11 +623,11 @@
           "lib/net48/Powel.Optimal.MultiAsset.OPS.Core.dll": {}
         }
       },
-      "Powel.Optimal.MultiAsset.Utility/2.0.0.530-alpha": {
+      "Powel.Optimal.MultiAsset.Utility/2.0.0.533-alpha": {
         "type": "package",
         "dependencies": {
           "EPPlus": "4.5.3.3",
-          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.530-alpha",
+          "Powel.Optimal.MultiAsset.Infrastructure": "2.0.0.533-alpha",
           "System.IdentityModel.Tokens.Jwt": "5.7.0",
           "System.Text.Json": "9.0.0"
         },
@@ -2796,10 +2796,10 @@
         "powel.optimal.log.client.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.Domain/2.0.0.530-alpha": {
-      "sha512": "SQUv05bZQDlAdoPprc7ai7L5fC/fhfgtUThKlmlueNg4yGJRJlhWdhBr0qUiFkg2PR8vs7gGdbr7AEWsnnO1+A==",
+    "Powel.Optimal.MultiAsset.Domain/2.0.0.533-alpha": {
+      "sha512": "SZp2yTZHF7WqIVQRxG8ML0PXFXsQQaRHOvx/YGMWetQqwKy3VEYCGCtj0Uu+VLI0ZAh0685iKF0V7Vf6JY4Dxw==",
       "type": "package",
-      "path": "powel.optimal.multiasset.domain/2.0.0.530-alpha",
+      "path": "powel.optimal.multiasset.domain/2.0.0.533-alpha",
       "files": [
         ".nupkg.metadata",
         "content/ProtocolBuffersConfiguration.tt",
@@ -2809,51 +2809,51 @@
         "contentFiles/any/net48/Serialization.tt",
         "contentFiles/any/net48/Serialization.txt",
         "lib/net48/Powel.Optimal.MultiAsset.Domain.dll",
-        "powel.optimal.multiasset.domain.2.0.0.530-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.domain.2.0.0.533-alpha.nupkg.sha512",
         "powel.optimal.multiasset.domain.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.530-alpha": {
-      "sha512": "P65lZ3RC2UWTYpbQQECc/c0MyLENgzGO0HL2oNq0qdtZY6RmniTALI+vQmi5Kd1kLfQfMBEZ6sqjvT23xZqsgA==",
+    "Powel.Optimal.MultiAsset.DynPHydroPlantOpt/2.0.0.533-alpha": {
+      "sha512": "JfwfpP9d1O8cWqZhD9qI3OcPjcpYELPji/KvlGJd9AhVhhtJNmn0xp7WdUWSz0gLTfOXGWRNPb3bL1402O3spQ==",
       "type": "package",
-      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.530-alpha",
+      "path": "powel.optimal.multiasset.dynphydroplantopt/2.0.0.533-alpha",
       "files": [
         ".nupkg.metadata",
         "lib/netstandard2.0/Powel.Optimal.DynPHydroPlantOpt.dll",
-        "powel.optimal.multiasset.dynphydroplantopt.2.0.0.530-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.dynphydroplantopt.2.0.0.533-alpha.nupkg.sha512",
         "powel.optimal.multiasset.dynphydroplantopt.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.530-alpha": {
-      "sha512": "4ZHpqt7bU89yoIN0uBIDnkMyEuVSQfptqL6CozbshCFK4L3njixnw6IUd3MokjgEZcQrcPwR2R7Z7GxkuXlg1g==",
+    "Powel.Optimal.MultiAsset.Infrastructure/2.0.0.533-alpha": {
+      "sha512": "1I+VnEb3QGhZ4dfS0VX6qHN3teQPxS3642l80wF3yMM+KplKJ7qXbBUGZe3Qyh/MEU4cYzBVQPGdugGrorguZw==",
       "type": "package",
-      "path": "powel.optimal.multiasset.infrastructure/2.0.0.530-alpha",
+      "path": "powel.optimal.multiasset.infrastructure/2.0.0.533-alpha",
       "files": [
         ".nupkg.metadata",
         "lib/net48/Powel.Optimal.MultiAsset.Infrastructure.dll",
-        "powel.optimal.multiasset.infrastructure.2.0.0.530-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.infrastructure.2.0.0.533-alpha.nupkg.sha512",
         "powel.optimal.multiasset.infrastructure.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.530-alpha": {
-      "sha512": "laTPmxcIeH9zD1VWiq6gfjXYEnpUbVwe07zNFCU8kku5lchGue5AexW6UAeVpg5o0jtwIrrSydSkJUXKVXa3TQ==",
+    "Powel.Optimal.MultiAsset.OPS.Core/2.0.0.533-alpha": {
+      "sha512": "0gwchJvOKKipQlLIPdxjolCSwV4c9CtgLHbcZqkZ7Y26Q2gJOtJ/SxD96ua/J/Wowzv89yIoHjMzshCb5jwA3Q==",
       "type": "package",
-      "path": "powel.optimal.multiasset.ops.core/2.0.0.530-alpha",
+      "path": "powel.optimal.multiasset.ops.core/2.0.0.533-alpha",
       "files": [
         ".nupkg.metadata",
         "lib/net48/Powel.Optimal.MultiAsset.OPS.Core.dll",
-        "powel.optimal.multiasset.ops.core.2.0.0.530-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.ops.core.2.0.0.533-alpha.nupkg.sha512",
         "powel.optimal.multiasset.ops.core.nuspec"
       ]
     },
-    "Powel.Optimal.MultiAsset.Utility/2.0.0.530-alpha": {
-      "sha512": "YP1mL6yMQareXomvqv8GVxukgtRFiZquRv3tASbsji+17pbc0/f7g2eUohu/mpH38Hqe/0LaF8cZRhhSGQc4EA==",
+    "Powel.Optimal.MultiAsset.Utility/2.0.0.533-alpha": {
+      "sha512": "yyIWFfjhLUP4zBMycIHiuffIYi1kfsE8LJQwSWQs9jS7tUk3KhZ428PWtQzrndm6XyEF6Cl99S4iV6m9i5TLMg==",
       "type": "package",
-      "path": "powel.optimal.multiasset.utility/2.0.0.530-alpha",
+      "path": "powel.optimal.multiasset.utility/2.0.0.533-alpha",
       "files": [
         ".nupkg.metadata",
         "lib/net48/Powel.Optimal.MultiAsset.Utility.dll",
-        "powel.optimal.multiasset.utility.2.0.0.530-alpha.nupkg.sha512",
+        "powel.optimal.multiasset.utility.2.0.0.533-alpha.nupkg.sha512",
         "powel.optimal.multiasset.utility.nuspec"
       ]
     },
@@ -6406,7 +6406,7 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "Powel.Optimal.MultiAsset.Domain >= 2.0.0.530-alpha"
+      "Powel.Optimal.MultiAsset.Domain >= 2.0.0.533-alpha"
     ]
   },
   "packageFolders": {
@@ -6466,7 +6466,7 @@
         "dependencies": {
           "Powel.Optimal.MultiAsset.Domain": {
             "target": "Package",
-            "version": "[2.0.0.530-alpha, )"
+            "version": "[2.0.0.533-alpha, )"
           }
         },
         "imports": [
@@ -6491,6 +6491,12 @@
   },
   "logs": [
     {
+      "code": "Undefined",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Your request could not be authenticated by the GitHub Packages service. Please ensure your access token is valid and has the appropriate scopes configured."
+    },
+    {
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
@@ -6504,7 +6510,7 @@
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'Powel.Optimal.MultiAsset.Domain 2.0.0.530-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "message": "Package 'Powel.Optimal.MultiAsset.Domain 2.0.0.533-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
       "libraryId": "Powel.Optimal.MultiAsset.Domain",
       "targetGraphs": [
         "net8.0"
@@ -6514,7 +6520,7 @@
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'Powel.Optimal.MultiAsset.Infrastructure 2.0.0.530-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "message": "Package 'Powel.Optimal.MultiAsset.Infrastructure 2.0.0.533-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
       "libraryId": "Powel.Optimal.MultiAsset.Infrastructure",
       "targetGraphs": [
         "net8.0"
@@ -6524,7 +6530,7 @@
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'Powel.Optimal.MultiAsset.OPS.Core 2.0.0.530-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "message": "Package 'Powel.Optimal.MultiAsset.OPS.Core 2.0.0.533-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
       "libraryId": "Powel.Optimal.MultiAsset.OPS.Core",
       "targetGraphs": [
         "net8.0"
@@ -6534,7 +6540,7 @@
       "code": "NU1701",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'Powel.Optimal.MultiAsset.Utility 2.0.0.530-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "message": "Package 'Powel.Optimal.MultiAsset.Utility 2.0.0.533-alpha' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
       "libraryId": "Powel.Optimal.MultiAsset.Utility",
       "targetGraphs": [
         "net8.0"

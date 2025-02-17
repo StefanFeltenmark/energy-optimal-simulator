@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
-    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.530-alpha" />
+    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.533-alpha" />
   </ItemGroup>
 
   <ItemGroup>
