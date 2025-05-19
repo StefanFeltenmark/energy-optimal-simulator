@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Specialized;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
+
 using Powel.Optimal.MultiAsset.Domain.General.Data;
 
 namespace BatterySimulator

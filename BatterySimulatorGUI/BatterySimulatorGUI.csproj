@@ -24,7 +24,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
-    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.533-alpha" />
+    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.797" />
+    <PackageReference Include="Powel.Optimal.MultiAsset.OPS.Core" Version="2.0.0.545" />
   </ItemGroup>
 
   <ItemGroup>

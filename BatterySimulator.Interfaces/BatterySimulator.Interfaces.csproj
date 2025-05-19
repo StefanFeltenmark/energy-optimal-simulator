@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.533-alpha" />
+    <PackageReference Include="Powel.Optimal.MultiAsset.Domain" Version="2.0.0.797" />
+    <PackageReference Include="Powel.Optimal.MultiAsset.OPS.Core" Version="2.0.0.545" />
   </ItemGroup>
 
   <ItemGroup>

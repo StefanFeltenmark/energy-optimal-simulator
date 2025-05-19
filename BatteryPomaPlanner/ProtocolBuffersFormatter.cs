@@ -87,7 +87,7 @@ namespace BatteryPomaPlanner
 
         private static RuntimeTypeModel CreateTypeModel()
         {
-            var typeModel = TypeModel.Create();
+            var typeModel = RuntimeTypeModel.Create();
 
             typeModel.IncludeDateTimeKind = true;
 

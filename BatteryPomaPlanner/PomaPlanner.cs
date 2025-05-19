@@ -1,7 +1,6 @@
 ﻿using BatterySimulator;
 using BatterySimulator.Interfaces;
 using Domain;
-using OfficeOpenXml.ConditionalFormatting;
 using Powel.Optimal.MultiAsset.Domain;
 using Powel.Optimal.MultiAsset.Domain.Common;
 using Powel.Optimal.MultiAsset.Domain.Common.Market;
@@ -116,7 +115,9 @@ namespace BatteryPomaPlanner
             _battery.Ts.SocSoftMin.DefaultValue = 0.15;
             _battery.FinalSocMax = new Percentage(100);
             _battery.FinalSocMin = new Percentage(0);
-            _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.Percent));
+            _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro,  Units.MegaWattHour));
+            _battery.SoftSchedulePenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
+            _battery.FinalStoragePrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro,  Units.MegaWattHour));
 
             _data.CommonData.Parameters.CaseName = "BatterySimulation";
             _data.OptimizationId = _optimizationId;
@@ -147,7 +148,7 @@ namespace BatteryPomaPlanner
 
         private async Task<PomaSolutionSet> CallMultiAssetService(MultiAssetData options)
         {
-            return await _multiAssetService.Run<PomaSolutionSet>("api/hydroThermal/start", options);
+            return await _multiAssetService.Run<PomaSolutionSet>("api/poma/start", options);
         }
 
         public Power GetPlannedProduction(DateTime time)
