@@ -89,20 +89,20 @@ namespace BatterySimulator
             lock (Sync)
             {
                 var t = _timeProvider.GetTime();
-                _energyContent.Add(t, value.EnergyContent.ConvertToUnit(Units.MegaWattHour).Value);
+                _energyContent.Add(t, value.EnergyContent.CovertToUnit(Units.MegaWattHour).Value);
                 _SoC.Add(t, value.SoC.Value);
-                _netCharge.Add(t, value.ChargingGrid.ConvertToUnit(Units.MegaWatt).Value-value.DischargingGrid.ConvertToUnit(Units.MegaWatt).Value);
-                _chargingGrid.Add(t, value.ChargingGrid.ConvertToUnit(Units.MegaWatt).Value);
-                _dischargingGrid.Add(t, -value.DischargingGrid.ConvertToUnit(Units.MegaWatt).Value);
-                _chargingBattery.Add(t, value.ChargingBattery.ConvertToUnit(Units.MegaWatt).Value);
-                _dischargingBattery.Add(t, -value.DischargingBattery.ConvertToUnit(Units.MegaWatt).Value);
+                _netCharge.Add(t, value.ChargingGrid.CovertToUnit(Units.MegaWatt).Value-value.DischargingGrid.CovertToUnit(Units.MegaWatt).Value);
+                _chargingGrid.Add(t, value.ChargingGrid.CovertToUnit(Units.MegaWatt).Value);
+                _dischargingGrid.Add(t, -value.DischargingGrid.CovertToUnit(Units.MegaWatt).Value);
+                _chargingBattery.Add(t, value.ChargingBattery.CovertToUnit(Units.MegaWatt).Value);
+                _dischargingBattery.Add(t, -value.DischargingBattery.CovertToUnit(Units.MegaWatt).Value);
 
                 if (_lastTime != default)
                 {
                     var delta = t - _lastTime;
-                    Energy chargedEnergy = value.ChargingBattery.ConvertToUnit(Units.MegaWatt).Value * delta.TotalHours;
+                    Energy chargedEnergy = value.ChargingBattery.CovertToUnit(Units.MegaWatt).Value * delta.TotalHours;
                     _chargedEnergyBattery.Add(t, chargedEnergy.Value);
-                    Energy dischargedEnergy = value.DischargingBattery.ConvertToUnit(Units.MegaWatt).Value * delta.TotalHours;
+                    Energy dischargedEnergy = value.DischargingBattery.CovertToUnit(Units.MegaWatt).Value * delta.TotalHours;
                     _dischargedEnergyBattery.Add(t, dischargedEnergy.Value);
 
                     var lastValue = _equivalentCycles[_lastTime];

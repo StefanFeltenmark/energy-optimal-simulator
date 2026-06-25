@@ -33,7 +33,7 @@ namespace BatterySimulator
 
         public Percentage GetSoC()
         {
-            Percentage soc = _state.EnergyContent / _battery.CapacityE();
+            Percentage soc = _state.EnergyContent / _battery.InitialCapacityE;
             return soc;
         }
 
@@ -49,10 +49,10 @@ namespace BatterySimulator
 
             // At most one of charging and discharging is non-zero
             Energy deltaMinusGrid = _state.DischargingGrid * delta;
-            Energy deltaPlusGrid = _state.ChargingGrid * delta;
+            Energy deltaPlusGrid = (_state.ChargingGrid * delta).CovertToUnit(Units.MegaWattHour);
 
             Energy deltaMinusBattery = (1/ _battery.DischargeEfficiency) * deltaMinusGrid;
-            Energy deltaPlusBattery = _battery.ChargeEfficiency * deltaPlusGrid;
+            Energy deltaPlusBattery = (_battery.ChargeEfficiency * deltaPlusGrid).CovertToUnit(Units.MegaWattHour);
 
             Energy dischargeLosses = (1/ _battery.DischargeEfficiency) * deltaMinusGrid - deltaMinusGrid;
             Energy chargeLosses = deltaPlusBattery -  _battery.ChargeEfficiency * deltaPlusGrid;
@@ -117,11 +117,12 @@ namespace BatterySimulator
             }
         }
 
-        public async Task PushBatteryState(BatteryState state)
+        public Task PushBatteryState(BatteryState state)
         {
             foreach (var observer in _observers) {
                   observer.OnNext(state);
             }
+            return Task.CompletedTask;
         }
 
         public void EndTransmission()

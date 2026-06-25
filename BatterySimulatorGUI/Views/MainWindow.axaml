@@ -48,9 +48,9 @@
             <TextBlock Margin="5 5">Delay (ms.)</TextBlock>
             <TextBox  Margin="5 5" Watermark="Enter simulation delay" Text="{Binding TimeDelay , UpdateSourceTrigger=LostFocus}" ></TextBox>
             <TextBlock Margin="5 5">Algorithm</TextBlock>
-            <ComboBox SelectedIndex="0" MaxDropDownHeight="100" HorizontalAlignment="Stretch" Margin="5 5" VerticalAlignment="Top" Width="180">
-                <ComboBoxItem>POMA</ComboBoxItem>
+            <ComboBox SelectedIndex="{Binding SelectedAlgorithmIndex}" MaxDropDownHeight="100" HorizontalAlignment="Stretch" Margin="5 5" VerticalAlignment="Top" Width="180">
                 <ComboBoxItem>Price policy</ComboBoxItem>
+                <ComboBoxItem>POMA</ComboBoxItem>
             </ComboBox>
         </StackPanel>
 
@@ -61,6 +61,7 @@
             <TextBlock  Margin="0 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas" Text="{Binding CurrentPnL, Mode = OneWay}"></TextBlock>
             <TextBlock Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas">EFC: </TextBlock>
             <TextBlock  Margin="0 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas" Text="{Binding EquivalentCycles, Mode = OneWay}"></TextBlock>
+            <TextBlock  Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="18" FontFamily="Consolas" Foreground="Red" Text="{Binding StatusMessage, Mode = OneWay}"></TextBlock>
         </StackPanel>
         <Border Grid.Column="2" Grid.Row="2" Background="White"
                 BorderBrush="Black"

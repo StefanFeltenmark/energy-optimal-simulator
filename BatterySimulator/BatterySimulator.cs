@@ -138,10 +138,18 @@ namespace BatterySimulator
                 ChargeEfficiency = new DimensionlessQuantity(0.95),
                 DischargeEfficiency = new DimensionlessQuantity(0.95),
                 MaxNumberOfEfcPerHour = 100, 
-                InitialSoC = new Percentage(50)
+                InitialSoC = new Percentage(50),
+                SoftSchedulePenaltyPrice = new UnitPrice(100,new PriceUnit(Currencies.Euro,Units.MegaWatt)),
+                FinalStoragePrice = new UnitPrice(0,new PriceUnit(Currencies.Euro,Units.MegaWatt)),
+                Ts = new Battery.BatteryTs()
             };
 
-            
+            // Initial capacities depend only on nominal capacity and state-of-health,
+            // so compute them here for every planner (not just inside PomaPlanner.SetUp).
+            _battery.CalculateInitialCapacityC();
+            _battery.CalculateInitialCapacityE();
+
+
             PriceUnit priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWatt);
             _battery.DischargePoints =
             [
@@ -198,58 +206,63 @@ namespace BatterySimulator
 
         }
 
-        public async Task Simulate()
+        public async Task Simulate(CancellationToken cancellationToken = default)
         {
             var priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWattHour);
             DateTime t = TimeProvider.GetTime();
             TimeSpan replanningInterval = TimeSpan.FromMinutes(180);
-            
+
             var planningTask = _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 32);
             await planningTask;
 
             DateTime lastPlanning = t;
 
-            while(t < _end && SimulationEnabled)
+            try
             {
-
-                if (t - lastPlanning >= replanningInterval)
+                while(t < _end && SimulationEnabled && !cancellationToken.IsCancellationRequested)
                 {
-                    Console.Out.WriteLine($"Replanning...");
 
-                    if (planningTask.IsCompleted)
+                    if (t - lastPlanning >= replanningInterval)
                     {
-                        planningTask = _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 32);
-                        await planningTask;
+                        Console.Out.WriteLine($"Replanning...");
+
+                        if (planningTask.IsCompleted)
+                        {
+                            planningTask = _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 32);
+                            await planningTask;
+                        }
+
+                        lastPlanning = t;
                     }
 
-                    lastPlanning = t;
+                    // Implement plan/policy
+                    _ems.SetChargeLevel(-_planner.GetPlannedProduction(t));
+
+                    // Update state
+                    await _ems.UpdateState(t);
+
+                    await Console.Out.WriteLineAsync($"{t}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
+
+                    // Non-blocking pacing; honours a Stop request promptly.
+                    await Task.Delay(_sleepTime, cancellationToken);
+
+                    if (_isRealTime)
+                    {
+                        await Task.Delay(Delta, cancellationToken);
+                    }
+
+
+                    _pnlManager.UpdatePnL(t, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
+
+                    TimeProvider.Increment();
+
+                    t = TimeProvider.GetTime();
                 }
-
-                // Implement plan/policy
-                _ems.SetChargeLevel(-_planner.GetPlannedProduction(t));
-                
-                // Update state
-                await _ems.UpdateState(t);
-
-                await Console.Out.WriteLineAsync($"{t}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
-
-                Thread.Sleep((int) _sleepTime.TotalMilliseconds);
-
-                if (_isRealTime)
-                {
-                    Thread.Sleep(Delta);
-                }
-
-
-                _pnlManager.UpdatePnL(t, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
-                
-                TimeProvider.Increment();
-
-                t = TimeProvider.GetTime();
             }
-
-
-
+            catch (OperationCanceledException)
+            {
+                // Stop requested — exit the simulation loop cleanly.
+            }
         }
 
         public void Dispose()

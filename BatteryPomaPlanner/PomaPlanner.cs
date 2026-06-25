@@ -1,16 +1,17 @@
 ﻿using BatterySimulator;
 using BatterySimulator.Interfaces;
 using Domain;
-using OfficeOpenXml.ConditionalFormatting;
+using Powel.Optimal.Domain.Infrastructure.Interfaces;
 using Powel.Optimal.MultiAsset.Domain;
 using Powel.Optimal.MultiAsset.Domain.Common;
+using Powel.Optimal.MultiAsset.Infrastructure;
 using Powel.Optimal.MultiAsset.Domain.Common.Market;
 using Powel.Optimal.MultiAsset.Domain.Common.Solution;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.EnergyStorage.Providers;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
-using Powel.Optimal.MultiAsset.Infrastructure;
+
 
 namespace BatteryPomaPlanner
 {
@@ -44,6 +45,8 @@ namespace BatteryPomaPlanner
             PriceUnit euroPerMw = new PriceUnit(Currencies.Euro, Units.MegaWatt);
 
             _battery = battery;
+            _battery.CalculateInitialCapacityC(); // should be done in POMA
+            _battery.CalculateInitialCapacityE(); // should be done in POMA
             _data.EnergyStorage = new EnergyStorageData
             {
                 Batteries =
@@ -147,7 +150,7 @@ namespace BatteryPomaPlanner
 
         private async Task<PomaSolutionSet> CallMultiAssetService(MultiAssetData options)
         {
-            return await _multiAssetService.Run<PomaSolutionSet>("api/hydroThermal/start", options);
+            return await _multiAssetService.Run<PomaSolutionSet>("api/poma/start", options);
         }
 
         public Power GetPlannedProduction(DateTime time)

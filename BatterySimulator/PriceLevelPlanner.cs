@@ -98,11 +98,11 @@ namespace BatterySimulator
 
                 if(price <= buyat)
                 {
-                    prod = Battery1.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
+                    prod = Battery1.InitialCapacityC.CovertToUnit(Units.MegaWatt).Value;
                 }
                 else if (price > sellat)
                 {
-                    prod = -Battery1.CapacityC().ConvertToUnit(Units.MegaWatt).Value;
+                    prod = -Battery1.InitialCapacityC.CovertToUnit(Units.MegaWatt).Value;
                 }
                 
                 _plan.SetValueAt(simulationInterval.Start, prod);

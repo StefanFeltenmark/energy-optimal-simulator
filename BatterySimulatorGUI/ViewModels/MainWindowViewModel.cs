@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using BatterySimulator;
+using BatterySimulator.Interfaces;
+using BatteryPomaPlanner;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Measure;
@@ -39,6 +43,9 @@ namespace BatterySimulatorGUI.ViewModels
         private DateTime _simulationTime;
         private string? _currentPnL;
         private string? _equivalentCycles;
+        private string? _statusMessage;
+        private int _selectedAlgorithmIndex;
+        private CancellationTokenSource? _cts;
         private TimeSpan _visibleHorizon;
         private int _nHours;
         private int _maxItems = 180;
@@ -51,8 +58,9 @@ namespace BatterySimulatorGUI.ViewModels
         public MainWindowViewModel(BatterySimulator.BatterySimulator simulator)
         {
             _simulator = simulator;
-            
+
             _nHours = 1000;
+            ApplySelectedPlanner();
             _simulator.SetUp(_nHours , 300);
 
             _visibleHorizon = TimeSpan.FromHours(6);
@@ -164,8 +172,8 @@ namespace BatterySimulatorGUI.ViewModels
            
             _simulationTime = _simulator.TimeProvider.GetTime();
 
-            netChargeAxes[0].MaxLimit = _simulator.Battery1.CapacityC().ConvertToUnit( Units.MegaWatt).Value + 1;
-            netChargeAxes[0].MinLimit = -_simulator.Battery1.CapacityC().ConvertToUnit( Units.MegaWatt).Value - 1;
+            netChargeAxes[0].MaxLimit = _simulator.Battery1.InitialCapacityC.CovertToUnit( Units.MegaWatt).Value + 1;
+            netChargeAxes[0].MinLimit = -_simulator.Battery1.InitialCapacityC.CovertToUnit( Units.MegaWatt).Value - 1;
 
         }
 
@@ -190,31 +198,49 @@ namespace BatterySimulatorGUI.ViewModels
                 _simulator.Recorder.DischargingGrid.CollectionChanged -= DischargingGridCollectionChanged;
                 _simulator.TimeProvider.PropertyChanged -= TimeProvider_PropertyChanged;
                 _simulator.PnlManager.AccProfit.CollectionChanged -= AccProfit_CollectionChanged;
+                _simulator.Planner.PlannedSoC.CollectionChanged -= PlannedSoC_CollectionChanged;
             }
+        }
+
+        /// <summary>
+        /// Runs <paramref name="action"/> on the UI thread. The simulation raises its
+        /// change notifications from a background thread, so every handler that touches
+        /// bound state must be marshalled or Avalonia throws a cross-thread exception.
+        /// </summary>
+        private static void OnUiThread(Action action)
+        {
+            if (Dispatcher.UIThread.CheckAccess())
+                action();
+            else
+                Dispatcher.UIThread.Post(action);
         }
 
         private void PlannedSoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             ObservableTimeSeries? series = sender as ObservableTimeSeries;
+            if (series == null) return;
 
-            DateTime t = _simulationTime;
-            _SoCPlanValues.Clear();
-            DateTime toDate = series.Series.GetLastTimePoint();
-            while (t < toDate)
+            OnUiThread(() =>
             {
-                _SoCPlanValues.Add(new DateTimePoint(t,100*series[t.ToUniversalTime()]));
-                t += TimeSpan.FromMinutes(15);
-            }
+                DateTime t = _simulationTime;
+                _SoCPlanValues.Clear();
+                DateTime toDate = series.Series.GetLastTimePoint();
+                while (t < toDate)
+                {
+                    _SoCPlanValues.Add(new DateTimePoint(t, series[t.ToUniversalTime()]));
+                    t += TimeSpan.FromMinutes(15);
+                }
+            });
         }
 
         private void DischargingGridCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            Update(sender, e, _dischargeValues);
+            OnUiThread(() => Update(sender, e, _dischargeValues));
         }
 
         private void ChargingGridCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            Update(sender, e, _chargeValues);
+            OnUiThread(() => Update(sender, e, _chargeValues));
         }
 
         private void Recorder_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -222,13 +248,13 @@ namespace BatterySimulatorGUI.ViewModels
             BatteryDataRecorder? recorder = sender as BatteryDataRecorder;
             if (recorder != null)
             {
-                EquivalentCycles = recorder.EquivalentCycles[_simulationTime].ToString("f2");
+                OnUiThread(() => EquivalentCycles = recorder.EquivalentCycles[_simulationTime].ToString("f2"));
             }
         }
 
         private void TimeProvider_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            SimulationTime = _simulator.TimeProvider.GetTime();
+            OnUiThread(() => SimulationTime = _simulator.TimeProvider.GetTime());
         }
 
         
@@ -249,7 +275,23 @@ namespace BatterySimulatorGUI.ViewModels
         public DateTime SimulationTime
         {
             get => _simulationTime;
-            private set => this.RaiseAndSetIfChanged(ref _simulationTime, value); 
+            private set => this.RaiseAndSetIfChanged(ref _simulationTime, value);
+        }
+
+        public string? StatusMessage
+        {
+            get => _statusMessage;
+            set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
+        }
+
+        /// <summary>
+        /// Index into the Algorithm selector: 0 = Price policy, 1 = POMA.
+        /// The choice is applied to the simulator on the next Start/Restart.
+        /// </summary>
+        public int SelectedAlgorithmIndex
+        {
+            get => _selectedAlgorithmIndex;
+            set => this.RaiseAndSetIfChanged(ref _selectedAlgorithmIndex, value);
         }
 
         public ObservableCollection<ISeries> PnlSeries => _pnlSeries;
@@ -260,22 +302,55 @@ namespace BatterySimulatorGUI.ViewModels
 
         public async Task StartSimulation()
         {
+            InitializeSimulator();
             await Task.Run(ReadData);
         }
 
         public async Task ReStartSimulation()
         {
-            _simulator?.SetUp(_nHours , 300);
-            
-            ManageHandlers();
+            InitializeSimulator();
+            await Task.Run(ReadData);
+        }
+
+        /// <summary>
+        /// (Re)wires the simulator for a fresh run: detaches the current event
+        /// handlers, applies the selected planner, runs SetUp, re-attaches handlers
+        /// and clears the chart series. Shared by Start and Restart.
+        /// </summary>
+        private void InitializeSimulator()
+        {
+            StatusMessage = null;
+
+            ManageHandlers(false);
+            ApplySelectedPlanner();
+            _simulator.SetUp(_nHours, 300);
+            ManageHandlers(true);
+
+            // SetUp creates a fresh recorder, so re-apply the sliding-window cap.
+            _simulator.Recorder.SoC.MaxItems = _maxItems;
+            _simulator.Recorder.ChargingGrid.MaxItems = _maxItems;
+            _simulator.Recorder.DischargingGrid.MaxItems = _maxItems;
 
             _SoCvalues.Clear();
+            _SoCPlanValues.Clear();
             _chargeValues.Clear();
             _dischargeValues.Clear();
             _pnlValues.Clear();
             _priceForecast.Clear();
+        }
 
-            await Task.Run(ReadData);
+        /// <summary>
+        /// Sets the simulator's planner from <see cref="SelectedAlgorithmIndex"/>.
+        /// SetUp performs the planner-specific wiring afterwards.
+        /// </summary>
+        private void ApplySelectedPlanner()
+        {
+            IBatteryPlanner planner = SelectedAlgorithmIndex switch
+            {
+                1 => new PomaPlanner(),
+                _ => new PriceLevelPlanner()
+            };
+            _simulator.Planner = planner;
         }
 
         private async Task ReadData()
@@ -287,8 +362,10 @@ namespace BatterySimulatorGUI.ViewModels
             timeAxis[0].MinLimit = _simulator.Start.Ticks;
             timeAxis[0].ForceStepToMin = false;
             timeAxis[0].MinStep = TimeSpan.FromSeconds(60).Ticks;
-           
-            await Task.Run(_simulator.Simulate);
+
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
+            await Task.Run(() => _simulator.Simulate(token), token);
 
             // Simulator finished
             _simulator.SimulationEnabled = false;
@@ -308,18 +385,19 @@ namespace BatterySimulatorGUI.ViewModels
 
         public void StopSimulation()
         {
+            _cts?.Cancel();
             if (_simulator != null) _simulator.SimulationEnabled = false;
         }
 
         private void SoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            var series = sender as ObservableTimeSeries;
-            
-            if (e.Action == NotifyCollectionChangedAction.Add)
+            if (e.Action != NotifyCollectionChangedAction.Add || e.NewItems == null) return;
+
+            OnUiThread(() =>
             {
                 foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
                 {
-                    _SoCvalues.Add(new DateTimePoint(datapoint.Key.ToLocalTime(), datapoint.Value));
+                    _SoCvalues.Add(new DateTimePoint(datapoint.Key.ToLocalTime(), 100.0*datapoint.Value));
                 }
 
                 if (_SoCvalues.Count > _maxItems)
@@ -329,21 +407,22 @@ namespace BatterySimulatorGUI.ViewModels
                     timeAxis[0].MinLimit = _SoCvalues.First().DateTime.Ticks;
                     timeAxis[0].MaxLimit = _SoCvalues.Last().DateTime.Add(TimeSpan.FromHours(4)).Ticks;
                 }
-                
-            }
-
+            });
         }
 
         private void AccProfit_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            Update(sender, e, _pnlValues);
-
-            double val = 0.0;
-            if (_pnlValues.Any())
+            OnUiThread(() =>
             {
-                val = _pnlValues[_pnlValues.Count - 1].Value.Value;
-            }
-            CurrentPnL = (new MonetaryAmount(val, Currencies.Euro)).ToString(); // todo
+                Update(sender, e, _pnlValues);
+
+                double val = 0.0;
+                if (_pnlValues.Any())
+                {
+                    val = _pnlValues[_pnlValues.Count - 1].Value.Value;
+                }
+                CurrentPnL = (new MonetaryAmount(val, Currencies.Euro)).ToString(); // todo
+            });
         }
 
         private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values)

@@ -52,7 +52,7 @@ namespace BatterySimulator
             PlanningPeriod planningPeriod = new PlanningPeriod(planStart, resolution, nPeriods);
             foreach (PlanningInterval simulationInterval in planningPeriod.Intervals)
             {
-                var cap = Battery1.CapacityC().ConvertToUnit(Units.MegaWatt);
+                var cap = Battery1.InitialCapacityC.CovertToUnit(Units.MegaWatt);
                 var test = cap.Value - 2 * _r.NextDouble() * cap.Value; 
                 _plan.SetValueAt(simulationInterval.Start, test);
             }

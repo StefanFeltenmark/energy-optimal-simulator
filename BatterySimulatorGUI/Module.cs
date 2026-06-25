@@ -11,7 +11,9 @@ namespace BatterySimulatorGUI
     {
         public static void AddCommonServices(this IServiceCollection collection)
         {
-            collection.AddSingleton<IBatteryPlanner, PomaPlanner>();
+            // Default planner runs standalone (no external service). The GUI can
+            // swap to POMA at runtime via the Algorithm selector (see MainWindowViewModel).
+            collection.AddSingleton<IBatteryPlanner, PriceLevelPlanner>();
             collection.AddSingleton<BatterySimulator.BatterySimulator>();
             collection.AddSingleton<Battery>();
             collection.AddTransient <MainWindowViewModel> ();

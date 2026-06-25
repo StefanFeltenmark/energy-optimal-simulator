@@ -15,17 +15,22 @@ namespace UnitTests
             this.output = output;
         }
         
-        [Fact] 
-        public void TestSimulator()
+        [Fact]
+        public async Task TestSimulator()
         {
-
             IBatteryPlanner planner = new RandomBatteryPlanner();
-            
-            BatterySimulator.BatterySimulator simulator = new BatterySimulator.BatterySimulator(planner);
 
-            simulator.Simulate();
+            using BatterySimulator.BatterySimulator simulator = new BatterySimulator.BatterySimulator(planner);
 
+            // Short horizon, single one-hour step, no pacing delay.
+            simulator.SetUp(1, 3600);
+            simulator.SleepTime = TimeSpan.Zero;
+            simulator.SimulationEnabled = true;
 
+            await simulator.Simulate();
+
+            // The clock advanced past the start, i.e. the loop actually ran.
+            Assert.True(simulator.SimulationTime > simulator.Start);
         }
     }
 }

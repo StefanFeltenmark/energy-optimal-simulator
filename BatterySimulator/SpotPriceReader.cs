@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using MathNet.Numerics.Interpolation;
-using Powel.Optimal.MultiAsset.Domain.General.Data;
-using Powel.Optimal.MultiAsset.OPS.Core.String;
+﻿using Powel.Optimal.MultiAsset.Domain.General.Data;
+
 
 namespace BatterySimulator
 {

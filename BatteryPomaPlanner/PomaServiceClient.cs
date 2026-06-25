@@ -1,15 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Headers;
 using Powel.Optimal.MultiAsset.Domain;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Powel.Optimal.MultiAsset.Domain.Common.Parameters;
-using Powel.Optimal.MultiAsset.Infrastructure;
+using Powel.Optimal.Domain.Infrastructure.Interfaces;
 
 namespace BatteryPomaPlanner
 {

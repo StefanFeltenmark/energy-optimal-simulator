@@ -93,7 +93,7 @@ namespace UnitTests
 
         private static RuntimeTypeModel CreateTypeModel()
         {
-            var typeModel = TypeModel.Create();
+            var typeModel = RuntimeTypeModel.Create();
        
             typeModel.IncludeDateTimeKind = true;
 
@@ -125,7 +125,8 @@ namespace UnitTests
                 InitialCapacityE = new Energy(20, Units.MegaWattHour),
                 ChargeEfficiency = new DimensionlessQuantity(0.95),
                 DischargeEfficiency = new DimensionlessQuantity(0.95),
-                MaxNumberOfEfcPerHour = 100
+                MaxNumberOfEfcPerHour = 100,
+                Ts = new Battery.BatteryTs()
             };
 
             
