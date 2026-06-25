@@ -119,7 +119,9 @@ namespace BatteryPomaPlanner
             _battery.Ts.SocSoftMin.DefaultValue = 0.15;
             _battery.FinalSocMax = new Percentage(100);
             _battery.FinalSocMin = new Percentage(0);
-            _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.Percent));
+            _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
+            _battery.SoftSchedulePenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
+            _battery.FinalStoragePrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
 
             _data.CommonData.Parameters.CaseName = "BatterySimulation";
             _data.OptimizationId = _optimizationId;
