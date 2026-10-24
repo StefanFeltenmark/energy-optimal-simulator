@@ -100,45 +100,71 @@ namespace BatterySimulator
         }
 
 
+        public SimulationSettings Settings { get; set; } = new SimulationSettings();
+
+        /// <summary>The price areas (CSV columns) available in <paramref name="priceFile"/>.</summary>
+        public static IReadOnlyList<string> ReadPriceAreas(string priceFile = SimulationSettings.DefaultPriceFile)
+        {
+            return SpotPriceReader.ReadFile(priceFile).Keys.ToList();
+        }
+
         public void SetUp(int nHours, int deltaSeconds)
         {
-            _start = new DateTime(2018, 1, 4, 9,0,0, DateTimeKind.Local); 
-            _end = _start + TimeSpan.FromHours(nHours);
-            TimeSpan delta = TimeSpan.FromSeconds(deltaSeconds);
+            Settings.DurationHours = nHours;
+            Settings.TimeStepSeconds = deltaSeconds;
+            SetUp(Settings);
+        }
+
+        public void SetUp(SimulationSettings settings)
+        {
+            var errors = settings.Validate();
+            if (errors.Count > 0) throw new ArgumentException(string.Join(" ", errors));
+            Settings = settings;
+
+            _start = DateTime.SpecifyKind(settings.Start, DateTimeKind.Local);
+            _end = _start + TimeSpan.FromHours(settings.DurationHours);
+
+            var prices = SpotPriceReader.ReadFile(settings.PriceFile);
+            if (!prices.TryGetValue(settings.PriceArea, out TimeSeries? areaPrices))
+                throw new ArgumentException($"Price area '{settings.PriceArea}' not found. Available: {string.Join(", ", prices.Keys)}.");
+
+            // Planners look beyond the simulation end (look-ahead, planning horizon, POMA's 24 h storage value),
+            // so the price data must cover that too.
+            DateTime dataStart = areaPrices.TimePoints().First();
+            DateTime dataEnd = areaPrices.TimePoints().Last().AddHours(1);
+            double lookBeyondHours = Math.Max(24, Math.Max(settings.LookAheadHours, settings.PlanningHorizonHours));
+            if (_start < dataStart || _end.AddHours(lookBeyondHours) > dataEnd)
+                throw new ArgumentException($"Prices cover {dataStart:yyyy-MM-dd HH:mm} to {dataEnd:yyyy-MM-dd HH:mm}; " +
+                                            $"start + duration + {lookBeyondHours:0.#} h look-ahead must fit inside.");
+
+            TimeSpan delta = TimeSpan.FromSeconds(settings.TimeStepSeconds);
             TimeProvider = new SimulationTimeProvider(_start, delta);
-            
+
             _recorder = new BatteryDataRecorder(_timeProvider);
 
             _market = new EnergyMarket(Guid.NewGuid(), "EPEX Intraday");
 
-            //
-            string filename = @"C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\Data\Prices\elspot-prices_2018_hourly_eur.csv";
-          
-            var prices  = SpotPriceReader.ReadFile(filename);
-            _market.Ts.EnergySellPrice = prices["SE3"];
+            _market.Ts.EnergySellPrice = areaPrices;
             _market.Ts.EnergySellPrice.IsBreakPointSeries = true;
-           
-            //_market.Ts.EnergySellPrice = TimeSeries.CreateTimeSeries(r.NextDoubleSequence().Take(nPeriods).Select(d=>d*100.0 + 20).ToArray(),_start, marketResolution);
-            double spread = 0.01;
-            _market.Ts.EnergyBuyPrice = _market.Ts.EnergySellPrice + TimeSeries.CreateTimeSeries(_market.Ts.EnergySellPrice.TimePoints(),spread);
+            _market.Ts.EnergyBuyPrice = _market.Ts.EnergySellPrice + TimeSeries.CreateTimeSeries(_market.Ts.EnergySellPrice.TimePoints(), settings.BuySellSpread);
 
-            
-            // exact 
+
+            // exact
             _priceForecaster = new PriceForecaster(_market.Ts.EnergyBuyPrice, a: 0, b: 0);
-            _priceForecaster.UpdateForecast(_start, TimeSpan.FromHours(nHours), TimeSpan.FromMinutes(15));
+            _priceForecaster.UpdateForecast(_start, TimeSpan.FromHours(settings.DurationHours), TimeSpan.FromMinutes(15));
 
             _battery = new Battery
             {
                 Id = Guid.NewGuid(),
                 Name = "Battery1",
-                NominalChargeCapacity = new Power(10,Units.MegaWatt),
-                NominalEnergyCapacity =  new Energy(20, Units.MegaWattHour),
+                NominalChargeCapacity = new Power(settings.PowerMW, Units.MegaWatt),
+                NominalEnergyCapacity =  new Energy(settings.EnergyMWh, Units.MegaWattHour),
                 InitialSoHc = new Percentage(100),
                 InitialSoHe = new Percentage(100),
-                ChargeEfficiency = new DimensionlessQuantity(0.95),
-                DischargeEfficiency = new DimensionlessQuantity(0.95),
-                MaxNumberOfEfcPerHour = 100, 
-                InitialSoC = new Percentage(50),
+                ChargeEfficiency = new DimensionlessQuantity(settings.ChargeEfficiency),
+                DischargeEfficiency = new DimensionlessQuantity(settings.DischargeEfficiency),
+                MaxNumberOfEfcPerHour = 100,
+                InitialSoC = new Percentage(settings.InitialSoCPercent),
                 SoftSchedulePenaltyPrice = new UnitPrice(100,new PriceUnit(Currencies.Euro,Units.MegaWatt)),
                 FinalStoragePrice = new UnitPrice(0,new PriceUnit(Currencies.Euro,Units.MegaWatt)),
                 Ts = new Battery.BatteryTs()
@@ -154,19 +180,20 @@ namespace BatterySimulator
             _battery.DischargePoints =
             [
                 new ChargePoint(new Power(0, Units.MegaWatt), new UnitPrice(0, priceUnit)),
-                new ChargePoint(new Power(10, Units.MegaWatt), new UnitPrice(0, priceUnit))
+                new ChargePoint(new Power(settings.PowerMW, Units.MegaWatt), new UnitPrice(0, priceUnit))
             ];
             _battery.ChargePoints =
             [
                 new ChargePoint(new Power(0, Units.MegaWatt), new UnitPrice(0, priceUnit)),
-                new ChargePoint(new Power(10, Units.MegaWatt), new UnitPrice(0, priceUnit))
+                new ChargePoint(new Power(settings.PowerMW, Units.MegaWatt), new UnitPrice(0, priceUnit))
             ];
 
 
+            // Must match Battery.InitialSoC, which POMA plans from.
             BatteryState initialState = new BatteryState
             {
-                EnergyContent = new Energy(10, Units.MegaWattHour),
-                Capacity = new Energy(20, Units.MegaWattHour)
+                EnergyContent = new Energy(settings.EnergyMWh * settings.InitialSoCPercent / 100.0, Units.MegaWattHour),
+                Capacity = new Energy(settings.EnergyMWh, Units.MegaWattHour)
             };
 
 
@@ -180,10 +207,14 @@ namespace BatterySimulator
             {
                 priceLevelPlanner.EnergyPriceForecast = _priceForecaster.PriceForecast;
                 priceLevelPlanner.Battery1 = _battery;
-                priceLevelPlanner.LookaAhead = TimeSpan.FromHours(4);
+                priceLevelPlanner.LookaAhead = TimeSpan.FromHours(settings.LookAheadHours);
+                priceLevelPlanner.BuyPriceThreshold = new Percentage(settings.BuyThresholdPercent);
+                priceLevelPlanner.SellPriceThreshold = new Percentage(settings.SellThresholdPercent);
             }
             else if(_planner is PomaPlanner pomaPlanner)
             {
+                pomaPlanner.SocSoftMin = settings.SocSoftMinPercent / 100.0;
+                pomaPlanner.SocSoftMax = settings.SocSoftMaxPercent / 100.0;
                 pomaPlanner.SetUp(_battery, _market);
                 pomaPlanner.Subscribe(_ems);
             }
@@ -202,7 +233,7 @@ namespace BatterySimulator
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
 
-            _sleepTime = TimeSpan.FromMilliseconds(250);
+            _sleepTime = TimeSpan.FromMilliseconds(settings.SleepMilliseconds);
 
         }
 
@@ -210,9 +241,11 @@ namespace BatterySimulator
         {
             var priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWattHour);
             DateTime t = TimeProvider.GetTime();
-            TimeSpan replanningInterval = TimeSpan.FromMinutes(180);
+            TimeSpan replanningInterval = TimeSpan.FromMinutes(Settings.ReplanIntervalMinutes);
+            TimeSpan planResolution = TimeSpan.FromMinutes(15);
+            int planPeriods = (int)Math.Round(TimeSpan.FromHours(Settings.PlanningHorizonHours) / planResolution);
 
-            var planningTask = _planner.UpdatePlan(_start, TimeSpan.FromMinutes(15), 32);
+            var planningTask = _planner.UpdatePlan(_start, planResolution, planPeriods);
             await planningTask;
 
             DateTime lastPlanning = t;
@@ -228,7 +261,7 @@ namespace BatterySimulator
 
                         if (planningTask.IsCompleted)
                         {
-                            planningTask = _planner.UpdatePlan(t, TimeSpan.FromMinutes(15), 32);
+                            planningTask = _planner.UpdatePlan(t, planResolution, planPeriods);
                             await planningTask;
                         }
 
@@ -269,7 +302,7 @@ namespace BatterySimulator
 
         public void Dispose()
         {
-            _ems.EndTransmission();
+            _ems?.EndTransmission();
         }
     }
 }

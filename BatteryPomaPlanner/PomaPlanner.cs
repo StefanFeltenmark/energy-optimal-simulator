@@ -40,6 +40,12 @@ namespace BatteryPomaPlanner
             _plannedSoC = new ObservableTimeSeries();
         }
 
+        /// <summary>Soft lower SoC limit as a fraction (0-1); applied in <see cref="SetUp"/>.</summary>
+        public double SocSoftMin { get; set; } = 0.05;
+
+        /// <summary>Soft upper SoC limit as a fraction (0-1); applied in <see cref="SetUp"/>.</summary>
+        public double SocSoftMax { get; set; } = 0.95;
+
         public void SetUp(Battery battery, EnergyMarket market)
         {
             PriceUnit euroPerMw = new PriceUnit(Currencies.Euro, Units.MegaWatt);
@@ -87,9 +93,11 @@ namespace BatteryPomaPlanner
             };
             provider.Availability.DefaultValue = 1;
             provider.MaxDelivery = new TimeSeries();
-            provider.MaxDelivery.DefaultValue = 100;
+            // Delivery limits must not cap the battery's own power rating.
+            double deliveryLimit = Math.Max(100, _battery.NominalChargeCapacity.CovertToUnit(Units.MegaWatt).Value);
+            provider.MaxDelivery.DefaultValue = deliveryLimit;
             provider.MinDelivery = new TimeSeries();
-            provider.MinDelivery.DefaultValue = -100;
+            provider.MinDelivery.DefaultValue = -deliveryLimit;
             
             _market.EnergyProviders.Add(provider);
 
@@ -119,9 +127,9 @@ namespace BatteryPomaPlanner
             _battery.Ts.SoftSchedule = new TimeSeries();
             _battery.Ts.SoftScheduleFlag = new TimeSeries();
             _battery.Ts.SocSoftMax = new TimeSeries();
-            _battery.Ts.SocSoftMax.DefaultValue = 0.95;
+            _battery.Ts.SocSoftMax.DefaultValue = SocSoftMax;
             _battery.Ts.SocSoftMin = new TimeSeries();
-            _battery.Ts.SocSoftMin.DefaultValue = 0.05;
+            _battery.Ts.SocSoftMin.DefaultValue = SocSoftMin;
             _battery.FinalSocMax = new Percentage(100);
             _battery.FinalSocMin = new Percentage(0);
             _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));

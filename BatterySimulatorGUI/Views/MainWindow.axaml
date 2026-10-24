@@ -29,7 +29,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="240"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Border Grid.Column="1" Grid.Row="0" Background="SlateGray"
@@ -40,19 +40,96 @@
            <TextBlock FontSize="36" Name="Title" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground  ="White">Volue Battery Simulator </TextBlock>
             </Border>
 
-        <StackPanel Grid.Column="0" Grid.Row="1">
-            <ToggleButton Margin="5 5" Click="Button_OnClick_Run" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="DarkSlateGray">Start simulation</ToggleButton>
-            <ToggleButton Margin="5 5" Click="Button_Restart" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="DarkSlateGray">Restart</ToggleButton>
-            <TextBlock Margin="5 5">Time step (s.)</TextBlock>
-            <TextBox  Margin="5 5" Watermark="Enter simulation time step" Text="{Binding TimeStepSeconds , UpdateSourceTrigger=LostFocus}" ></TextBox>
-            <TextBlock Margin="5 5">Delay (ms.)</TextBlock>
-            <TextBox  Margin="5 5" Watermark="Enter simulation delay" Text="{Binding TimeDelay , UpdateSourceTrigger=LostFocus}" ></TextBox>
-            <TextBlock Margin="5 5">Algorithm</TextBlock>
-            <ComboBox SelectedIndex="{Binding SelectedAlgorithmIndex}" MaxDropDownHeight="100" HorizontalAlignment="Stretch" Margin="5 5" VerticalAlignment="Top" Width="180">
-                <ComboBoxItem>Price policy</ComboBoxItem>
-                <ComboBoxItem>POMA</ComboBoxItem>
-            </ComboBox>
-        </StackPanel>
+        <ScrollViewer Grid.Column="0" Grid.Row="1" Grid.RowSpan="4" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="5 0">
+                <StackPanel.Styles>
+                    <Style Selector="TextBlock.label">
+                        <Setter Property="Margin" Value="0 6 0 2"/>
+                    </Style>
+                    <Style Selector="NumericUpDown">
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        <Setter Property="FormatString" Value="0.##"/>
+                    </Style>
+                    <Style Selector="Expander">
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        <Setter Property="Margin" Value="0 4"/>
+                    </Style>
+                </StackPanel.Styles>
+
+                <ToggleButton Margin="0 5" Click="Button_OnClick_Run" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="DarkSlateGray">Start simulation</ToggleButton>
+                <ToggleButton Margin="0 5" Click="Button_Restart" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="DarkSlateGray">Restart</ToggleButton>
+
+                <TextBlock Classes="label">Algorithm</TextBlock>
+                <ComboBox SelectedIndex="{Binding SelectedAlgorithmIndex}" HorizontalAlignment="Stretch">
+                    <ComboBoxItem>Price policy</ComboBoxItem>
+                    <ComboBoxItem>POMA</ComboBoxItem>
+                </ComboBox>
+
+                <TextBlock Margin="0 8 0 0" FontSize="11" Foreground="Gray" TextWrapping="Wrap">Changes apply on Start/Restart (delay applies immediately).</TextBlock>
+
+                <Expander Header="Simulation" IsExpanded="True">
+                    <StackPanel>
+                        <TextBlock Classes="label">Start date</TextBlock>
+                        <CalendarDatePicker SelectedDate="{Binding StartDate}" HorizontalAlignment="Stretch"
+                                            DisplayDateStart="2018-01-01" DisplayDateEnd="2018-12-31"/>
+                        <TextBlock Classes="label">Start hour</TextBlock>
+                        <NumericUpDown Value="{Binding StartHour}" Minimum="0" Maximum="23" Increment="1" FormatString="0"/>
+                        <TextBlock Classes="label">Duration (h)</TextBlock>
+                        <NumericUpDown Value="{Binding DurationHours}" Minimum="1" Maximum="8760" Increment="24" FormatString="0"/>
+                        <TextBlock Classes="label">Time step (s)</TextBlock>
+                        <NumericUpDown Value="{Binding TimeStepSeconds}" Minimum="60" Maximum="3600" Increment="60" FormatString="0"/>
+                        <TextBlock Classes="label">Delay per step (ms)</TextBlock>
+                        <NumericUpDown Value="{Binding DelayMilliseconds}" Minimum="0" Maximum="5000" Increment="50" FormatString="0"/>
+                        <TextBlock Classes="label">Planning horizon (h)</TextBlock>
+                        <NumericUpDown Value="{Binding PlanningHorizonHours}" Minimum="0.25" Maximum="48" Increment="1"/>
+                        <TextBlock Classes="label">Re-plan interval (min)</TextBlock>
+                        <NumericUpDown Value="{Binding ReplanIntervalMinutes}" Minimum="15" Maximum="2880" Increment="15" FormatString="0"/>
+                    </StackPanel>
+                </Expander>
+
+                <Expander Header="Market">
+                    <StackPanel>
+                        <TextBlock Classes="label">Price area</TextBlock>
+                        <ComboBox ItemsSource="{Binding PriceAreas}" SelectedItem="{Binding SelectedPriceArea}" HorizontalAlignment="Stretch"/>
+                        <TextBlock Classes="label">Buy/sell spread (€/MWh)</TextBlock>
+                        <NumericUpDown Value="{Binding BuySellSpread}" Minimum="0" Maximum="100" Increment="0.5"/>
+                    </StackPanel>
+                </Expander>
+
+                <Expander Header="Battery">
+                    <StackPanel>
+                        <TextBlock Classes="label">Power (MW)</TextBlock>
+                        <NumericUpDown Value="{Binding PowerMW}" Minimum="0.1" Maximum="1000" Increment="1"/>
+                        <TextBlock Classes="label">Energy capacity (MWh)</TextBlock>
+                        <NumericUpDown Value="{Binding EnergyMWh}" Minimum="0.1" Maximum="10000" Increment="1"/>
+                        <TextBlock Classes="label">Charge efficiency (%)</TextBlock>
+                        <NumericUpDown Value="{Binding ChargeEfficiencyPercent}" Minimum="1" Maximum="100" Increment="1"/>
+                        <TextBlock Classes="label">Discharge efficiency (%)</TextBlock>
+                        <NumericUpDown Value="{Binding DischargeEfficiencyPercent}" Minimum="1" Maximum="100" Increment="1"/>
+                        <TextBlock Classes="label">Initial SoC (%)</TextBlock>
+                        <NumericUpDown Value="{Binding InitialSoCPercent}" Minimum="0" Maximum="100" Increment="5"/>
+                    </StackPanel>
+                </Expander>
+
+                <Expander Header="Planner">
+                    <StackPanel>
+                        <TextBlock Classes="label" FontWeight="SemiBold">Price policy</TextBlock>
+                        <TextBlock Classes="label">Buy threshold (% above min)</TextBlock>
+                        <NumericUpDown Value="{Binding BuyThresholdPercent}" Minimum="0" Maximum="100" Increment="5"/>
+                        <TextBlock Classes="label">Sell threshold (% below max)</TextBlock>
+                        <NumericUpDown Value="{Binding SellThresholdPercent}" Minimum="0" Maximum="100" Increment="5"/>
+                        <TextBlock Classes="label">Look-ahead (h)</TextBlock>
+                        <NumericUpDown Value="{Binding LookAheadHours}" Minimum="0.25" Maximum="48" Increment="1"/>
+
+                        <TextBlock Classes="label" FontWeight="SemiBold" Margin="0 12 0 2">POMA</TextBlock>
+                        <TextBlock Classes="label">Soft SoC min (%)</TextBlock>
+                        <NumericUpDown Value="{Binding SocSoftMinPercent}" Minimum="0" Maximum="100" Increment="5"/>
+                        <TextBlock Classes="label">Soft SoC max (%)</TextBlock>
+                        <NumericUpDown Value="{Binding SocSoftMaxPercent}" Minimum="0" Maximum="100" Increment="5"/>
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
 
             
         <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" >

@@ -47,8 +47,11 @@ namespace BatterySimulatorGUI.ViewModels
         private int _selectedAlgorithmIndex;
         private CancellationTokenSource? _cts;
         private TimeSpan _visibleHorizon;
-        private int _nHours;
         private int _maxItems = 180;
+
+        // Edited by the parameter panel and applied on every Start/Restart.
+        private readonly SimulationSettings _settings = new SimulationSettings { DurationHours = 1000, TimeStepSeconds = 300 };
+        private IReadOnlyList<string> _priceAreas = Array.Empty<string>();
 
         public MainWindowViewModel()
         {
@@ -59,9 +62,9 @@ namespace BatterySimulatorGUI.ViewModels
         {
             _simulator = simulator;
 
-            _nHours = 1000;
+            _priceAreas = BatterySimulator.BatterySimulator.ReadPriceAreas(_settings.PriceFile);
             ApplySelectedPlanner();
-            _simulator.SetUp(_nHours , 300);
+            _simulator.SetUp(_settings);
 
             _visibleHorizon = TimeSpan.FromHours(6);
 
@@ -172,9 +175,14 @@ namespace BatterySimulatorGUI.ViewModels
            
             _simulationTime = _simulator.TimeProvider.GetTime();
 
-            netChargeAxes[0].MaxLimit = _simulator.Battery1.InitialCapacityC.CovertToUnit( Units.MegaWatt).Value + 1;
-            netChargeAxes[0].MinLimit = -_simulator.Battery1.InitialCapacityC.CovertToUnit( Units.MegaWatt).Value - 1;
+            UpdateChargeAxisLimits();
+        }
 
+        private void UpdateChargeAxisLimits()
+        {
+            double power = _simulator.Battery1.InitialCapacityC.CovertToUnit(Units.MegaWatt).Value;
+            netChargeAxes[0].MaxLimit = power + 1;
+            netChargeAxes[0].MinLimit = -power - 1;
         }
 
         private void ManageHandlers(bool subScribe = true)
@@ -327,8 +335,12 @@ namespace BatterySimulatorGUI.ViewModels
 
             ManageHandlers(false);
             ApplySelectedPlanner();
-            _simulator.SetUp(_nHours, 300);
+            _simulator.SetUp(_settings);
             ManageHandlers(true);
+
+            // The time step and battery power may have changed: resize the sliding window and charge axis.
+            _maxItems = (int) (_visibleHorizon.TotalMinutes / _simulator.Delta.TotalMinutes);
+            UpdateChargeAxisLimits();
 
             // SetUp creates a fresh recorder, so re-apply the sliding-window cap.
             _simulator.Recorder.SoC.MaxItems = _maxItems;
@@ -361,7 +373,7 @@ namespace BatterySimulatorGUI.ViewModels
         {
             _simulator.SimulationEnabled = true;
             _simulator.IsRealTime = false;
-            SetPrice(_simulator.Start, _simulator.Start + TimeSpan.FromHours(_nHours));
+            SetPrice(_simulator.Start, _simulator.Start + TimeSpan.FromHours(_settings.DurationHours));
             timeAxis[0].MaxLimit = (_simulator.Start + _visibleHorizon).Ticks;
             timeAxis[0].MinLimit = _simulator.Start.Ticks;
             timeAxis[0].ForceStepToMin = false;
@@ -533,32 +545,135 @@ namespace BatterySimulatorGUI.ViewModels
                 }
             };
 
-        public string TimeStepSeconds
+        // ---- Parameter panel -------------------------------------------------------------
+        // Bound to NumericUpDown (decimal?) controls; a cleared box (null) keeps the old value.
+        // The values are stored in _settings and take effect on the next Start/Restart.
+
+        // Simulation
+        public DateTime? StartDate
         {
-            get => _simulator.Delta.TotalSeconds.ToString();
+            get => _settings.Start.Date;
+            set { if (value is { } d) _settings.Start = d.Date + _settings.Start.TimeOfDay; }
+        }
+
+        public decimal? StartHour
+        {
+            get => _settings.Start.Hour;
+            set { if (value is { } h) _settings.Start = _settings.Start.Date.AddHours((int)h); }
+        }
+
+        public decimal? DurationHours
+        {
+            get => _settings.DurationHours;
+            set { if (value is { } v) _settings.DurationHours = (int)v; }
+        }
+
+        public decimal? TimeStepSeconds
+        {
+            get => _settings.TimeStepSeconds;
+            set { if (value is { } v) _settings.TimeStepSeconds = (int)v; }
+        }
+
+        public decimal? DelayMilliseconds
+        {
+            get => _settings.SleepMilliseconds;
             set
             {
-                int nSeconds = 300;
-                bool ok = int.TryParse(value, out nSeconds);
-                if (ok)
-                {
-                    _simulator.Delta = TimeSpan.FromSeconds(nSeconds);
-                }
+                if (value is not { } v) return;
+                _settings.SleepMilliseconds = (int)v;
+                // Pacing can be changed while a run is in progress.
+                if (_simulator != null) _simulator.SleepTime = TimeSpan.FromMilliseconds(_settings.SleepMilliseconds);
             }
         }
 
-        public string TimeDelay
+        public decimal? PlanningHorizonHours
         {
-            get => _simulator.SleepTime.TotalMilliseconds.ToString();
-            set
-            {
-                int nMilleSecs = 100;
-                bool ok = int.TryParse(value, out nMilleSecs);
-                if (ok)
-                {
-                    _simulator.SleepTime = TimeSpan.FromMilliseconds(nMilleSecs);
-                }
-            }
+            get => (decimal)_settings.PlanningHorizonHours;
+            set { if (value is { } v) _settings.PlanningHorizonHours = (double)v; }
+        }
+
+        public decimal? ReplanIntervalMinutes
+        {
+            get => (decimal)_settings.ReplanIntervalMinutes;
+            set { if (value is { } v) _settings.ReplanIntervalMinutes = (double)v; }
+        }
+
+        // Market
+        public IReadOnlyList<string> PriceAreas => _priceAreas;
+
+        public string? SelectedPriceArea
+        {
+            get => _settings.PriceArea;
+            set { if (value != null) _settings.PriceArea = value; }
+        }
+
+        public decimal? BuySellSpread
+        {
+            get => (decimal)_settings.BuySellSpread;
+            set { if (value is { } v) _settings.BuySellSpread = (double)v; }
+        }
+
+        // Battery
+        public decimal? PowerMW
+        {
+            get => (decimal)_settings.PowerMW;
+            set { if (value is { } v) _settings.PowerMW = (double)v; }
+        }
+
+        public decimal? EnergyMWh
+        {
+            get => (decimal)_settings.EnergyMWh;
+            set { if (value is { } v) _settings.EnergyMWh = (double)v; }
+        }
+
+        public decimal? ChargeEfficiencyPercent
+        {
+            get => (decimal)(_settings.ChargeEfficiency * 100);
+            set { if (value is { } v) _settings.ChargeEfficiency = (double)v / 100; }
+        }
+
+        public decimal? DischargeEfficiencyPercent
+        {
+            get => (decimal)(_settings.DischargeEfficiency * 100);
+            set { if (value is { } v) _settings.DischargeEfficiency = (double)v / 100; }
+        }
+
+        public decimal? InitialSoCPercent
+        {
+            get => (decimal)_settings.InitialSoCPercent;
+            set { if (value is { } v) _settings.InitialSoCPercent = (double)v; }
+        }
+
+        // PriceLevelPlanner
+        public decimal? BuyThresholdPercent
+        {
+            get => (decimal)_settings.BuyThresholdPercent;
+            set { if (value is { } v) _settings.BuyThresholdPercent = (double)v; }
+        }
+
+        public decimal? SellThresholdPercent
+        {
+            get => (decimal)_settings.SellThresholdPercent;
+            set { if (value is { } v) _settings.SellThresholdPercent = (double)v; }
+        }
+
+        public decimal? LookAheadHours
+        {
+            get => (decimal)_settings.LookAheadHours;
+            set { if (value is { } v) _settings.LookAheadHours = (double)v; }
+        }
+
+        // POMA
+        public decimal? SocSoftMinPercent
+        {
+            get => (decimal)_settings.SocSoftMinPercent;
+            set { if (value is { } v) _settings.SocSoftMinPercent = (double)v; }
+        }
+
+        public decimal? SocSoftMaxPercent
+        {
+            get => (decimal)_settings.SocSoftMaxPercent;
+            set { if (value is { } v) _settings.SocSoftMaxPercent = (double)v; }
         }
 
         

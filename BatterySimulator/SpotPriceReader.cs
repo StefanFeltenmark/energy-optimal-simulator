@@ -32,7 +32,7 @@ namespace BatterySimulator
 
             for (int i = 2; i < lineData.Length; i++)
             {
-                string priceArea = lineData[i];
+                string priceArea = lineData[i].Trim();
                 spotPrices.Add(priceArea, new TimeSeries());
             }
 
