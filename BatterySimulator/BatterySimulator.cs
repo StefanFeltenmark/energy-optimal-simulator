@@ -235,13 +235,8 @@ namespace BatterySimulator
                         lastPlanning = t;
                     }
 
-                    // Implement plan/policy
+                    // Implement plan/policy for the interval [t, t + Delta)
                     _ems.SetChargeLevel(-_planner.GetPlannedProduction(t));
-
-                    // Update state
-                    await _ems.UpdateState(t);
-
-                    await Console.Out.WriteLineAsync($"{t}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC().ToFraction():P1}");
 
                     // Non-blocking pacing; honours a Stop request promptly.
                     await Task.Delay(_sleepTime, cancellationToken);
@@ -251,12 +246,19 @@ namespace BatterySimulator
                         await Task.Delay(Delta, cancellationToken);
                     }
 
-
-                    _pnlManager.UpdatePnL(t, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
-
+                    // Advance the clock first, so the state update integrates the setpoint
+                    // over [t, t + Delta] and observers record it at the interval end.
                     TimeProvider.Increment();
+                    DateTime tNext = TimeProvider.GetTime();
 
-                    t = TimeProvider.GetTime();
+                    await _ems.UpdateState(tNext);
+
+                    await Console.Out.WriteLineAsync($"{t}-{tNext:HH:mm}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC().ToFraction():P1}");
+
+                    // Energy traded over [t, tNext) is settled at the prices valid at t.
+                    _pnlManager.UpdatePnL(tNext, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
+
+                    t = tNext;
                 }
             }
             catch (OperationCanceledException)
