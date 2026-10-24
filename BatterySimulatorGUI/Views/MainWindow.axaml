@@ -103,8 +103,10 @@
                         <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">Used when the market model is Order book. 15-minute products; the mid price ends at the realized price at delivery.</TextBlock>
                         <TextBlock Classes="label">Gate closure (min before delivery)</TextBlock>
                         <NumericUpDown Value="{Binding GateClosureMinutes}" Minimum="0" Maximum="240" Increment="5" FormatString="0"/>
-                        <TextBlock Classes="label">Mid volatility (€/MWh/√h)</TextBlock>
+                        <TextBlock Classes="label">Market volatility, all products (€/MWh/√h)</TextBlock>
                         <NumericUpDown Value="{Binding MidVolatility}" Minimum="0" Maximum="100" Increment="0.5"/>
+                        <TextBlock Classes="label">Product-specific volatility (€/MWh/√h)</TextBlock>
+                        <NumericUpDown Value="{Binding ProductNoiseVolatility}" Minimum="0" Maximum="100" Increment="0.1"/>
                         <TextBlock Classes="label">Spread near delivery (€/MWh)</TextBlock>
                         <NumericUpDown Value="{Binding SpreadNearDelivery}" Minimum="0" Maximum="100" Increment="0.1"/>
                         <TextBlock Classes="label">Spread far from delivery (€/MWh)</TextBlock>

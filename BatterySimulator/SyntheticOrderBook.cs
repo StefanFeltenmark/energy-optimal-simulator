@@ -12,18 +12,25 @@ namespace BatterySimulator
 
     /// <summary>
     /// A synthetic continuous-intraday order book. Each product is a delivery period identified by its
-    /// local delivery start. Its mid price follows a random walk in trading time that ends exactly at the
-    /// realized price at delivery; the spread narrows and depth builds up as delivery approaches. Volume
-    /// taken by market orders is removed from the book and replenished over time.
+    /// local delivery start; all products trade at the same time. A product's mid price is
+    /// <c>realized + MidVolatility x (F(now) - F(delivery)) + ProductNoiseVolatility x W_product(time to delivery)</c>,
+    /// where F is a market-wide random walk in absolute time shared by all products and W is the product's own
+    /// random walk. Both terms vanish at delivery, so the mid ends exactly at the realized price, and neighbouring
+    /// products move almost together. The spread narrows and depth builds up as delivery approaches. Volume taken
+    /// by market orders is removed from the book and replenished over time.
     /// </summary>
     public class SyntheticOrderBook
     {
         private const double PathGridMinutes = 5;
         private const double MaxPathHours = 48;
+        private static readonly DateTime FactorEpoch = new DateTime(2000, 1, 1);
 
         private readonly TimeSeries _realizedPrices;
         private readonly SimulationSettings _settings;
         private readonly Dictionary<DateTime, double[]> _paths = new();
+        private readonly List<double> _factor = new() { 0 };
+        private readonly long _factorOffset;
+        private readonly Random _factorRng;
         private readonly Dictionary<(DateTime Product, bool AskSide), (double Volume, DateTime At)> _consumed = new();
 
         /// <param name="realizedPrices">Realized prices keyed by local delivery time (the simulator's time axis).</param>
@@ -31,6 +38,12 @@ namespace BatterySimulator
         {
             _realizedPrices = realizedPrices;
             _settings = settings;
+
+            // The market factor starts well before the run (products can be quoted up to MaxPathHours ahead of
+            // delivery) at a point fixed by the run start, so it does not depend on query order.
+            DateTime origin = settings.Start.Date.AddHours(-MaxPathHours - 24);
+            _factorOffset = (long)((origin - FactorEpoch).TotalMinutes / PathGridMinutes);
+            _factorRng = new Random(unchecked(settings.OrderBookSeed * 7919 + 17));
         }
 
         public double Mid(DateTime product, DateTime tradingTime)
@@ -38,8 +51,30 @@ namespace BatterySimulator
             double[] path = Path(product);
             double x = Math.Min(HoursToDelivery(product, tradingTime), MaxPathHours) * 60 / PathGridMinutes;
             int i = (int)Math.Floor(x);
-            double w = i + 1 < path.Length ? path[i] + (path[i + 1] - path[i]) * (x - i) : path[^1];
-            return _realizedPrices[product] + _settings.MidVolatility * w;
+            double own = i + 1 < path.Length ? path[i] + (path[i + 1] - path[i]) * (x - i) : path[^1];
+
+            // Market-wide shock still to come before delivery; clamped like the product path to MaxPathHours.
+            DateTime from = tradingTime < product ? tradingTime : product;
+            if ((product - from).TotalHours > MaxPathHours) from = product.AddHours(-MaxPathHours);
+            double common = Factor(from) - Factor(product);
+
+            return _realizedPrices[product] + _settings.MidVolatility * common + _settings.ProductNoiseVolatility * own;
+        }
+
+        /// <summary>Market-wide standard random walk in absolute time, generated in order on a fixed grid.</summary>
+        private double Factor(DateTime time)
+        {
+            double x = (time - FactorEpoch).TotalMinutes / PathGridMinutes - _factorOffset;
+            if (x < 0) throw new ArgumentOutOfRangeException(nameof(time), "Order book queried more than 72 h before the run start.");
+
+            int i = (int)Math.Floor(x);
+            double stepStd = Math.Sqrt(PathGridMinutes / 60);
+            while (_factor.Count <= i + 1)
+            {
+                double u1 = 1 - _factorRng.NextDouble(), u2 = _factorRng.NextDouble();
+                _factor.Add(_factor[^1] + stepStd * Math.Sqrt(-2 * Math.Log(u1)) * Math.Cos(2 * Math.PI * u2));
+            }
+            return _factor[i] + (_factor[i + 1] - _factor[i]) * (x - i);
         }
 
         public double Spread(DateTime product, DateTime tradingTime)

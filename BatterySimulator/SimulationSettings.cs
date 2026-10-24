@@ -34,8 +34,13 @@ namespace BatterySimulator
         public const int ProductMinutes = 15;
         /// <summary>Trading in a product stops this long before its delivery starts.</summary>
         public double GateClosureMinutes { get; set; } = 30;
-        /// <summary>Volatility of the mid price in trading time, EUR/MWh per sqrt(hour). The mid ends at the realized price at delivery.</summary>
+        /// <summary>
+        /// Volatility of the market-wide factor that moves all products' mids together, EUR/MWh per sqrt(hour).
+        /// Each mid ends at its realized price at delivery.
+        /// </summary>
         public double MidVolatility { get; set; } = 3;
+        /// <summary>Volatility of each product's own, independent mid noise, EUR/MWh per sqrt(hour). Limits cross-product mispricing.</summary>
+        public double ProductNoiseVolatility { get; set; } = 0.5;
         /// <summary>Bid/ask spread close to gate closure, EUR/MWh.</summary>
         public double SpreadNearDelivery { get; set; } = 0.5;
         /// <summary>Bid/ask spread long before delivery, EUR/MWh.</summary>
@@ -103,7 +108,7 @@ namespace BatterySimulator
                 if (TimeStepSeconds > 0 && (ProductMinutes * 60) % TimeStepSeconds != 0) errors.Add($"With the order book, the time step must divide {ProductMinutes} minutes ({ProductMinutes * 60} s).");
                 if (Start.Minute % ProductMinutes != 0 || Start.Second != 0) errors.Add($"With the order book, the start must be on a {ProductMinutes}-minute boundary.");
                 if (GateClosureMinutes < 0) errors.Add("Gate closure cannot be negative.");
-                if (MidVolatility < 0) errors.Add("Mid-price volatility cannot be negative.");
+                if (MidVolatility < 0 || ProductNoiseVolatility < 0) errors.Add("Mid-price volatilities cannot be negative.");
                 if (SpreadNearDelivery < 0 || SpreadFarFromDelivery < 0) errors.Add("Spreads cannot be negative.");
                 if (LiquidityBuildUpHours <= 0) errors.Add("Liquidity build-up time must be positive.");
                 if (BookLevels < 1) errors.Add("The book needs at least one level per side.");

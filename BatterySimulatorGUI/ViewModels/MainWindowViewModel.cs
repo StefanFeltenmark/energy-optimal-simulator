@@ -876,6 +876,12 @@ namespace BatterySimulatorGUI.ViewModels
             set { if (value is { } v) { _settings.MidVolatility = (double)v; OnSettingChanged(); } }
         }
 
+        public decimal? ProductNoiseVolatility
+        {
+            get => (decimal)_settings.ProductNoiseVolatility;
+            set { if (value is { } v) { _settings.ProductNoiseVolatility = (double)v; OnSettingChanged(); } }
+        }
+
         public decimal? SpreadNearDelivery
         {
             get => (decimal)_settings.SpreadNearDelivery;

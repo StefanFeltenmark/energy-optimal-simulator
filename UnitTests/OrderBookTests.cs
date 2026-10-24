@@ -39,6 +39,19 @@ namespace UnitTests
         }
 
         [Fact]
+        public void NeighbouringProductsMoveTogether()
+        {
+            // Without product noise, the market factor moves all mids together: the difference between two
+            // products' deviations from their realized prices does not change with trading time.
+            var book = new SyntheticOrderBook(Prices(), new SimulationSettings { MarketModel = MarketModel.OrderBook, ProductNoiseVolatility = 0 });
+            DateTime next = Delivery.AddMinutes(15);
+            double Gap(DateTime t) => (book.Mid(next, t) - Prices()[next]) - (book.Mid(Delivery, t) - Prices()[Delivery]);
+
+            Assert.Equal(Gap(Delivery.AddHours(-8)), Gap(Delivery.AddHours(-1)), 9);
+            Assert.NotEqual(book.Mid(Delivery, Delivery.AddHours(-8)), book.Mid(Delivery, Delivery.AddHours(-1)));   // but they do move
+        }
+
+        [Fact]
         public void SpreadNarrowsAndDepthGrowsTowardsDelivery()
         {
             var book = new SyntheticOrderBook(Prices(), Settings());
@@ -170,6 +183,7 @@ namespace UnitTests
                 MarketModel = MarketModel.OrderBook,
                 GateClosureMinutes = 0,
                 MidVolatility = 0,
+                ProductNoiseVolatility = 0,
                 SpreadNearDelivery = 0.01,
                 SpreadFarFromDelivery = 0.01,
                 LevelVolumeMWh = 1e6,
