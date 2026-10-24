@@ -547,31 +547,43 @@ namespace BatterySimulatorGUI.ViewModels
 
         // ---- Parameter panel -------------------------------------------------------------
         // Bound to NumericUpDown (decimal?) controls; a cleared box (null) keeps the old value.
-        // The values are stored in _settings and take effect on the next Start/Restart.
+        // The values are stored in _settings, which the simulator holds by reference: planner settings
+        // are picked up at the next re-plan of a running simulation, the rest on the next Start/Restart.
+
+        private const string InvalidSettingsPrefix = "Invalid settings: ";
+
+        private void OnSettingChanged()
+        {
+            var errors = _settings.Validate();
+            if (errors.Count > 0)
+                StatusMessage = InvalidSettingsPrefix + string.Join(" ", errors);
+            else if (StatusMessage?.StartsWith(InvalidSettingsPrefix) == true)
+                StatusMessage = null;
+        }
 
         // Simulation
         public DateTime? StartDate
         {
             get => _settings.Start.Date;
-            set { if (value is { } d) _settings.Start = d.Date + _settings.Start.TimeOfDay; }
+            set { if (value is { } d) { _settings.Start = d.Date + _settings.Start.TimeOfDay; OnSettingChanged(); } }
         }
 
         public decimal? StartHour
         {
             get => _settings.Start.Hour;
-            set { if (value is { } h) _settings.Start = _settings.Start.Date.AddHours((int)h); }
+            set { if (value is { } h) { _settings.Start = _settings.Start.Date.AddHours((int)h); OnSettingChanged(); } }
         }
 
         public decimal? DurationHours
         {
             get => _settings.DurationHours;
-            set { if (value is { } v) _settings.DurationHours = (int)v; }
+            set { if (value is { } v) { _settings.DurationHours = (int)v; OnSettingChanged(); } }
         }
 
         public decimal? TimeStepSeconds
         {
             get => _settings.TimeStepSeconds;
-            set { if (value is { } v) _settings.TimeStepSeconds = (int)v; }
+            set { if (value is { } v) { _settings.TimeStepSeconds = (int)v; OnSettingChanged(); } }
         }
 
         public decimal? DelayMilliseconds
@@ -583,19 +595,20 @@ namespace BatterySimulatorGUI.ViewModels
                 _settings.SleepMilliseconds = (int)v;
                 // Pacing can be changed while a run is in progress.
                 if (_simulator != null) _simulator.SleepTime = TimeSpan.FromMilliseconds(_settings.SleepMilliseconds);
+                OnSettingChanged();
             }
         }
 
         public decimal? PlanningHorizonHours
         {
             get => (decimal)_settings.PlanningHorizonHours;
-            set { if (value is { } v) _settings.PlanningHorizonHours = (double)v; }
+            set { if (value is { } v) { _settings.PlanningHorizonHours = (double)v; OnSettingChanged(); } }
         }
 
         public decimal? ReplanIntervalMinutes
         {
             get => (decimal)_settings.ReplanIntervalMinutes;
-            set { if (value is { } v) _settings.ReplanIntervalMinutes = (double)v; }
+            set { if (value is { } v) { _settings.ReplanIntervalMinutes = (double)v; OnSettingChanged(); } }
         }
 
         // Market
@@ -604,76 +617,76 @@ namespace BatterySimulatorGUI.ViewModels
         public string? SelectedPriceArea
         {
             get => _settings.PriceArea;
-            set { if (value != null) _settings.PriceArea = value; }
+            set { if (value != null) { _settings.PriceArea = value; OnSettingChanged(); } }
         }
 
         public decimal? BuySellSpread
         {
             get => (decimal)_settings.BuySellSpread;
-            set { if (value is { } v) _settings.BuySellSpread = (double)v; }
+            set { if (value is { } v) { _settings.BuySellSpread = (double)v; OnSettingChanged(); } }
         }
 
         // Battery
         public decimal? PowerMW
         {
             get => (decimal)_settings.PowerMW;
-            set { if (value is { } v) _settings.PowerMW = (double)v; }
+            set { if (value is { } v) { _settings.PowerMW = (double)v; OnSettingChanged(); } }
         }
 
         public decimal? EnergyMWh
         {
             get => (decimal)_settings.EnergyMWh;
-            set { if (value is { } v) _settings.EnergyMWh = (double)v; }
+            set { if (value is { } v) { _settings.EnergyMWh = (double)v; OnSettingChanged(); } }
         }
 
         public decimal? ChargeEfficiencyPercent
         {
             get => (decimal)(_settings.ChargeEfficiency * 100);
-            set { if (value is { } v) _settings.ChargeEfficiency = (double)v / 100; }
+            set { if (value is { } v) { _settings.ChargeEfficiency = (double)v / 100; OnSettingChanged(); } }
         }
 
         public decimal? DischargeEfficiencyPercent
         {
             get => (decimal)(_settings.DischargeEfficiency * 100);
-            set { if (value is { } v) _settings.DischargeEfficiency = (double)v / 100; }
+            set { if (value is { } v) { _settings.DischargeEfficiency = (double)v / 100; OnSettingChanged(); } }
         }
 
         public decimal? InitialSoCPercent
         {
             get => (decimal)_settings.InitialSoCPercent;
-            set { if (value is { } v) _settings.InitialSoCPercent = (double)v; }
+            set { if (value is { } v) { _settings.InitialSoCPercent = (double)v; OnSettingChanged(); } }
         }
 
         // PriceLevelPlanner
         public decimal? BuyThresholdPercent
         {
             get => (decimal)_settings.BuyThresholdPercent;
-            set { if (value is { } v) _settings.BuyThresholdPercent = (double)v; }
+            set { if (value is { } v) { _settings.BuyThresholdPercent = (double)v; OnSettingChanged(); } }
         }
 
         public decimal? SellThresholdPercent
         {
             get => (decimal)_settings.SellThresholdPercent;
-            set { if (value is { } v) _settings.SellThresholdPercent = (double)v; }
+            set { if (value is { } v) { _settings.SellThresholdPercent = (double)v; OnSettingChanged(); } }
         }
 
         public decimal? LookAheadHours
         {
             get => (decimal)_settings.LookAheadHours;
-            set { if (value is { } v) _settings.LookAheadHours = (double)v; }
+            set { if (value is { } v) { _settings.LookAheadHours = (double)v; OnSettingChanged(); } }
         }
 
         // POMA
         public decimal? SocSoftMinPercent
         {
             get => (decimal)_settings.SocSoftMinPercent;
-            set { if (value is { } v) _settings.SocSoftMinPercent = (double)v; }
+            set { if (value is { } v) { _settings.SocSoftMinPercent = (double)v; OnSettingChanged(); } }
         }
 
         public decimal? SocSoftMaxPercent
         {
             get => (decimal)_settings.SocSoftMaxPercent;
-            set { if (value is { } v) _settings.SocSoftMaxPercent = (double)v; }
+            set { if (value is { } v) { _settings.SocSoftMaxPercent = (double)v; OnSettingChanged(); } }
         }
 
         

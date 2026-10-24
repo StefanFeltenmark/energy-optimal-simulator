@@ -207,14 +207,10 @@ namespace BatterySimulator
             {
                 priceLevelPlanner.EnergyPriceForecast = _priceForecaster.PriceForecast;
                 priceLevelPlanner.Battery1 = _battery;
-                priceLevelPlanner.LookaAhead = TimeSpan.FromHours(settings.LookAheadHours);
-                priceLevelPlanner.BuyPriceThreshold = new Percentage(settings.BuyThresholdPercent);
-                priceLevelPlanner.SellPriceThreshold = new Percentage(settings.SellThresholdPercent);
             }
-            else if(_planner is PomaPlanner pomaPlanner)
+            ApplyPlannerSettings();
+            if(_planner is PomaPlanner pomaPlanner)
             {
-                pomaPlanner.SocSoftMin = settings.SocSoftMinPercent / 100.0;
-                pomaPlanner.SocSoftMax = settings.SocSoftMaxPercent / 100.0;
                 pomaPlanner.SetUp(_battery, _market);
                 pomaPlanner.Subscribe(_ems);
             }
@@ -237,6 +233,28 @@ namespace BatterySimulator
 
         }
 
+        /// <summary>
+        /// Pushes the planner-related <see cref="Settings"/> into the planner. Called in SetUp and before
+        /// every re-plan, so these settings can be changed while a simulation runs. Invalid settings
+        /// (e.g. half-edited in the GUI) are ignored and the planner keeps its previous values.
+        /// </summary>
+        private void ApplyPlannerSettings()
+        {
+            if (Settings.Validate().Count > 0) return;
+
+            if (_planner is PriceLevelPlanner priceLevelPlanner)
+            {
+                priceLevelPlanner.LookaAhead = TimeSpan.FromHours(Settings.LookAheadHours);
+                priceLevelPlanner.BuyPriceThreshold = new Percentage(Settings.BuyThresholdPercent);
+                priceLevelPlanner.SellPriceThreshold = new Percentage(Settings.SellThresholdPercent);
+            }
+            else if (_planner is PomaPlanner pomaPlanner)
+            {
+                pomaPlanner.SocSoftMin = Settings.SocSoftMinPercent / 100.0;
+                pomaPlanner.SocSoftMax = Settings.SocSoftMaxPercent / 100.0;
+            }
+        }
+
         public async Task Simulate(CancellationToken cancellationToken = default)
         {
             var priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWattHour);
@@ -254,6 +272,12 @@ namespace BatterySimulator
             {
                 while(t < _end && SimulationEnabled && !cancellationToken.IsCancellationRequested)
                 {
+                    // Horizon and re-plan interval may be changed while running; ignore invalid edits.
+                    if (Settings.Validate().Count == 0)
+                    {
+                        replanningInterval = TimeSpan.FromMinutes(Settings.ReplanIntervalMinutes);
+                        planPeriods = (int)Math.Round(TimeSpan.FromHours(Settings.PlanningHorizonHours) / planResolution);
+                    }
 
                     if (t - lastPlanning >= replanningInterval)
                     {
@@ -261,6 +285,7 @@ namespace BatterySimulator
 
                         if (planningTask.IsCompleted)
                         {
+                            ApplyPlannerSettings();
                             planningTask = _planner.UpdatePlan(t, planResolution, planPeriods);
                             await planningTask;
                         }

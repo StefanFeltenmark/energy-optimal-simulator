@@ -65,7 +65,7 @@
                     <ComboBoxItem>POMA</ComboBoxItem>
                 </ComboBox>
 
-                <TextBlock Margin="0 8 0 0" FontSize="11" Foreground="Gray" TextWrapping="Wrap">Changes apply on Start/Restart (delay applies immediately).</TextBlock>
+                <TextBlock Margin="0 8 0 0" FontSize="11" Foreground="Gray" TextWrapping="Wrap">Planner settings can be changed while running and apply at the next re-plan; the delay applies immediately. Other settings apply on Start/Restart.</TextBlock>
 
                 <Expander Header="Simulation" IsExpanded="True">
                     <StackPanel>
@@ -80,10 +80,6 @@
                         <NumericUpDown Value="{Binding TimeStepSeconds}" Minimum="60" Maximum="3600" Increment="60" FormatString="0"/>
                         <TextBlock Classes="label">Delay per step (ms)</TextBlock>
                         <NumericUpDown Value="{Binding DelayMilliseconds}" Minimum="0" Maximum="5000" Increment="50" FormatString="0"/>
-                        <TextBlock Classes="label">Planning horizon (h)</TextBlock>
-                        <NumericUpDown Value="{Binding PlanningHorizonHours}" Minimum="0.25" Maximum="48" Increment="1"/>
-                        <TextBlock Classes="label">Re-plan interval (min)</TextBlock>
-                        <NumericUpDown Value="{Binding ReplanIntervalMinutes}" Minimum="15" Maximum="2880" Increment="15" FormatString="0"/>
                     </StackPanel>
                 </Expander>
 
@@ -111,9 +107,14 @@
                     </StackPanel>
                 </Expander>
 
-                <Expander Header="Planner">
+                <Expander Header="Planner (live)">
                     <StackPanel>
-                        <TextBlock Classes="label" FontWeight="SemiBold">Price policy</TextBlock>
+                        <TextBlock Classes="label">Planning horizon (h)</TextBlock>
+                        <NumericUpDown Value="{Binding PlanningHorizonHours}" Minimum="0.25" Maximum="48" Increment="1"/>
+                        <TextBlock Classes="label">Re-plan interval (min)</TextBlock>
+                        <NumericUpDown Value="{Binding ReplanIntervalMinutes}" Minimum="15" Maximum="2880" Increment="15" FormatString="0"/>
+
+                        <TextBlock Classes="label" FontWeight="SemiBold" Margin="0 12 0 2">Price policy</TextBlock>
                         <TextBlock Classes="label">Buy threshold (% above min)</TextBlock>
                         <NumericUpDown Value="{Binding BuyThresholdPercent}" Minimum="0" Maximum="100" Increment="5"/>
                         <TextBlock Classes="label">Sell threshold (% below max)</TextBlock>

@@ -119,11 +119,89 @@ namespace UnitTests
             Assert.Contains("Price area 'XX' not found", ex.Message);
         }
 
+        [Fact]
+        public async Task HorizonAndReplanIntervalChangedMidRunApplyAtNextReplan()
+        {
+            var calls = new List<(DateTime Start, int Periods)>();
+            BatterySimulator.BatterySimulator? sim = null;
+            var planner = new FixedPlanner(_ => 0, (planStart, nPeriods) =>
+            {
+                calls.Add((planStart, nPeriods));
+                if (calls.Count == 1)
+                {
+                    // As if edited in the GUI while the first plan is being made.
+                    sim!.Settings.PlanningHorizonHours = 4;
+                    sim.Settings.ReplanIntervalMinutes = 60;
+                }
+            });
+
+            using var simulator = new BatterySimulator.BatterySimulator(planner);
+            sim = simulator;
+            simulator.SetUp(new SimulationSettings { DurationHours = 3, TimeStepSeconds = 900, SleepMilliseconds = 0 });
+            simulator.SimulationEnabled = true;
+            await simulator.Simulate();
+
+            DateTime start = simulator.Start;
+            // Default 8 h horizon (32 x 15 min) first; then 4 h plans every 60 min instead of every 180 min.
+            Assert.Equal(new[] { (start, 32), (start.AddHours(1), 16), (start.AddHours(2), 16) }, calls);
+        }
+
+        [Fact]
+        public async Task PriceLevelThresholdsChangedMidRunApplyAtNextReplan()
+        {
+            var planner = new PriceLevelPlanner();
+            using var simulator = new BatterySimulator.BatterySimulator(planner);
+            simulator.SetUp(new SimulationSettings { DurationHours = 4, TimeStepSeconds = 900, SleepMilliseconds = 0 });
+
+            // Change the thresholds one hour in, before the re-plan at 3 h.
+            simulator.TimeProvider.PropertyChanged += (_, _) =>
+            {
+                if (simulator.SimulationTime == simulator.Start.AddHours(1))
+                {
+                    simulator.Settings.BuyThresholdPercent = 40;
+                    simulator.Settings.SellThresholdPercent = 30;
+                }
+            };
+            Assert.Equal(15, planner.BuyPriceThreshold.Value);
+
+            simulator.SimulationEnabled = true;
+            await simulator.Simulate();
+
+            Assert.Equal(40, planner.BuyPriceThreshold.Value);
+            Assert.Equal(30, planner.SellPriceThreshold.Value);
+        }
+
+        [Fact]
+        public async Task InvalidMidRunEditsAreIgnored()
+        {
+            var calls = new List<int>();
+            BatterySimulator.BatterySimulator? sim = null;
+            var planner = new FixedPlanner(_ => 0, (_, nPeriods) =>
+            {
+                calls.Add(nPeriods);
+                // Re-plan interval longer than the horizon is invalid: keep the previous values.
+                if (calls.Count == 1) sim!.Settings.PlanningHorizonHours = 1;
+            });
+
+            using var simulator = new BatterySimulator.BatterySimulator(planner);
+            sim = simulator;
+            simulator.SetUp(new SimulationSettings { DurationHours = 7, TimeStepSeconds = 900, SleepMilliseconds = 0 });
+            simulator.SimulationEnabled = true;
+            await simulator.Simulate();
+
+            Assert.Equal(new[] { 32, 32, 32 }, calls);
+        }
+
         private class FixedPlanner : IBatteryPlanner
         {
             private readonly Func<DateTime, double> _production;
+            private readonly Action<DateTime, int>? _onUpdatePlan;
 
-            public FixedPlanner(Func<DateTime, double> production) => _production = production;
+            public FixedPlanner(Func<DateTime, double> production, Action<DateTime, int>? onUpdatePlan = null)
+            {
+                _production = production;
+                _onUpdatePlan = onUpdatePlan;
+            }
 
             public string Name => "FixedPlanner";
 
@@ -131,7 +209,11 @@ namespace UnitTests
 
             public Power GetPlannedProduction(DateTime time) => new Power(_production(time), Units.MegaWatt);
 
-            public Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods) => Task.CompletedTask;
+            public Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
+            {
+                _onUpdatePlan?.Invoke(planStart, nPeriods);
+                return Task.CompletedTask;
+            }
         }
     }
 }

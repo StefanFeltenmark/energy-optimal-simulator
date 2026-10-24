@@ -40,10 +40,10 @@ namespace BatteryPomaPlanner
             _plannedSoC = new ObservableTimeSeries();
         }
 
-        /// <summary>Soft lower SoC limit as a fraction (0-1); applied in <see cref="SetUp"/>.</summary>
+        /// <summary>Soft lower SoC limit as a fraction (0-1); applied on every optimisation.</summary>
         public double SocSoftMin { get; set; } = 0.05;
 
-        /// <summary>Soft upper SoC limit as a fraction (0-1); applied in <see cref="SetUp"/>.</summary>
+        /// <summary>Soft upper SoC limit as a fraction (0-1); applied on every optimisation.</summary>
         public double SocSoftMax { get; set; } = 0.95;
 
         public void SetUp(Battery battery, EnergyMarket market)
@@ -195,6 +195,10 @@ namespace BatteryPomaPlanner
             {
                 _battery.InitialSoC = _currentState.SoC;
             }
+
+            // May have changed since the last optimisation (e.g. edited in the GUI).
+            _battery.Ts.SocSoftMin.DefaultValue = SocSoftMin;
+            _battery.Ts.SocSoftMax.DefaultValue = SocSoftMax;
 
             // Value energy left at the end of the horizon at what it can be sold for later:
             // the mean sell price over the next 24 h, net of discharge losses.
