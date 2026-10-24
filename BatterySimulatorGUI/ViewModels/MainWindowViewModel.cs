@@ -233,14 +233,18 @@ namespace BatterySimulatorGUI.ViewModels
             });
         }
 
+        // Recorder values are stamped at the end of their interval; draw the charge/discharge
+        // columns at the interval midpoint so they line up with the price steps.
+        private TimeSpan ColumnOffset => -_simulator.Delta / 2;
+
         private void DischargingGridCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            OnUiThread(() => Update(sender, e, _dischargeValues));
+            OnUiThread(() => Update(sender, e, _dischargeValues, ColumnOffset));
         }
 
         private void ChargingGridCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            OnUiThread(() => Update(sender, e, _chargeValues));
+            OnUiThread(() => Update(sender, e, _chargeValues, ColumnOffset));
         }
 
         private void Recorder_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -426,14 +430,14 @@ namespace BatterySimulatorGUI.ViewModels
             });
         }
 
-        private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values)
+        private void Update(object? sender, NotifyCollectionChangedEventArgs e, ObservableCollection<DateTimePoint> values, TimeSpan timeOffset = default)
         {
             var series = sender as ObservableTimeSeries;
             if (e.Action == NotifyCollectionChangedAction.Add)
             {
                 foreach (KeyValuePair<DateTime,double> datapoint in e.NewItems.Cast<KeyValuePair<DateTime,double>>())
                 {
-                    values.Add(new DateTimePoint(datapoint.Key.ToLocalTime(), datapoint.Value));
+                    values.Add(new DateTimePoint(datapoint.Key.ToLocalTime() + timeOffset, datapoint.Value));
                 }
 
                 if (values.Count > _maxItems)
