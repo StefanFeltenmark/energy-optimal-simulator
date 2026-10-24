@@ -119,14 +119,14 @@ namespace BatteryPomaPlanner
             _battery.Ts.SoftSchedule = new TimeSeries();
             _battery.Ts.SoftScheduleFlag = new TimeSeries();
             _battery.Ts.SocSoftMax = new TimeSeries();
-            _battery.Ts.SocSoftMax.DefaultValue = 0.85;
+            _battery.Ts.SocSoftMax.DefaultValue = 0.95;
             _battery.Ts.SocSoftMin = new TimeSeries();
-            _battery.Ts.SocSoftMin.DefaultValue = 0.15;
+            _battery.Ts.SocSoftMin.DefaultValue = 0.05;
             _battery.FinalSocMax = new Percentage(100);
             _battery.FinalSocMin = new Percentage(0);
             _battery.FinalSocPenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
             _battery.SoftSchedulePenaltyPrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
-            _battery.FinalStoragePrice = new UnitPrice(1000, new PriceUnit(Currencies.Euro, Units.MegaWattHour));
+            // FinalStoragePrice is set per optimisation in UpdatePlan.
 
             _data.CommonData.Parameters.CaseName = "BatterySimulation";
             _data.OptimizationId = _optimizationId;
@@ -187,6 +187,13 @@ namespace BatteryPomaPlanner
             {
                 _battery.InitialSoC = _currentState.SoC;
             }
+
+            // Value energy left at the end of the horizon at what it can be sold for later:
+            // the mean sell price over the next 24 h, net of discharge losses.
+            DateTime startUtc = planStart.ToUniversalTime();
+            double meanSellPrice = _market.Ts.EnergySellPrice.GetSubSeries(startUtc, startUtc.AddHours(24)).Values().Average();
+            _battery.FinalStoragePrice = new UnitPrice(meanSellPrice * _battery.DischargeEfficiency.Value,
+                new PriceUnit(Currencies.Euro, Units.MegaWattHour));
 
             _data.OptimizationId = Guid.NewGuid();
             
