@@ -1,13 +1,11 @@
 
-BatterySimulator/.vs/BatterySimulator/FileContentIndex/
+.vs/
 
 *.db
 
 *.db-wal
 
 *.v2
-
-BatterySimulator/.vs/BatterySimulator/v17/
 
 *.dll
 
