@@ -42,7 +42,22 @@ namespace BatterySimulator
 
         public double Position(DateTime product) => _positions.TryGetValue(product, out double v) ? v : 0;
 
+        // Per product: total absolute fill volume and cash, for the volume-weighted average fill price.
+        private readonly Dictionary<DateTime, (double Volume, double Cash)> _fills = new();
+
+        /// <summary>Volume-weighted average price of all fills (buys and sells) in a product; NaN if never traded.</summary>
+        public double AverageFillPrice(DateTime product) =>
+            _fills.TryGetValue(product, out var f) && f.Volume > 0 ? f.Cash / f.Volume : double.NaN;
+
         public static DateTime ProductStart(DateTime t) => new DateTime(t.Ticks - t.Ticks % ProductLength.Ticks, t.Kind);
+
+        /// <summary>The first product whose delivery starts at or after gate closure, i.e. the front product tradable at <paramref name="t"/>.</summary>
+        public DateTime FirstTradableProduct(DateTime t)
+        {
+            DateTime gate = t.AddMinutes(_settings.GateClosureMinutes);
+            DateTime first = ProductStart(gate);
+            return first < gate ? first + ProductLength : first;
+        }
 
         /// <summary>
         /// Trades towards the planned positions for products from gate closure up to <paramref name="planEnd"/>
@@ -53,12 +68,9 @@ namespace BatterySimulator
         {
             double buyCost = 0, sellIncome = 0;
 
-            DateTime gate = t.AddMinutes(_settings.GateClosureMinutes);
-            DateTime first = ProductStart(gate);
-            if (first < gate) first += ProductLength;
             DateTime last = planEnd < _runEnd ? planEnd : _runEnd;
 
-            for (DateTime product = first; product < last; product += ProductLength)
+            for (DateTime product = FirstTradableProduct(t); product < last; product += ProductLength)
             {
                 double target = -planner.GetPlannedProduction(product).CovertToUnit(Units.MegaWatt).Value * ProductLength.TotalHours;
                 double delta = target - Position(product);
@@ -68,6 +80,10 @@ namespace BatterySimulator
                 _positions[product] = Position(product) + fill.VolumeMWh;
                 if (fill.CashEur < 0) buyCost -= fill.CashEur;
                 else sellIncome += fill.CashEur;
+
+                // |cash| = |volume| x fill price for both buys and sells.
+                var f = _fills.TryGetValue(product, out var prev) ? prev : default;
+                _fills[product] = (f.Volume + Math.Abs(fill.VolumeMWh), f.Cash + Math.Abs(fill.CashEur));
 
                 TradeCount++;
                 if (fill.VolumeMWh > 0) GrossBoughtMWh += fill.VolumeMWh;

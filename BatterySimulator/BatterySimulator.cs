@@ -257,7 +257,8 @@ namespace BatterySimulator
             {
                 double planned = -_planner.GetPlannedProduction(product).CovertToUnit(Units.MegaWatt).Value;
                 double position = _executor != null ? _executor.Position(product) / productLength.TotalHours : double.NaN;
-                products.Add(new ProductSnapshot(product, position, planned));
+                double fillPrice = _executor?.AverageFillPrice(product) ?? double.NaN;
+                products.Add(new ProductSnapshot(product, position, planned, fillPrice));
             }
 
             return new ExecutionSnapshot(
@@ -267,7 +268,32 @@ namespace BatterySimulator
                 TradeCount: _executor?.TradeCount ?? 0,
                 ShortImbalanceMWh: _executor?.ShortImbalanceMWh ?? 0,
                 LongImbalanceMWh: _executor?.LongImbalanceMWh ?? 0,
-                ImbalanceNetCost: _executor?.ImbalanceNetCost ?? 0);
+                ImbalanceNetCost: _executor?.ImbalanceNetCost ?? 0,
+                Quotes: _executor != null ? Quotes(_executor, to) : Array.Empty<BookQuote>());
+        }
+
+        /// <summary>How far ahead (from the trading time) <see cref="ExecutionSnapshot.Quotes"/> covers open products.</summary>
+        public const double QuoteHorizonHours = 12;
+
+        /// <summary>Top of the book for all open products, as the market looks at trading time <paramref name="t"/>.</summary>
+        private List<BookQuote> Quotes(OrderBookExecutor executor, DateTime t)
+        {
+            TimeSpan productLength = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes);
+            DateTime last = t.AddHours(QuoteHorizonHours);
+
+            var quotes = new List<BookQuote>();
+            for (DateTime product = executor.FirstTradableProduct(t); product < last; product += productLength)
+            {
+                var bids = executor.Book.Bids(product, t);
+                var asks = executor.Book.Asks(product, t);
+                quotes.Add(new BookQuote(
+                    product,
+                    bids.Count > 0 ? bids[0].Price : double.NaN,
+                    asks.Count > 0 ? asks[0].Price : double.NaN,
+                    executor.Book.Mid(product, t),
+                    _market.Ts.EnergySellPrice[product]));
+            }
+            return quotes;
         }
 
         /// <summary>

@@ -34,7 +34,6 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _SoCPlanValues;
 
         private ObservableCollection<DateTimePoint> _priceForecast;
-        private ObservableCollection<DateTimePoint> _realizedPrice;
         private ObservableCollection<DateTimePoint> _netChargevalues;
         private ObservableCollection<DateTimePoint> _chargeValues;
         private ObservableCollection<DateTimePoint> _dischargeValues;
@@ -46,6 +45,13 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _plannedPowerValues;
         private ObservableCollection<DateTimePoint> _deliveredValues;
         private string? _executionSummary;
+
+        // Order book panel: top of the book for the front (first tradable) product
+        private ObservableCollection<ISeries> _bookSeries;
+        private ObservableCollection<DateTimePoint> _askValues;
+        private ObservableCollection<DateTimePoint> _bidValues;
+        private ObservableCollection<DateTimePoint> _midValues;
+        private ObservableCollection<DateTimePoint> _bookReferenceValues;
 
         private DateTime _simulationTime;
         private string? _currentPnL;
@@ -120,7 +126,7 @@ namespace BatterySimulatorGUI.ViewModels
                 MaxBarWidth = double.MaxValue,
                 IgnoresBarPosition = true,
                 Fill = new SolidColorPaint(SKColors.LightBlue),
-                IsVisibleAtLegend = false,
+                IsVisibleAtLegend = true,
                 ScalesYAt = 0
             });
 
@@ -143,21 +149,8 @@ namespace BatterySimulatorGUI.ViewModels
             _chargingSeries.Add(new StepLineSeries<DateTimePoint>
             {
                 Values = _priceForecast,
-                Name = "PriceForecast",
-                Stroke = new SolidColorPaint(SKColors.LightPink) { StrokeThickness = 2 }, 
-                Fill = null,
-                GeometryFill = null,
-                GeometryStroke = null,
-                IsVisibleAtLegend = true,
-                ScalesYAt = 1
-            });
-
-            _realizedPrice = new ObservableCollection<DateTimePoint>();
-            _chargingSeries.Add(new StepLineSeries<DateTimePoint>
-            {
-                Values = _realizedPrice,
-                Name = "Price",
-                Stroke = new SolidColorPaint(SKColors.Red) { StrokeThickness = 3 }, 
+                Name = "Reference price",
+                Stroke = new SolidColorPaint(SKColors.LightPink) { StrokeThickness = 2 },
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null,
@@ -211,6 +204,18 @@ namespace BatterySimulatorGUI.ViewModels
                 GeometryFill = null,
                 GeometryStroke = null
             });
+            _askValues = new ObservableCollection<DateTimePoint>();
+            _bidValues = new ObservableCollection<DateTimePoint>();
+            _midValues = new ObservableCollection<DateTimePoint>();
+            _bookReferenceValues = new ObservableCollection<DateTimePoint>();
+            _bookSeries = new ObservableCollection<ISeries>
+            {
+                BookLine(_bookReferenceValues, "Realized (hindsight)", SKColors.LightPink, 2),
+                BookLine(_midValues, "Mid", SKColors.Gray, 1, dashed: true),
+                BookLine(_askValues, "Best ask", SKColors.IndianRed, 2),
+                BookLine(_bidValues, "Best bid", SKColors.SeaGreen, 2)
+            };
+
             _simulator.StepCompleted += Simulator_StepCompleted;
 
             _simulationTime = _simulator.TimeProvider.GetTime();
@@ -239,6 +244,17 @@ namespace BatterySimulatorGUI.ViewModels
                     ReplaceFromFirstProduct(_plannedPowerValues, snapshot.Products, p => p.PlannedMW);
                     if (snapshot.HasOrderBook)
                         ReplaceFromFirstProduct(_positionValues, snapshot.Products, p => p.PositionMW);
+                }
+
+                if (snapshot.Quotes.Count > 0)
+                {
+                    // The whole intraday curve as it looks now: every open product against delivery time.
+                    SetCurve(_askValues, snapshot.Quotes, q => q.BestAsk);
+                    SetCurve(_bidValues, snapshot.Quotes, q => q.BestBid);
+                    SetCurve(_midValues, snapshot.Quotes, q => q.Mid);
+                    SetCurve(_bookReferenceValues, snapshot.Quotes, q => q.ReferencePrice);
+                    bookTimeAxis[0].MinLimit = snapshot.Quotes[0].Product.Ticks;
+                    bookTimeAxis[0].MaxLimit = snapshot.Quotes[^1].Product.AddMinutes(SimulationSettings.ProductMinutes).Ticks;
                 }
 
                 ExecutionSummary = snapshot.HasOrderBook
@@ -286,7 +302,53 @@ namespace BatterySimulatorGUI.ViewModels
             while (values.Count > 0 && values[0].DateTime < cutoff) values.RemoveAt(0);
         }
 
+        private static StepLineSeries<DateTimePoint> BookLine(ObservableCollection<DateTimePoint> values, string name, SKColor color, float thickness, bool dashed = false)
+        {
+            var stroke = new SolidColorPaint(color) { StrokeThickness = thickness };
+            if (dashed) stroke.PathEffect = new DashEffect(new float[] { 4, 3 });
+            return new StepLineSeries<DateTimePoint>
+            {
+                Values = values,
+                Name = name,
+                Stroke = stroke,
+                Fill = null,
+                GeometryFill = null,
+                GeometryStroke = null
+            };
+        }
+
+        /// <summary>
+        /// Rewrites a curve over delivery time (one step per product, closed at the last product's end),
+        /// updating existing points in place.
+        /// </summary>
+        private static void SetCurve(ObservableCollection<DateTimePoint> values, IReadOnlyList<BookQuote> quotes, Func<BookQuote, double> select)
+        {
+            int i = 0;
+            void Set(DateTime time, double price)
+            {
+                // An empty book side has no price; leave a gap rather than a misleading value.
+                double? value = double.IsNaN(price) ? null : price;
+                if (i < values.Count)
+                {
+                    DateTimePoint point = values[i];
+                    if (point.DateTime != time) point.DateTime = time;
+                    if (point.Value != value) point.Value = value;
+                }
+                else
+                {
+                    values.Add(new DateTimePoint(time, value));
+                }
+                i++;
+            }
+
+            foreach (BookQuote quote in quotes) Set(quote.Product, select(quote));
+            Set(quotes[^1].Product.AddMinutes(SimulationSettings.ProductMinutes), select(quotes[^1]));
+            while (values.Count > i) values.RemoveAt(values.Count - 1);
+        }
+
         public ObservableCollection<ISeries> Positions => _positionSeries;
+
+        public ObservableCollection<ISeries> OrderBook => _bookSeries;
 
         /// <summary>Execution totals for the header; null with the single-price market model.</summary>
         public string? ExecutionSummary
@@ -466,6 +528,10 @@ namespace BatterySimulatorGUI.ViewModels
             _positionValues.Clear();
             _plannedPowerValues.Clear();
             _deliveredValues.Clear();
+            _askValues.Clear();
+            _bidValues.Clear();
+            _midValues.Clear();
+            _bookReferenceValues.Clear();
             ExecutionSummary = null;
         }
 
@@ -646,6 +712,39 @@ namespace BatterySimulatorGUI.ViewModels
                 new Axis
                 {
                     Name = "Position (MW)",
+
+                    LabelsPaint = new SolidColorPaint(SKColors.Green),
+                    TextSize = 16,
+
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray)
+                    {
+                        StrokeThickness = 2,
+                        PathEffect = new DashEffect(new float[] { 3, 3 })
+                    }
+                }
+            ];
+
+        /// <summary>Delivery-time axis for the order book panel (its own; the other charts share timeAxis).</summary>
+        public Axis[] bookTimeAxis { get; set; }
+            =
+            [
+                new DateTimeAxis(TimeSpan.FromMinutes(SimulationSettings.ProductMinutes), Formatter)
+                {
+                    Name = "Delivery",
+                    NameTextSize = 14,
+                    ShowSeparatorLines = true,
+                    TicksAtCenter = false,
+                    SeparatorsAtCenter = false,
+                    MinStep = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes).Ticks,
+                    TextSize = 16
+                }
+            ];
+
+        public Axis[] bookAxes { get; set; }
+            = [
+                new Axis
+                {
+                    Name = "€/MWh",
 
                     LabelsPaint = new SolidColorPaint(SKColors.Green),
                     TextSize = 16,

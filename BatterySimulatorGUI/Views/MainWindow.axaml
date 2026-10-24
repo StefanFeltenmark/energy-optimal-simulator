@@ -199,23 +199,39 @@
                 x:Name ="BatteryCharging"
                 Series="{Binding Charging}"
                 XAxes="{Binding timeAxis}"
-                YAxes="{Binding netChargeAxes}">
+                YAxes="{Binding netChargeAxes}"
+                LegendPosition="Top">
             </lvc:CartesianChart>
         </Border>
-        <Border Grid.Column="1" Grid.Row="4" Background="White"
-                BorderBrush="Black"
-                BorderThickness="2"
-                CornerRadius="3"
-                Padding="10" Margin="10">
-            <lvc:CartesianChart
-                x:Name ="positions"
-                Series="{Binding Positions}"
-                XAxes="{Binding timeAxis}"
-                YAxes="{Binding positionAxes}"
-                LegendPosition="Top"
-                EasingFunction="{x:Null}">
-            </lvc:CartesianChart>
-        </Border>
+        <Grid Grid.Column="1" Grid.Row="4" ColumnDefinitions="*,*">
+            <Border Grid.Column="0" Background="White"
+                    BorderBrush="Black"
+                    BorderThickness="2"
+                    CornerRadius="3"
+                    Padding="10" Margin="10">
+                <lvc:CartesianChart
+                    x:Name ="positions"
+                    Series="{Binding Positions}"
+                    XAxes="{Binding timeAxis}"
+                    YAxes="{Binding positionAxes}"
+                    LegendPosition="Top">
+                </lvc:CartesianChart>
+            </Border>
+            <Border Grid.Column="1" Background="White"
+                    BorderBrush="Black"
+                    BorderThickness="2"
+                    CornerRadius="3"
+                    Padding="10" Margin="10">
+                <lvc:CartesianChart
+                    x:Name ="orderBook"
+                    Series="{Binding OrderBook}"
+                    XAxes="{Binding bookTimeAxis}"
+                    YAxes="{Binding bookAxes}"
+                    LegendPosition="Top"
+                    EasingFunction="{x:Null}">
+                </lvc:CartesianChart>
+            </Border>
+        </Grid>
         <Border Grid.Column="1" Grid.Row="5" Background="White"
                 BorderBrush="Black"
                 BorderThickness="2"

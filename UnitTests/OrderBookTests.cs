@@ -109,6 +109,26 @@ namespace UnitTests
         }
 
         [Fact]
+        public void AverageFillPriceIsVolumeWeightedOverBuysAndSells()
+        {
+            var settings = Settings();
+            var executor = new OrderBookExecutor(new SyntheticOrderBook(Prices(), settings), settings, Delivery.AddHours(4));
+            DateTime t = Delivery.AddHours(-1);
+            Assert.True(double.IsNaN(executor.AverageFillPrice(Delivery)));
+
+            executor.Trade(t, new ConstantPlanner(-8), Delivery.AddMinutes(15));                 // buy 2 MWh
+            executor.Trade(t.AddMinutes(5), new ConstantPlanner(-4), Delivery.AddMinutes(15));   // sell 1 MWh back
+
+            // The same orders on an identical book (each product has its own book state).
+            var reference = new SyntheticOrderBook(Prices(), settings);
+            Fill buy = reference.ExecuteMarketOrder(Delivery, 2, t);
+            Fill sell = reference.ExecuteMarketOrder(Delivery, -1, t.AddMinutes(5));
+
+            Assert.Equal(1, executor.Position(Delivery), 9);
+            Assert.Equal((-buy.CashEur + sell.CashEur) / 3, executor.AverageFillPrice(Delivery), 9);
+        }
+
+        [Fact]
         public void ExecutorDoesNotTradeBeyondTheRunEnd()
         {
             var settings = Settings();
@@ -180,10 +200,25 @@ namespace UnitTests
             Assert.Equal(sim.Start.AddMinutes(15), first.Products[0].Product);    // next product to be delivered
             Assert.Equal(0, first.Products[0].PositionMW);                       // inside gate closure at the start
             Assert.Equal(4, first.Products[2].PositionMW, 9);                    // 09:45, traded at 09:15
+            Assert.True(double.IsNaN(first.Products[0].AverageFillPrice));        // never traded
+            Assert.Equal(sim.Executor!.AverageFillPrice(first.Products[2].Product), first.Products[2].AverageFillPrice);
             Assert.All(first.Products, p => Assert.Equal(4, p.PlannedMW, 9));
 
             foreach (ExecutionSnapshot s in snapshots)
+            {
                 Assert.Equal(sim.Recorder.NetCharge[s.IntervalEnd], s.DeliveredMW);
+
+                // Quotes: all open products from the first after gate closure, 12 h ahead, bid < mid < ask.
+                Assert.Equal(sim.Executor!.FirstTradableProduct(s.IntervalEnd), s.Quotes[0].Product);
+                Assert.True(s.Quotes[^1].Product < s.IntervalEnd.AddHours(BatterySimulator.BatterySimulator.QuoteHorizonHours));
+                Assert.All(s.Quotes, q => Assert.True(q.BestBid < q.Mid && q.Mid < q.BestAsk));
+                for (int i = 1; i < s.Quotes.Count; i++) Assert.Equal(s.Quotes[i - 1].Product.AddMinutes(15), s.Quotes[i].Product);
+            }
+            // At 09:15: products 09:45 (after the 30 min gate) up to 21:00 -> 46 products.
+            Assert.Equal(sim.Start.AddMinutes(45), snapshots[0].Quotes[0].Product);
+            Assert.Equal(46, snapshots[0].Quotes.Count);
+            // Spreads are wider far from delivery than near it.
+            Assert.True(snapshots[0].Quotes[^1].BestAsk - snapshots[0].Quotes[^1].BestBid > snapshots[0].Quotes[0].BestAsk - snapshots[0].Quotes[0].BestBid);
 
             ExecutionSnapshot last = snapshots[^1];
             Assert.Equal(sim.Executor!.GrossBoughtMWh + sim.Executor.GrossSoldMWh, last.GrossTradedMWh);
@@ -202,6 +237,7 @@ namespace UnitTests
 
             Assert.NotNull(snapshot);
             Assert.False(snapshot!.HasOrderBook);
+            Assert.Empty(snapshot.Quotes);
             Assert.All(snapshot.Products, p => Assert.True(double.IsNaN(p.PositionMW)));
             Assert.All(snapshot.Products, p => Assert.Equal(4, p.PlannedMW, 9));
             Assert.Equal(0, snapshot.TradeCount);
