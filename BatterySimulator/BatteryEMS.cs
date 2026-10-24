@@ -33,8 +33,11 @@ namespace BatterySimulator
 
         public Percentage GetSoC()
         {
-            Percentage soc = _state.EnergyContent / _battery.InitialCapacityE;
-            return soc;
+            // Energy / Energy converts to a Percentage holding the raw fraction (0.5 = 0.5 %),
+            // so build the Percentage explicitly from the fraction.
+            double fraction = _state.EnergyContent.CovertToUnit(Units.MegaWattHour).Value
+                              / _battery.InitialCapacityE.CovertToUnit(Units.MegaWattHour).Value;
+            return new Percentage(100.0 * fraction);
         }
 
         

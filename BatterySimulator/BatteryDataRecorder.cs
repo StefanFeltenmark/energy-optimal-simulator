@@ -90,7 +90,7 @@ namespace BatterySimulator
             {
                 var t = _timeProvider.GetTime();
                 _energyContent.Add(t, value.EnergyContent.CovertToUnit(Units.MegaWattHour).Value);
-                _SoC.Add(t, value.SoC.Value);
+                _SoC.Add(t, value.SoC.ToFraction());
                 _netCharge.Add(t, value.ChargingGrid.CovertToUnit(Units.MegaWatt).Value-value.DischargingGrid.CovertToUnit(Units.MegaWatt).Value);
                 _chargingGrid.Add(t, value.ChargingGrid.CovertToUnit(Units.MegaWatt).Value);
                 _dischargingGrid.Add(t, -value.DischargingGrid.CovertToUnit(Units.MegaWatt).Value);

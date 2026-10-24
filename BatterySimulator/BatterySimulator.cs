@@ -241,7 +241,7 @@ namespace BatterySimulator
                     // Update state
                     await _ems.UpdateState(t);
 
-                    await Console.Out.WriteLineAsync($"{t}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC():P1}");
+                    await Console.Out.WriteLineAsync($"{t}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC().ToFraction():P1}");
 
                     // Non-blocking pacing; honours a Stop request promptly.
                     await Task.Delay(_sleepTime, cancellationToken);
