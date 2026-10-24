@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A battery energy-storage **simulator** for the Volue Energy Optimal product family. It runs a battery against an **intraday electricity market in real time**, trying to **maximize trading profit**: each interval a *planner* (trading strategy) decides charge/discharge, the physical battery state advances, and SoC / charge / PnL are recorded and plotted. The point is to **evaluate and compare different trading strategies** — including delegating planning to the real POMA (multi-asset optimization) service.
 
-The clock can run either accelerated (fast replay) or in true real time (`BatterySimulator.IsRealTime`, which sleeps a full `Delta` per tick to track wall-clock against the live market). The committed 2018 hourly price CSV is the stand-in market feed.
+The clock can run either accelerated (fast replay) or in true real time (`BatterySimulator.IsRealTime`, which additionally waits a full `Delta` per tick to track wall-clock against the live market). The committed 2018 hourly price CSV is the stand-in market feed.
 
 The whole solution targets **.NET 8** with nullable + implicit usings enabled.
 
@@ -45,12 +45,13 @@ BatteryPomaPlanner       -->  BatterySimulator.Interfaces, Domain
 UnitTests                -->  BatterySimulator, BatteryPomaPlanner
 ```
 
-The simulation loop lives in `BatterySimulator/BatterySimulator.cs`. `SetUp(nHours, deltaSeconds)` wires everything; `Simulate()` runs the clock. Each tick it:
+The simulation loop lives in `BatterySimulator/BatterySimulator.cs`. `SetUp(nHours, deltaSeconds)` wires everything; `async Task Simulate(CancellationToken)` runs the clock until the end time, `SimulationEnabled` goes false, or the token is cancelled. Each tick it:
 1. asks the planner for planned production (`GetPlannedProduction(t)`), inverts the sign, and applies it as the EMS charge setpoint,
-2. advances physical state (`IBatteryEMS.UpdateState`),
-3. updates PnL against realized market prices,
-4. increments the simulated clock.
-Re-planning happens on a fixed interval (`replanningInterval`) by awaiting `planner.UpdatePlan(...)`.
+2. advances physical state (`await IBatteryEMS.UpdateState`),
+3. paces itself with `await Task.Delay(SleepTime, token)` (250 ms by default), plus `Task.Delay(Delta, token)` in real-time mode,
+4. updates PnL against realized market prices,
+5. increments the simulated clock.
+Re-planning happens on a fixed interval (`replanningInterval`, 180 min) by awaiting `planner.UpdatePlan(...)`. Cancellation surfaces as `OperationCanceledException` from `Task.Delay` and is caught inside `Simulate()`, so it returns normally on stop.
 
 **Sign convention (important):** in the EMS, a *positive* setpoint = charging (energy into battery), *negative* = discharging. Note `Simulate()` negates the planner's planned production before calling `SetChargeLevel`, so planner "production" is discharge-positive while the EMS setpoint is charge-positive. Net charge recorded for PnL is `ChargingGrid - DischargingGrid`.
 
@@ -79,6 +80,7 @@ When editing, watch which namespace you're importing — the file path (`Domain/
 ## Things that will trip you up
 
 - **Hard-coded local paths.** `BatterySimulator.SetUp` reads prices from an absolute path: `C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\Data\Prices\elspot-prices_2018_hourly_eur.csv`. The simulation start date is also hard-coded (`2018-01-04`). `SerializationTests` writes to `C:\temp\Simulator`.
-- **Synchronous over async.** `Console/Program.cs` calls `simulator.Simulate()` without awaiting; `Simulate()` uses `Thread.Sleep` for pacing (`SleepTime`, and real-time mode sleeps a full `Delta`). The GUI runs it on a background `Task.Run`.
+- **`Percentage` from a quantity ratio holds the raw fraction.** `Percentage p = energyA / energyB;` gives `p.Value == 0.5` for half — i.e. 0.5 %, not 50 % — whereas `new Percentage(50)` is 50 % (`ToFraction() == 0.5`). Compute the ratio as a `double` and construct `new Percentage(100 * fraction)` (as `BatteryEMS.GetSoC` does). `BatteryDataRecorder.SoC` stores fractions (0–1); the GUI multiplies by 100 for display.
+- **Async simulation loop.** `Simulate()` is async end to end — no `Thread.Sleep`; pacing is `Task.Delay` honouring the `CancellationToken`. `BatterySimulatorConsole/Program.cs` uses top-level `await simulator.Simulate()`. The GUI runs it via `Task.Run(() => _simulator.Simulate(token), token)` with a `CancellationTokenSource` that its Stop command cancels, so UI updates from `ObservableTimeSeries` events arrive off the UI thread and are marshalled with `OnUiThread`. Remember to set `SimulationEnabled = true` before calling `Simulate()` or the loop exits immediately.
 - **`bin/` and `obj/` are partly committed.** Several `bin/Debug/net8.0/*.deps.json` and `Domain/obj/*` files are tracked in git (the `.gitignore` is inconsistent). Don't be surprised by build-output churn in `git status`; avoid adding more.
 - **The `.sln` lives in `BatterySimulator/`**, not the repo root, and references the sibling projects with `..\` paths.
