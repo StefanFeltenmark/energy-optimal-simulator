@@ -272,6 +272,54 @@ namespace BatterySimulator
                 Quotes: _executor != null ? Quotes(_executor, to) : Array.Empty<BookQuote>());
         }
 
+        /// <summary>
+        /// Gives an order-book-aware planner the market as it looks at <paramref name="t"/>: for every product of the
+        /// coming plan, its existing position and, if still tradable, the price and depth for further trades. Each
+        /// side is priced at the average of a read-only walk sized to one product at full battery power, so the
+        /// planner does not assume it can trade the whole book at the best price.
+        /// </summary>
+        private void PrepareMarketView(DateTime t, DateTime planEnd)
+        {
+            if (_planner is not IOrderBookAwarePlanner aware) return;
+            if (_executor == null || !Settings.BookAwarePlanning)
+            {
+                aware.SetMarketView(null);
+                return;
+            }
+
+            TimeSpan productLength = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes);
+            double hours = productLength.TotalHours;
+            double fullPowerVolume = _battery.NominalChargeCapacity.CovertToUnit(Units.MegaWatt).Value * hours;
+            DateTime firstTradable = _executor.FirstTradableProduct(t);
+            SyntheticOrderBook book = _executor.Book;
+
+            var quotes = new List<ProductQuote>();
+            for (DateTime product = OrderBookExecutor.ProductStart(t); product < planEnd; product += productLength)
+            {
+                double positionMW = _executor.Position(product) / hours;
+                double mid = book.Mid(product, t);
+
+                if (product < firstTradable)
+                {
+                    // Past gate closure: only the existing position can be delivered.
+                    quotes.Add(new ProductQuote(product, mid, mid, 0, 0, positionMW));
+                    continue;
+                }
+
+                var ask = book.QuoteForVolume(product, t, fullPowerVolume, askSide: true);
+                var bid = book.QuoteForVolume(product, t, fullPowerVolume, askSide: false);
+                quotes.Add(new ProductQuote(
+                    product,
+                    double.IsNaN(ask.AveragePrice) ? mid : ask.AveragePrice,
+                    double.IsNaN(bid.AveragePrice) ? mid : bid.AveragePrice,
+                    ask.DepthMWh / hours,
+                    bid.DepthMWh / hours,
+                    positionMW));
+            }
+
+            aware.SetMarketView(quotes);
+        }
+
         /// <summary>How far ahead (from the trading time) <see cref="ExecutionSnapshot.Quotes"/> covers open products.</summary>
         public const double QuoteHorizonHours = 12;
 
@@ -326,6 +374,7 @@ namespace BatterySimulator
             TimeSpan planResolution = TimeSpan.FromMinutes(15);
             int planPeriods = (int)Math.Round(TimeSpan.FromHours(Settings.PlanningHorizonHours) / planResolution);
 
+            PrepareMarketView(_start, _start + planPeriods * planResolution);
             var planningTask = _planner.UpdatePlan(_start, planResolution, planPeriods);
             await planningTask;
 
@@ -350,6 +399,7 @@ namespace BatterySimulator
                         if (planningTask.IsCompleted)
                         {
                             ApplyPlannerSettings();
+                            PrepareMarketView(t, t + planPeriods * planResolution);
                             planningTask = _planner.UpdatePlan(t, planResolution, planPeriods);
                             await planningTask;
                             planEnd = t + planPeriods * planResolution;

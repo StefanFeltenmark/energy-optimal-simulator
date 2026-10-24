@@ -31,7 +31,7 @@ namespace BatterySimulator
         public MarketModel MarketModel { get; set; } = MarketModel.SinglePrice;
 
         // Synthetic order book (MarketModel.OrderBook). Products are 15-minute delivery periods.
-        public const int ProductMinutes = 15;
+        public const int ProductMinutes = global::BatterySimulator.Interfaces.ProductQuote.ProductMinutes;
         /// <summary>Trading in a product stops this long before its delivery starts.</summary>
         public double GateClosureMinutes { get; set; } = 30;
         /// <summary>
@@ -61,6 +61,11 @@ namespace BatterySimulator
         public double ImbalancePenalty { get; set; } = 5;
         /// <summary>Seed for the synthetic mid-price paths (each product's path is derived from this and its delivery start).</summary>
         public int OrderBookSeed { get; set; } = 1;
+        /// <summary>
+        /// With the order book, give planners that support it (POMA) the current bid/ask, depth and existing positions
+        /// instead of the reference price, so revising a position costs the spread inside the optimisation.
+        /// </summary>
+        public bool BookAwarePlanning { get; set; } = true;
 
         // Battery
         public double PowerMW { get; set; } = 10;
@@ -107,6 +112,9 @@ namespace BatterySimulator
             {
                 if (TimeStepSeconds > 0 && (ProductMinutes * 60) % TimeStepSeconds != 0) errors.Add($"With the order book, the time step must divide {ProductMinutes} minutes ({ProductMinutes * 60} s).");
                 if (Start.Minute % ProductMinutes != 0 || Start.Second != 0) errors.Add($"With the order book, the start must be on a {ProductMinutes}-minute boundary.");
+                // Plans must start on product boundaries and cover whole products.
+                if (ReplanIntervalMinutes % ProductMinutes != 0) errors.Add($"With the order book, the re-plan interval must be a multiple of {ProductMinutes} minutes.");
+                if (PlanningHorizonHours * 60 % ProductMinutes != 0) errors.Add($"With the order book, the planning horizon must be a multiple of {ProductMinutes} minutes.");
                 if (GateClosureMinutes < 0) errors.Add("Gate closure cannot be negative.");
                 if (MidVolatility < 0 || ProductNoiseVolatility < 0) errors.Add("Mid-price volatilities cannot be negative.");
                 if (SpreadNearDelivery < 0 || SpreadFarFromDelivery < 0) errors.Add("Spreads cannot be negative.");

@@ -15,8 +15,12 @@ using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatteryPomaPlanner
 {
-    public class PomaPlanner : IBatteryPlanner, IObserver<BatteryState>
+    public class PomaPlanner : IBatteryPlanner, IOrderBookAwarePlanner, IObserver<BatteryState>
     {
+        private const double Unlimited = 1000000;
+        private TimeSeries _referenceBuyPrice = new TimeSeries();
+        private TimeSeries _referenceSellPrice = new TimeSeries();
+        private IReadOnlyList<ProductQuote>? _marketView;
         private ILogger _logger;
         private PomaServiceClient _multiAssetService;
         private MultiAssetData _data;
@@ -65,18 +69,18 @@ namespace BatteryPomaPlanner
             // POMA gets its own market: the simulator's prices are keyed by local clock time,
             // while POMA works in UTC (PlanningPeriod converts its start to UTC).
             _market = new EnergyMarket(market.Id, market.Name);
-            _market.Ts.EnergySellPrice = ToUtc(market.Ts.EnergySellPrice);
-            _market.Ts.EnergyBuyPrice = ToUtc(market.Ts.EnergyBuyPrice);
+            _referenceSellPrice = ToUtc(market.Ts.EnergySellPrice);
+            _referenceBuyPrice = ToUtc(market.Ts.EnergyBuyPrice);
+            _market.Ts.EnergySellPrice = _referenceSellPrice;
+            _market.Ts.EnergyBuyPrice = _referenceBuyPrice;
 
             _data.CommonData.EnergyMarkets.Add(_market);
 
             // Market data
-            _market.Ts.PowerBuyMax = new TimeSeries();
-            _market.Ts.PowerBuyMax.DefaultValue = 1000000;
+            _market.Ts.PowerBuyMax = Constant(Unlimited);
             _market.Ts.PowerBuyMin = new TimeSeries();
             _market.Ts.PowerSellMin = new TimeSeries();
-            _market.Ts.PowerSellMax = new TimeSeries();
-            _market.Ts.PowerSellMax.DefaultValue = 1000000;
+            _market.Ts.PowerSellMax = Constant(Unlimited);
             _market.Ts.EnergyDeficitPenaltyPrice = new TimeSeries();
             _market.Ts.EnergyDeficitPenaltyPrice.DefaultValue = 1000000;
             _market.Ts.EnergySurplusPenaltyPrice = new TimeSeries();
@@ -144,6 +148,58 @@ namespace BatteryPomaPlanner
 
         public string Name => "POMA";
 
+        public void SetMarketView(IReadOnlyList<ProductQuote>? quotes) => _marketView = quotes;
+
+        /// <summary>
+        /// Sets the market series for the next optimisation. With a market view, buy/sell prices and limits come
+        /// from the order book and existing positions enter as a negative load (a bought position is energy the
+        /// portfolio must take up), so POMA's buys and sells are only the additional trades. POMA's energy balance:
+        /// production + buy = load + sell, hence production = sell - buy - position.
+        /// Without a view, it plans against the reference price as before.
+        /// </summary>
+        private void ApplyMarketView()
+        {
+            if (_marketView == null || _marketView.Count == 0)
+            {
+                _market.Ts.EnergyBuyPrice = _referenceBuyPrice;
+                _market.Ts.EnergySellPrice = _referenceSellPrice;
+                _market.Ts.PowerBuyMax = Constant(Unlimited);
+                _market.Ts.PowerSellMax = Constant(Unlimited);
+                _market.Ts.PowerLoad = new TimeSeries();
+                return;
+            }
+
+            TimeSeries buyPrice = Breakpoints(), sellPrice = Breakpoints(), buyMax = Breakpoints(), sellMax = Breakpoints(), load = Breakpoints();
+            foreach (ProductQuote quote in _marketView)
+            {
+                DateTime utc = DateTime.SpecifyKind(quote.Product, DateTimeKind.Local).ToUniversalTime();
+                buyPrice.SetValueAt(utc, quote.BuyPrice);
+                sellPrice.SetValueAt(utc, quote.SellPrice);
+                buyMax.SetValueAt(utc, quote.MaxBuyMW);
+                sellMax.SetValueAt(utc, quote.MaxSellMW);
+                load.SetValueAt(utc, -quote.PositionMW);
+            }
+
+            // Close the series at the end of the last product so nothing carries on beyond the view.
+            ProductQuote last = _marketView[^1];
+            DateTime end = DateTime.SpecifyKind(last.Product, DateTimeKind.Local).ToUniversalTime().AddMinutes(ProductQuote.ProductMinutes);
+            buyPrice.SetValueAt(end, last.BuyPrice);
+            sellPrice.SetValueAt(end, last.SellPrice);
+            buyMax.SetValueAt(end, 0);
+            sellMax.SetValueAt(end, 0);
+            load.SetValueAt(end, 0);
+
+            _market.Ts.EnergyBuyPrice = buyPrice;
+            _market.Ts.EnergySellPrice = sellPrice;
+            _market.Ts.PowerBuyMax = buyMax;
+            _market.Ts.PowerSellMax = sellMax;
+            _market.Ts.PowerLoad = load;
+        }
+
+        private static TimeSeries Breakpoints() => new TimeSeries(true, true) { IsBreakPointSeries = true };
+
+        private static TimeSeries Constant(double value) => new TimeSeries { DefaultValue = value };
+
         private static TimeSeries ToUtc(TimeSeries localSeries)
         {
             var utcSeries = new TimeSeries(true, true);
@@ -203,7 +259,9 @@ namespace BatteryPomaPlanner
             // Value energy left at the end of the horizon at what it can be sold for later:
             // the mean sell price over the next 24 h, net of discharge losses.
             DateTime startUtc = planStart.ToUniversalTime();
-            double meanSellPrice = _market.Ts.EnergySellPrice.GetSubSeries(startUtc, startUtc.AddHours(24)).Values().Average();
+            double meanSellPrice = _referenceSellPrice.GetSubSeries(startUtc, startUtc.AddHours(24)).Values().Average();
+
+            ApplyMarketView();
             _battery.FinalStoragePrice = new UnitPrice(meanSellPrice * _battery.DischargeEfficiency.Value,
                 new PriceUnit(Currencies.Euro, Units.MegaWattHour));
 

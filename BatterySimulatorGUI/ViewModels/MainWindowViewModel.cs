@@ -882,6 +882,12 @@ namespace BatterySimulatorGUI.ViewModels
             set { if (value is { } v) { _settings.ProductNoiseVolatility = (double)v; OnSettingChanged(); } }
         }
 
+        public bool BookAwarePlanning
+        {
+            get => _settings.BookAwarePlanning;
+            set { _settings.BookAwarePlanning = value; OnSettingChanged(); }
+        }
+
         public decimal? SpreadNearDelivery
         {
             get => (decimal)_settings.SpreadNearDelivery;

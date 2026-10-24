@@ -257,6 +257,82 @@ namespace UnitTests
             Assert.Equal(0, snapshot.TradeCount);
         }
 
+        [Fact]
+        public void QuoteForVolumeIsReadOnlyAndMatchesExecution()
+        {
+            var book = new SyntheticOrderBook(Prices(), Settings());
+            DateTime t = Delivery.AddHours(-1);
+
+            var first = book.QuoteForVolume(Delivery, t, 2, askSide: true);
+            var second = book.QuoteForVolume(Delivery, t, 2, askSide: true);
+            Assert.Equal(first, second);                                         // nothing consumed
+
+            Fill fill = new SyntheticOrderBook(Prices(), Settings()).ExecuteMarketOrder(Delivery, 2, t);
+            Assert.Equal(fill.AveragePrice, first.AveragePrice, 9);
+            Assert.Equal(book.Asks(Delivery, t).Sum(l => l.VolumeMWh), first.DepthMWh, 9);
+            Assert.True(book.QuoteForVolume(Delivery, t, 2, askSide: false).AveragePrice < first.AveragePrice);
+        }
+
+        [Fact]
+        public async Task BookAwarePlannerGetsPositionsPricesAndCapsBeforeEveryPlan()
+        {
+            var planner = new RecordingAwarePlanner(-8);   // always wants to charge 8 MW
+            using var sim = new BatterySimulator.BatterySimulator(planner);
+            sim.SetUp(new SimulationSettings
+            {
+                DurationHours = 3, TimeStepSeconds = 900, SleepMilliseconds = 0, MarketModel = MarketModel.OrderBook,
+                PlanningHorizonHours = 2, ReplanIntervalMinutes = 60
+            });
+            sim.SimulationEnabled = true;
+            await sim.Simulate();
+
+            DateTime start = sim.Start;
+            Assert.Equal(3, planner.Views.Count);                                // initial plan + re-plans at 1 h and 2 h
+
+            IReadOnlyList<ProductQuote> initial = planner.Views[0]!;
+            Assert.Equal(8, initial.Count);                                      // 2 h of 15-minute products
+            Assert.Equal(start, initial[0].Product);
+            Assert.All(initial, q => Assert.Equal(0, q.PositionMW));
+            Assert.All(initial.Take(2), q => Assert.Equal((0.0, 0.0), (q.MaxBuyMW, q.MaxSellMW)));     // inside the 30 min gate
+            Assert.All(initial.Skip(2), q => Assert.True(q.MaxBuyMW > 0 && q.MaxSellMW > 0 && q.BuyPrice > q.SellPrice));
+
+            // At the 1 h re-plan, products traded so far carry the 8 MW position.
+            IReadOnlyList<ProductQuote> replan = planner.Views[1]!;
+            Assert.Equal(start.AddHours(1), replan[0].Product);
+            Assert.Equal(8, replan.Single(q => q.Product == start.AddHours(1.5)).PositionMW, 9);
+            Assert.Equal(sim.Executor!.Position(start.AddHours(1.5)) / 0.25, replan.Single(q => q.Product == start.AddHours(1.5)).PositionMW, 9);
+        }
+
+        [Theory]
+        [InlineData(MarketModel.SinglePrice, true)]
+        [InlineData(MarketModel.OrderBook, false)]
+        public async Task PlannerPlansAgainstReferencePriceWithoutBookAwareness(MarketModel model, bool bookAware)
+        {
+            var planner = new RecordingAwarePlanner(0);
+            using var sim = new BatterySimulator.BatterySimulator(planner);
+            sim.SetUp(new SimulationSettings { DurationHours = 1, TimeStepSeconds = 900, SleepMilliseconds = 0, MarketModel = model, BookAwarePlanning = bookAware });
+            sim.SimulationEnabled = true;
+            await sim.Simulate();
+            Assert.All(planner.Views, Assert.Null);
+        }
+
+        private class RecordingAwarePlanner : IBatteryPlanner, IOrderBookAwarePlanner
+        {
+            private readonly double _productionMW;
+            public RecordingAwarePlanner(double productionMW) => _productionMW = productionMW;
+            public List<IReadOnlyList<ProductQuote>?> Views { get; } = new();
+            private IReadOnlyList<ProductQuote>? _latest;
+            public void SetMarketView(IReadOnlyList<ProductQuote>? quotes) => _latest = quotes;
+            public string Name => "RecordingAware";
+            public ObservableTimeSeries PlannedSoC { get; } = new ObservableTimeSeries();
+            public Power GetPlannedProduction(DateTime time) => new Power(_productionMW, Units.MegaWatt);
+            public Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
+            {
+                Views.Add(_latest);
+                return Task.CompletedTask;
+            }
+        }
+
         private class ConstantPlanner : IBatteryPlanner
         {
             private readonly double _productionMW;

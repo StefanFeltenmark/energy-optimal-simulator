@@ -90,6 +90,27 @@ namespace BatterySimulator
         public IReadOnlyList<BookLevel> Bids(DateTime product, DateTime tradingTime) => Levels(product, tradingTime, askSide: false);
 
         /// <summary>
+        /// Read-only: the volume-weighted average price for buying (<paramref name="askSide"/>) or selling
+        /// <paramref name="volumeMWh"/> now, and the total depth on that side. Price is NaN if the side is empty.
+        /// </summary>
+        public (double AveragePrice, double DepthMWh) QuoteForVolume(DateTime product, DateTime tradingTime, double volumeMWh, bool askSide)
+        {
+            var levels = Levels(product, tradingTime, askSide);
+            double depth = levels.Sum(l => l.VolumeMWh);
+            double remaining = Math.Min(volumeMWh, depth), filled = 0, cash = 0;
+            foreach (BookLevel level in levels)
+            {
+                if (remaining <= 1e-9) break;
+                double volume = Math.Min(remaining, level.VolumeMWh);
+                filled += volume;
+                cash += volume * level.Price;
+                remaining -= volume;
+            }
+            double price = filled > 0 ? cash / filled : levels.Count > 0 ? levels[0].Price : double.NaN;
+            return (price, depth);
+        }
+
+        /// <summary>
         /// Executes a market order for <paramref name="volumeMWh"/> (+ buy, - sell) by walking the book.
         /// Fills partially if the book is not deep enough.
         /// </summary>
