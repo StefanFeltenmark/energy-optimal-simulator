@@ -39,6 +39,16 @@ namespace BatterySimulator
 
         public ObservableTimeSeries AccProfit => _accProfit;
 
+        /// <summary>Books cash flows that were settled directly (order-book fills, imbalance), both >= 0.</summary>
+        public void RecordCashFlows(DateTime t, double buyCost, double sellIncome)
+        {
+            _buyCost.Add(t, buyCost);
+            _sellIncome.Add(t, sellIncome);
+            _profit.Add(t, sellIncome - buyCost);
+            _accProfit.Add(t, _accProfit[_latestTime] + sellIncome - buyCost);
+            _latestTime = t;
+        }
+
         public void UpdatePnL(DateTime t, UnitPrice buyPrice, UnitPrice sellPrice)
         {
             Energy boughtEnergy = 0;

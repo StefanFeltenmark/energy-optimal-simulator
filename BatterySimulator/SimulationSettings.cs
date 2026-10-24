@@ -1,5 +1,14 @@
 namespace BatterySimulator
 {
+    public enum MarketModel
+    {
+        /// <summary>Every trade fills completely at the hourly price (sell) or price + spread (buy).</summary>
+        SinglePrice,
+
+        /// <summary>15-minute products traded with market orders against a synthetic continuous-intraday order book.</summary>
+        OrderBook
+    }
+
     /// <summary>
     /// User-tunable inputs for a simulation run. The defaults reproduce the original hard-coded setup.
     /// </summary>
@@ -19,6 +28,34 @@ namespace BatterySimulator
         public string PriceFile { get; set; } = DefaultPriceFile;
         public string PriceArea { get; set; } = "SE3";
         public double BuySellSpread { get; set; } = 0.01;
+        public MarketModel MarketModel { get; set; } = MarketModel.SinglePrice;
+
+        // Synthetic order book (MarketModel.OrderBook). Products are 15-minute delivery periods.
+        public const int ProductMinutes = 15;
+        /// <summary>Trading in a product stops this long before its delivery starts.</summary>
+        public double GateClosureMinutes { get; set; } = 30;
+        /// <summary>Volatility of the mid price in trading time, EUR/MWh per sqrt(hour). The mid ends at the realized price at delivery.</summary>
+        public double MidVolatility { get; set; } = 3;
+        /// <summary>Bid/ask spread close to gate closure, EUR/MWh.</summary>
+        public double SpreadNearDelivery { get; set; } = 0.5;
+        /// <summary>Bid/ask spread long before delivery, EUR/MWh.</summary>
+        public double SpreadFarFromDelivery { get; set; } = 3;
+        /// <summary>Time constant for spread narrowing and depth building up towards delivery, hours.</summary>
+        public double LiquidityBuildUpHours { get; set; } = 6;
+        /// <summary>Number of price levels on each side of the book.</summary>
+        public int BookLevels { get; set; } = 5;
+        /// <summary>Price distance between consecutive levels, EUR/MWh.</summary>
+        public double LevelPriceStep { get; set; } = 0.5;
+        /// <summary>Volume per level close to delivery, MWh.</summary>
+        public double LevelVolumeMWh { get; set; } = 1.0;
+        /// <summary>Fraction of <see cref="LevelVolumeMWh"/> available long before delivery.</summary>
+        public double FarDepthFraction { get; set; } = 0.3;
+        /// <summary>Time constant for consumed liquidity to be replenished, minutes.</summary>
+        public double LiquidityRecoveryMinutes { get; set; } = 30;
+        /// <summary>Imbalance price = realized price + penalty when short, - penalty when long, EUR/MWh.</summary>
+        public double ImbalancePenalty { get; set; } = 5;
+        /// <summary>Seed for the synthetic mid-price paths (each product's path is derived from this and its delivery start).</summary>
+        public int OrderBookSeed { get; set; } = 1;
 
         // Battery
         public double PowerMW { get; set; } = 10;
@@ -35,6 +72,9 @@ namespace BatterySimulator
         // POMA
         public double SocSoftMinPercent { get; set; } = 5;
         public double SocSoftMaxPercent { get; set; } = 95;
+
+        /// <summary>A copy, for components that must not see later edits (all properties are value types or strings).</summary>
+        public SimulationSettings Clone() => (SimulationSettings)MemberwiseClone();
 
         /// <summary>
         /// Returns a description of every invalid value; empty when the settings are usable.
@@ -58,6 +98,21 @@ namespace BatterySimulator
             if (BuyThresholdPercent is < 0 or > 100 || SellThresholdPercent is < 0 or > 100) errors.Add("Price thresholds must be between 0 and 100 %.");
             if (LookAheadHours <= 0) errors.Add("Look-ahead must be positive.");
             if (SocSoftMinPercent < 0 || SocSoftMaxPercent > 100 || SocSoftMinPercent >= SocSoftMaxPercent) errors.Add("Soft SoC limits must satisfy 0 <= min < max <= 100 %.");
+            if (MarketModel == MarketModel.OrderBook)
+            {
+                if (TimeStepSeconds > 0 && (ProductMinutes * 60) % TimeStepSeconds != 0) errors.Add($"With the order book, the time step must divide {ProductMinutes} minutes ({ProductMinutes * 60} s).");
+                if (Start.Minute % ProductMinutes != 0 || Start.Second != 0) errors.Add($"With the order book, the start must be on a {ProductMinutes}-minute boundary.");
+                if (GateClosureMinutes < 0) errors.Add("Gate closure cannot be negative.");
+                if (MidVolatility < 0) errors.Add("Mid-price volatility cannot be negative.");
+                if (SpreadNearDelivery < 0 || SpreadFarFromDelivery < 0) errors.Add("Spreads cannot be negative.");
+                if (LiquidityBuildUpHours <= 0) errors.Add("Liquidity build-up time must be positive.");
+                if (BookLevels < 1) errors.Add("The book needs at least one level per side.");
+                if (LevelPriceStep < 0) errors.Add("Level price step cannot be negative.");
+                if (LevelVolumeMWh <= 0) errors.Add("Level volume must be positive.");
+                if (FarDepthFraction is < 0 or > 1) errors.Add("Far-from-delivery depth fraction must be between 0 and 1.");
+                if (LiquidityRecoveryMinutes <= 0) errors.Add("Liquidity recovery time must be positive.");
+                if (ImbalancePenalty < 0) errors.Add("Imbalance penalty cannot be negative.");
+            }
             return errors;
         }
     }

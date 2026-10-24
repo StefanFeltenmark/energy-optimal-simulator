@@ -39,7 +39,7 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _chargeValues;
         private ObservableCollection<DateTimePoint> _dischargeValues;
         private ObservableCollection<DateTimePoint> _pnlValues;
-        
+
         private DateTime _simulationTime;
         private string? _currentPnL;
         private string? _equivalentCycles;
@@ -624,6 +624,86 @@ namespace BatterySimulatorGUI.ViewModels
         {
             get => (decimal)_settings.BuySellSpread;
             set { if (value is { } v) { _settings.BuySellSpread = (double)v; OnSettingChanged(); } }
+        }
+
+        /// <summary>Index into the market model selector: 0 = single price, 1 = order book.</summary>
+        public int MarketModelIndex
+        {
+            get => (int)_settings.MarketModel;
+            set { _settings.MarketModel = (MarketModel)value; OnSettingChanged(); }
+        }
+
+        // Order book
+        public decimal? GateClosureMinutes
+        {
+            get => (decimal)_settings.GateClosureMinutes;
+            set { if (value is { } v) { _settings.GateClosureMinutes = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? MidVolatility
+        {
+            get => (decimal)_settings.MidVolatility;
+            set { if (value is { } v) { _settings.MidVolatility = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? SpreadNearDelivery
+        {
+            get => (decimal)_settings.SpreadNearDelivery;
+            set { if (value is { } v) { _settings.SpreadNearDelivery = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? SpreadFarFromDelivery
+        {
+            get => (decimal)_settings.SpreadFarFromDelivery;
+            set { if (value is { } v) { _settings.SpreadFarFromDelivery = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? LiquidityBuildUpHours
+        {
+            get => (decimal)_settings.LiquidityBuildUpHours;
+            set { if (value is { } v) { _settings.LiquidityBuildUpHours = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? BookLevels
+        {
+            get => _settings.BookLevels;
+            set { if (value is { } v) { _settings.BookLevels = (int)v; OnSettingChanged(); } }
+        }
+
+        public decimal? LevelPriceStep
+        {
+            get => (decimal)_settings.LevelPriceStep;
+            set { if (value is { } v) { _settings.LevelPriceStep = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? LevelVolumeMWh
+        {
+            get => (decimal)_settings.LevelVolumeMWh;
+            set { if (value is { } v) { _settings.LevelVolumeMWh = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? FarDepthPercent
+        {
+            get => (decimal)(_settings.FarDepthFraction * 100);
+            set { if (value is { } v) { _settings.FarDepthFraction = (double)v / 100; OnSettingChanged(); } }
+        }
+
+        public decimal? LiquidityRecoveryMinutes
+        {
+            get => (decimal)_settings.LiquidityRecoveryMinutes;
+            set { if (value is { } v) { _settings.LiquidityRecoveryMinutes = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? ImbalancePenalty
+        {
+            get => (decimal)_settings.ImbalancePenalty;
+            set { if (value is { } v) { _settings.ImbalancePenalty = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? OrderBookSeed
+        {
+            get => _settings.OrderBookSeed;
+            set { if (value is { } v) { _settings.OrderBookSeed = (int)v; OnSettingChanged(); } }
         }
 
         // Battery

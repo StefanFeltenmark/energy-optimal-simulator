@@ -24,6 +24,7 @@ namespace BatterySimulator
         private EnergyMarket? _market;
         private Battery? _battery;
         private TimeSpan _sleepTime;
+        private OrderBookExecutor? _executor;
 
         public BatterySimulator(IBatteryPlanner planner)
         {
@@ -229,9 +230,19 @@ namespace BatterySimulator
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
 
+            // The book's mid converges to the realized (sell) price; BuySellSpread is not used with the order book.
+            // The book gets a snapshot: its parameters apply on Start/Restart, not to a running simulation.
+            var bookSettings = settings.Clone();
+            _executor = settings.MarketModel == MarketModel.OrderBook
+                ? new OrderBookExecutor(new SyntheticOrderBook(_market.Ts.EnergySellPrice, bookSettings), bookSettings, _end)
+                : null;
+
             _sleepTime = TimeSpan.FromMilliseconds(settings.SleepMilliseconds);
 
         }
+
+        /// <summary>The order-book executor when <see cref="MarketModel.OrderBook"/> is selected, otherwise null.</summary>
+        public OrderBookExecutor? Executor => _executor;
 
         /// <summary>
         /// Pushes the planner-related <see cref="Settings"/> into the planner. Called in SetUp and before
@@ -267,6 +278,7 @@ namespace BatterySimulator
             await planningTask;
 
             DateTime lastPlanning = t;
+            DateTime planEnd = t + planPeriods * planResolution;
 
             try
             {
@@ -288,13 +300,24 @@ namespace BatterySimulator
                             ApplyPlannerSettings();
                             planningTask = _planner.UpdatePlan(t, planResolution, planPeriods);
                             await planningTask;
+                            planEnd = t + planPeriods * planResolution;
                         }
 
                         lastPlanning = t;
                     }
 
                     // Implement plan/policy for the interval [t, t + Delta)
-                    _ems.SetChargeLevel(-_planner.GetPlannedProduction(t));
+                    (double BuyCost, double SellIncome) trades = default;
+                    if (_executor != null)
+                    {
+                        // Trade towards the plan; the battery delivers what has been traded.
+                        trades = _executor.Trade(t, _planner, planEnd);
+                        _ems.SetChargeLevel(_executor.DeliverySetpoint(t));
+                    }
+                    else
+                    {
+                        _ems.SetChargeLevel(-_planner.GetPlannedProduction(t));
+                    }
 
                     // Non-blocking pacing; honours a Stop request promptly.
                     await Task.Delay(_sleepTime, cancellationToken);
@@ -313,8 +336,17 @@ namespace BatterySimulator
 
                     await Console.Out.WriteLineAsync($"{t}-{tNext:HH:mm}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC().ToFraction():P1}");
 
-                    // Energy traded over [t, tNext) is settled at the prices valid at t.
-                    _pnlManager.UpdatePnL(tNext, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
+                    if (_executor != null)
+                    {
+                        // Cash from this step's fills plus imbalance for what was delivered over [t, tNext).
+                        var imbalance = _executor.SettleImbalance(t, tNext, _recorder.NetCharge[tNext], _market.Ts.EnergySellPrice[t]);
+                        _pnlManager.RecordCashFlows(tNext, trades.BuyCost + imbalance.BuyCost, trades.SellIncome + imbalance.SellIncome);
+                    }
+                    else
+                    {
+                        // Energy traded over [t, tNext) is settled at the prices valid at t.
+                        _pnlManager.UpdatePnL(tNext, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
+                    }
 
                     t = tNext;
                 }

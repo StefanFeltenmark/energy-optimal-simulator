@@ -87,8 +87,43 @@
                     <StackPanel>
                         <TextBlock Classes="label">Price area</TextBlock>
                         <ComboBox ItemsSource="{Binding PriceAreas}" SelectedItem="{Binding SelectedPriceArea}" HorizontalAlignment="Stretch"/>
-                        <TextBlock Classes="label">Buy/sell spread (€/MWh)</TextBlock>
+                        <TextBlock Classes="label">Market model</TextBlock>
+                        <ComboBox SelectedIndex="{Binding MarketModelIndex}" HorizontalAlignment="Stretch">
+                            <ComboBoxItem>Single price</ComboBoxItem>
+                            <ComboBoxItem>Order book (intraday)</ComboBoxItem>
+                        </ComboBox>
+                        <TextBlock Classes="label">Buy/sell spread (€/MWh, single price)</TextBlock>
                         <NumericUpDown Value="{Binding BuySellSpread}" Minimum="0" Maximum="100" Increment="0.5"/>
+                    </StackPanel>
+                </Expander>
+
+                <Expander Header="Order book">
+                    <StackPanel>
+                        <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">Used when the market model is Order book. 15-minute products; the mid price ends at the realized price at delivery.</TextBlock>
+                        <TextBlock Classes="label">Gate closure (min before delivery)</TextBlock>
+                        <NumericUpDown Value="{Binding GateClosureMinutes}" Minimum="0" Maximum="240" Increment="5" FormatString="0"/>
+                        <TextBlock Classes="label">Mid volatility (€/MWh/√h)</TextBlock>
+                        <NumericUpDown Value="{Binding MidVolatility}" Minimum="0" Maximum="100" Increment="0.5"/>
+                        <TextBlock Classes="label">Spread near delivery (€/MWh)</TextBlock>
+                        <NumericUpDown Value="{Binding SpreadNearDelivery}" Minimum="0" Maximum="100" Increment="0.1"/>
+                        <TextBlock Classes="label">Spread far from delivery (€/MWh)</TextBlock>
+                        <NumericUpDown Value="{Binding SpreadFarFromDelivery}" Minimum="0" Maximum="100" Increment="0.5"/>
+                        <TextBlock Classes="label">Liquidity build-up time (h)</TextBlock>
+                        <NumericUpDown Value="{Binding LiquidityBuildUpHours}" Minimum="0.25" Maximum="48" Increment="1"/>
+                        <TextBlock Classes="label">Levels per side</TextBlock>
+                        <NumericUpDown Value="{Binding BookLevels}" Minimum="1" Maximum="50" Increment="1" FormatString="0"/>
+                        <TextBlock Classes="label">Level price step (€/MWh)</TextBlock>
+                        <NumericUpDown Value="{Binding LevelPriceStep}" Minimum="0" Maximum="50" Increment="0.1"/>
+                        <TextBlock Classes="label">Volume per level near delivery (MWh)</TextBlock>
+                        <NumericUpDown Value="{Binding LevelVolumeMWh}" Minimum="0.1" Maximum="10000" Increment="0.5"/>
+                        <TextBlock Classes="label">Depth far from delivery (%)</TextBlock>
+                        <NumericUpDown Value="{Binding FarDepthPercent}" Minimum="0" Maximum="100" Increment="5"/>
+                        <TextBlock Classes="label">Liquidity recovery time (min)</TextBlock>
+                        <NumericUpDown Value="{Binding LiquidityRecoveryMinutes}" Minimum="1" Maximum="1440" Increment="5" FormatString="0"/>
+                        <TextBlock Classes="label">Imbalance penalty (€/MWh)</TextBlock>
+                        <NumericUpDown Value="{Binding ImbalancePenalty}" Minimum="0" Maximum="1000" Increment="1"/>
+                        <TextBlock Classes="label">Random seed</TextBlock>
+                        <NumericUpDown Value="{Binding OrderBookSeed}" Minimum="0" Maximum="1000000" Increment="1" FormatString="0"/>
                     </StackPanel>
                 </Expander>
 
