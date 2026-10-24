@@ -377,7 +377,8 @@ namespace BatterySimulatorGUI.ViewModels
             _priceForecast.Clear();
             while (t < toTime)
             {
-                _priceForecast.Add(new DateTimePoint(t.ToLocalTime(), _simulator.PriceForecaster.PriceForecast[t.ToUniversalTime()]));
+                // The forecast is keyed by local clock time (like the CSV prices); only POMA's plan is UTC-keyed.
+                _priceForecast.Add(new DateTimePoint(t.ToLocalTime(), _simulator.PriceForecaster.PriceForecast[t]));
                 t += TimeSpan.FromMinutes(15);
             }
         }
