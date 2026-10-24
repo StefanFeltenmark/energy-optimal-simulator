@@ -289,7 +289,7 @@ namespace UnitTests
             DateTime start = sim.Start;
             Assert.Equal(3, planner.Views.Count);                                // initial plan + re-plans at 1 h and 2 h
 
-            IReadOnlyList<ProductQuote> initial = planner.Views[0]!;
+            IReadOnlyList<ProductQuote> initial = planner.Views[0]!.Products;
             Assert.Equal(8, initial.Count);                                      // 2 h of 15-minute products
             Assert.Equal(start, initial[0].Product);
             Assert.All(initial, q => Assert.Equal(0, q.PositionMW));
@@ -297,10 +297,17 @@ namespace UnitTests
             Assert.All(initial.Skip(2), q => Assert.True(q.MaxBuyMW > 0 && q.MaxSellMW > 0 && q.BuyPrice > q.SellPrice));
 
             // At the 1 h re-plan, products traded so far carry the 8 MW position.
-            IReadOnlyList<ProductQuote> replan = planner.Views[1]!;
+            IReadOnlyList<ProductQuote> replan = planner.Views[1]!.Products;
             Assert.Equal(start.AddHours(1), replan[0].Product);
             Assert.Equal(8, replan.Single(q => q.Product == start.AddHours(1.5)).PositionMW, 9);
             Assert.Equal(sim.Executor!.Position(start.AddHours(1.5)) / 0.25, replan.Single(q => q.Product == start.AddHours(1.5)).PositionMW, 9);
+
+            // Storage value: the average book mid over the next 24 h as seen at planning time (not the realized prices).
+            double expectedMean = Enumerable.Range(0, 96).Select(i => sim.Executor.Book.Mid(start.AddMinutes(15 * i), start)).Average();
+            Assert.Equal(expectedMean, planner.Views[0]!.MeanMidNext24h, 9);
+            var realized = SpotPriceReader.ReadFile(SimulationSettings.DefaultPriceFile)["SE3"];
+            double realizedMean = Enumerable.Range(0, 96).Select(i => realized[start.AddMinutes(15 * i)]).Average();
+            Assert.NotEqual(realizedMean, planner.Views[0]!.MeanMidNext24h, 3);
         }
 
         [Theory]
@@ -320,9 +327,9 @@ namespace UnitTests
         {
             private readonly double _productionMW;
             public RecordingAwarePlanner(double productionMW) => _productionMW = productionMW;
-            public List<IReadOnlyList<ProductQuote>?> Views { get; } = new();
-            private IReadOnlyList<ProductQuote>? _latest;
-            public void SetMarketView(IReadOnlyList<ProductQuote>? quotes) => _latest = quotes;
+            public List<MarketView?> Views { get; } = new();
+            private MarketView? _latest;
+            public void SetMarketView(MarketView? view) => _latest = view;
             public string Name => "RecordingAware";
             public ObservableTimeSeries PlannedSoC { get; } = new ObservableTimeSeries();
             public Power GetPlannedProduction(DateTime time) => new Power(_productionMW, Units.MegaWatt);

@@ -317,7 +317,16 @@ namespace BatterySimulator
                     positionMW));
             }
 
-            aware.SetMarketView(quotes);
+            // What the market currently expects energy to be worth over the next day (beyond the plan).
+            double midSum = 0;
+            int midCount = 0;
+            for (DateTime product = OrderBookExecutor.ProductStart(t); product < t.AddHours(24); product += productLength)
+            {
+                midSum += book.Mid(product, t);
+                midCount++;
+            }
+
+            aware.SetMarketView(new MarketView(quotes, midSum / midCount));
         }
 
         /// <summary>How far ahead (from the trading time) <see cref="ExecutionSnapshot.Quotes"/> covers open products.</summary>

@@ -20,7 +20,7 @@ namespace BatteryPomaPlanner
         private const double Unlimited = 1000000;
         private TimeSeries _referenceBuyPrice = new TimeSeries();
         private TimeSeries _referenceSellPrice = new TimeSeries();
-        private IReadOnlyList<ProductQuote>? _marketView;
+        private MarketView? _marketView;
         private ILogger _logger;
         private PomaServiceClient _multiAssetService;
         private MultiAssetData _data;
@@ -148,7 +148,7 @@ namespace BatteryPomaPlanner
 
         public string Name => "POMA";
 
-        public void SetMarketView(IReadOnlyList<ProductQuote>? quotes) => _marketView = quotes;
+        public void SetMarketView(MarketView? view) => _marketView = view;
 
         /// <summary>
         /// Sets the market series for the next optimisation. With a market view, buy/sell prices and limits come
@@ -159,7 +159,7 @@ namespace BatteryPomaPlanner
         /// </summary>
         private void ApplyMarketView()
         {
-            if (_marketView == null || _marketView.Count == 0)
+            if (_marketView == null || _marketView.Products.Count == 0)
             {
                 _market.Ts.EnergyBuyPrice = _referenceBuyPrice;
                 _market.Ts.EnergySellPrice = _referenceSellPrice;
@@ -170,7 +170,7 @@ namespace BatteryPomaPlanner
             }
 
             TimeSeries buyPrice = Breakpoints(), sellPrice = Breakpoints(), buyMax = Breakpoints(), sellMax = Breakpoints(), load = Breakpoints();
-            foreach (ProductQuote quote in _marketView)
+            foreach (ProductQuote quote in _marketView.Products)
             {
                 DateTime utc = DateTime.SpecifyKind(quote.Product, DateTimeKind.Local).ToUniversalTime();
                 buyPrice.SetValueAt(utc, quote.BuyPrice);
@@ -181,7 +181,7 @@ namespace BatteryPomaPlanner
             }
 
             // Close the series at the end of the last product so nothing carries on beyond the view.
-            ProductQuote last = _marketView[^1];
+            ProductQuote last = _marketView.Products[^1];
             DateTime end = DateTime.SpecifyKind(last.Product, DateTimeKind.Local).ToUniversalTime().AddMinutes(ProductQuote.ProductMinutes);
             buyPrice.SetValueAt(end, last.BuyPrice);
             sellPrice.SetValueAt(end, last.SellPrice);
@@ -256,10 +256,13 @@ namespace BatteryPomaPlanner
             _battery.Ts.SocSoftMin.DefaultValue = SocSoftMin;
             _battery.Ts.SocSoftMax.DefaultValue = SocSoftMax;
 
-            // Value energy left at the end of the horizon at what it can be sold for later:
-            // the mean sell price over the next 24 h, net of discharge losses.
+            // Value energy left at the end of the horizon at what it can be sold for later, net of discharge
+            // losses: with a market view, the book's average mid over the next 24 h (what the market expects now);
+            // otherwise the reference sell price over the next 24 h.
             DateTime startUtc = planStart.ToUniversalTime();
-            double meanSellPrice = _referenceSellPrice.GetSubSeries(startUtc, startUtc.AddHours(24)).Values().Average();
+            double meanSellPrice = _marketView != null
+                ? _marketView.MeanMidNext24h
+                : _referenceSellPrice.GetSubSeries(startUtc, startUtc.AddHours(24)).Values().Average();
 
             ApplyMarketView();
             _battery.FinalStoragePrice = new UnitPrice(meanSellPrice * _battery.DischargeEfficiency.Value,

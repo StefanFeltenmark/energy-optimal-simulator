@@ -21,12 +21,20 @@ public readonly record struct ProductQuote(
     public const int ProductMinutes = 15;
 }
 
+/// <summary>The market as it looks when a plan is made.</summary>
+/// <param name="Products">Every product of the coming plan.</param>
+/// <param name="MeanMidNext24h">
+/// Average book mid over the products delivered in the next 24 h (EUR/MWh): the market's current view of what
+/// energy is worth beyond the plan, e.g. for valuing energy left in storage at the end of the horizon.
+/// </param>
+public sealed record MarketView(IReadOnlyList<ProductQuote> Products, double MeanMidNext24h);
+
 /// <summary>
 /// A planner that can plan against the current order book and existing positions instead of a single price.
 /// The simulator calls <see cref="SetMarketView"/> before every <see cref="IBatteryPlanner.UpdatePlan"/>.
 /// </summary>
 public interface IOrderBookAwarePlanner
 {
-    /// <param name="quotes">Every product of the coming plan, or null to plan against the reference price.</param>
-    void SetMarketView(IReadOnlyList<ProductQuote>? quotes);
+    /// <param name="view">The current market, or null to plan against the reference price.</param>
+    void SetMarketView(MarketView? view);
 }
