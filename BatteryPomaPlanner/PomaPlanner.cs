@@ -55,29 +55,34 @@ namespace BatteryPomaPlanner
                 ]
             };
             _data.CommonData = new CommonData();
-            _market = market;
+
+            // POMA gets its own market: the simulator's prices are keyed by local clock time,
+            // while POMA works in UTC (PlanningPeriod converts its start to UTC).
+            _market = new EnergyMarket(market.Id, market.Name);
+            _market.Ts.EnergySellPrice = ToUtc(market.Ts.EnergySellPrice);
+            _market.Ts.EnergyBuyPrice = ToUtc(market.Ts.EnergyBuyPrice);
 
             _data.CommonData.EnergyMarkets.Add(_market);
 
             // Market data
-            market.Ts.PowerBuyMax = new TimeSeries();
-            market.Ts.PowerBuyMax.DefaultValue = 1000000;
-            market.Ts.PowerBuyMin = new TimeSeries();
-            market.Ts.PowerSellMin = new TimeSeries();
-            market.Ts.PowerSellMax = new TimeSeries();
-            market.Ts.PowerSellMax.DefaultValue = 1000000;
-            market.Ts.EnergyDeficitPenaltyPrice = new TimeSeries();
-            market.Ts.EnergyDeficitPenaltyPrice.DefaultValue = 1000000;
-            market.Ts.EnergySurplusPenaltyPrice = new TimeSeries();
-            market.Ts.EnergySurplusPenaltyPrice.DefaultValue = 1000000;
+            _market.Ts.PowerBuyMax = new TimeSeries();
+            _market.Ts.PowerBuyMax.DefaultValue = 1000000;
+            _market.Ts.PowerBuyMin = new TimeSeries();
+            _market.Ts.PowerSellMin = new TimeSeries();
+            _market.Ts.PowerSellMax = new TimeSeries();
+            _market.Ts.PowerSellMax.DefaultValue = 1000000;
+            _market.Ts.EnergyDeficitPenaltyPrice = new TimeSeries();
+            _market.Ts.EnergyDeficitPenaltyPrice.DefaultValue = 1000000;
+            _market.Ts.EnergySurplusPenaltyPrice = new TimeSeries();
+            _market.Ts.EnergySurplusPenaltyPrice.DefaultValue = 1000000;
 
-            market.Ts.PowerLoad = new TimeSeries();
+            _market.Ts.PowerLoad = new TimeSeries();
 
-            market.EnergyProviders = new List<EnergyProvider>();
-            BatteryEnergyProvider provider = new BatteryEnergyProvider(market.Id, _battery.Id)
+            _market.EnergyProviders = new List<EnergyProvider>();
+            BatteryEnergyProvider provider = new BatteryEnergyProvider(_market.Id, _battery.Id)
             {
                 Battery = _battery,
-                EnergyMarket = market,
+                EnergyMarket = _market,
                 Availability = new TimeSeries()
             };
             provider.Availability.DefaultValue = 1;
@@ -86,7 +91,7 @@ namespace BatteryPomaPlanner
             provider.MinDelivery = new TimeSeries();
             provider.MinDelivery.DefaultValue = -100;
             
-            market.EnergyProviders.Add(provider);
+            _market.EnergyProviders.Add(provider);
 
             // Battery time series
             _battery.RampCost = new UnitPrice(0.1, euroPerMw);
@@ -130,6 +135,17 @@ namespace BatteryPomaPlanner
         }
 
         public string Name => "POMA";
+
+        private static TimeSeries ToUtc(TimeSeries localSeries)
+        {
+            var utcSeries = new TimeSeries(true, true);
+            foreach (DateTime t in localSeries.TimePoints())
+            {
+                utcSeries.SetValueAt(DateTime.SpecifyKind(t, DateTimeKind.Local).ToUniversalTime(), localSeries[t]);
+            }
+            utcSeries.IsBreakPointSeries = localSeries.IsBreakPointSeries;
+            return utcSeries;
+        }
 
 
         public TimeSeries Plan
