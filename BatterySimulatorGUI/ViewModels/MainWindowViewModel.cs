@@ -188,18 +188,20 @@ namespace BatterySimulatorGUI.ViewModels
             });
             _positionSeries.Add(new StepLineSeries<DateTimePoint>
             {
-                Values = _plannedPowerValues,
-                Name = "Planned",
-                Stroke = new SolidColorPaint(SKColors.Orange) { StrokeThickness = 2, PathEffect = new DashEffect(new float[] { 6, 4 }) },
+                Values = _positionValues,
+                Name = "Traded position",
+                Stroke = new SolidColorPaint(SKColors.DodgerBlue) { StrokeThickness = 3 },
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null
             });
+            // Drawn last: the position usually equals the plan, so the dashes run along the blue line and
+            // only separate from it where a fill was partial or a product had passed gate closure.
             _positionSeries.Add(new StepLineSeries<DateTimePoint>
             {
-                Values = _positionValues,
-                Name = "Traded position",
-                Stroke = new SolidColorPaint(SKColors.DodgerBlue) { StrokeThickness = 3 },
+                Values = _plannedPowerValues,
+                Name = "Planned",
+                Stroke = new SolidColorPaint(SKColors.Orange) { StrokeThickness = 2, PathEffect = new DashEffect(new float[] { 6, 4 }) },
                 Fill = null,
                 GeometryFill = null,
                 GeometryStroke = null
