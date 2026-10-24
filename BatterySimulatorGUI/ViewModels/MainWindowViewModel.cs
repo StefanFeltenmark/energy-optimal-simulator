@@ -40,6 +40,13 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _dischargeValues;
         private ObservableCollection<DateTimePoint> _pnlValues;
 
+        // Position panel (fed by BatterySimulator.StepCompleted)
+        private ObservableCollection<ISeries> _positionSeries;
+        private ObservableCollection<DateTimePoint> _positionValues;
+        private ObservableCollection<DateTimePoint> _plannedPowerValues;
+        private ObservableCollection<DateTimePoint> _deliveredValues;
+        private string? _executionSummary;
+
         private DateTime _simulationTime;
         private string? _currentPnL;
         private string? _equivalentCycles;
@@ -172,7 +179,40 @@ namespace BatterySimulatorGUI.ViewModels
                 ScalesYAt = 0
             });
 
-           
+            // Position panel: what was traded, what the planner wants, and what the battery delivered.
+            _positionSeries = new ObservableCollection<ISeries>();
+            _positionValues = new ObservableCollection<DateTimePoint>();
+            _plannedPowerValues = new ObservableCollection<DateTimePoint>();
+            _deliveredValues = new ObservableCollection<DateTimePoint>();
+            _positionSeries.Add(new StepLineSeries<DateTimePoint>
+            {
+                Values = _deliveredValues,
+                Name = "Delivered",
+                Stroke = new SolidColorPaint(SKColors.Gray) { StrokeThickness = 1 },
+                Fill = new SolidColorPaint(SKColors.LightGray.WithAlpha(120)),
+                GeometryFill = null,
+                GeometryStroke = null
+            });
+            _positionSeries.Add(new StepLineSeries<DateTimePoint>
+            {
+                Values = _plannedPowerValues,
+                Name = "Planned",
+                Stroke = new SolidColorPaint(SKColors.Orange) { StrokeThickness = 2, PathEffect = new DashEffect(new float[] { 6, 4 }) },
+                Fill = null,
+                GeometryFill = null,
+                GeometryStroke = null
+            });
+            _positionSeries.Add(new StepLineSeries<DateTimePoint>
+            {
+                Values = _positionValues,
+                Name = "Traded position",
+                Stroke = new SolidColorPaint(SKColors.DodgerBlue) { StrokeThickness = 3 },
+                Fill = null,
+                GeometryFill = null,
+                GeometryStroke = null
+            });
+            _simulator.StepCompleted += Simulator_StepCompleted;
+
             _simulationTime = _simulator.TimeProvider.GetTime();
 
             UpdateChargeAxisLimits();
@@ -183,6 +223,76 @@ namespace BatterySimulatorGUI.ViewModels
             double power = _simulator.Battery1.InitialCapacityC.CovertToUnit(Units.MegaWatt).Value;
             netChargeAxes[0].MaxLimit = power + 1;
             netChargeAxes[0].MinLimit = -power - 1;
+            positionAxes[0].MaxLimit = power + 1;
+            positionAxes[0].MinLimit = -power - 1;
+        }
+
+        private void Simulator_StepCompleted(object? sender, ExecutionSnapshot snapshot)
+        {
+            OnUiThread(() =>
+            {
+                _deliveredValues.Add(new DateTimePoint(snapshot.IntervalStart, snapshot.DeliveredMW));
+                DropBefore(_deliveredValues, snapshot.IntervalStart - _visibleHorizon);
+
+                if (snapshot.Products.Count > 0)
+                {
+                    ReplaceFromFirstProduct(_plannedPowerValues, snapshot.Products, p => p.PlannedMW);
+                    if (snapshot.HasOrderBook)
+                        ReplaceFromFirstProduct(_positionValues, snapshot.Products, p => p.PositionMW);
+                }
+
+                ExecutionSummary = snapshot.HasOrderBook
+                    ? $"Traded {snapshot.GrossTradedMWh:F1} MWh ({snapshot.TradeCount} trades)  Imbalance {snapshot.ShortImbalanceMWh + snapshot.LongImbalanceMWh:F1} MWh, {snapshot.ImbalanceNetCost:F0} €"
+                    : null;
+            });
+        }
+
+        /// <summary>
+        /// Keeps the history before the first product (frozen positions / last plan for delivered products) and
+        /// overwrites everything from it onwards with the snapshot, closing the last step at its product end.
+        /// Existing points are updated in place rather than removed and re-added, so the chart does not
+        /// re-draw (and animate) the whole line every step.
+        /// </summary>
+        private void ReplaceFromFirstProduct(ObservableCollection<DateTimePoint> values, IReadOnlyList<ProductSnapshot> products, Func<ProductSnapshot, double> select)
+        {
+            DateTime from = products[0].Product;
+            int i = values.Count;
+            while (i > 0 && values[i - 1].DateTime >= from) i--;
+
+            void Set(DateTime time, double value)
+            {
+                if (i < values.Count)
+                {
+                    DateTimePoint point = values[i];
+                    if (point.DateTime != time) point.DateTime = time;
+                    if (point.Value != value) point.Value = value;
+                }
+                else
+                {
+                    values.Add(new DateTimePoint(time, value));
+                }
+                i++;
+            }
+
+            foreach (ProductSnapshot product in products) Set(product.Product, select(product));
+            Set(products[^1].Product.AddMinutes(SimulationSettings.ProductMinutes), select(products[^1]));
+            while (values.Count > i) values.RemoveAt(values.Count - 1);
+
+            DropBefore(values, from - _visibleHorizon);
+        }
+
+        private static void DropBefore(ObservableCollection<DateTimePoint> values, DateTime cutoff)
+        {
+            while (values.Count > 0 && values[0].DateTime < cutoff) values.RemoveAt(0);
+        }
+
+        public ObservableCollection<ISeries> Positions => _positionSeries;
+
+        /// <summary>Execution totals for the header; null with the single-price market model.</summary>
+        public string? ExecutionSummary
+        {
+            get => _executionSummary;
+            private set => this.RaiseAndSetIfChanged(ref _executionSummary, value);
         }
 
         private void ManageHandlers(bool subScribe = true)
@@ -353,6 +463,10 @@ namespace BatterySimulatorGUI.ViewModels
             _dischargeValues.Clear();
             _pnlValues.Clear();
             _priceForecast.Clear();
+            _positionValues.Clear();
+            _plannedPowerValues.Clear();
+            _deliveredValues.Clear();
+            ExecutionSummary = null;
         }
 
         /// <summary>
@@ -524,6 +638,23 @@ namespace BatterySimulatorGUI.ViewModels
                     Name = "Price (€/MWh)",
                     TextSize = 16,
                     Position = AxisPosition.End,
+                }
+            ];
+
+        public Axis[] positionAxes { get; set; }
+            = [
+                new Axis
+                {
+                    Name = "Position (MW)",
+
+                    LabelsPaint = new SolidColorPaint(SKColors.Green),
+                    TextSize = 16,
+
+                    SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray)
+                    {
+                        StrokeThickness = 2,
+                        PathEffect = new DashEffect(new float[] { 3, 3 })
+                    }
                 }
             ];
 

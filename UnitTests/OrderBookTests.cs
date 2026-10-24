@@ -163,6 +163,50 @@ namespace UnitTests
             Assert.InRange(book - single, -2, 2);
         }
 
+        [Fact]
+        public async Task StepCompletedPublishesPositionsPlanAndTotals()
+        {
+            var snapshots = new List<ExecutionSnapshot>();
+            using var sim = new BatterySimulator.BatterySimulator(new ConstantPlanner(-4));   // charge 4 MW
+            sim.SetUp(new SimulationSettings { DurationHours = 2, TimeStepSeconds = 900, SleepMilliseconds = 0, MarketModel = MarketModel.OrderBook });
+            sim.StepCompleted += (_, s) => snapshots.Add(s);
+            sim.SimulationEnabled = true;
+            await sim.Simulate();
+
+            Assert.Equal(8, snapshots.Count);                                     // one per 15-minute step
+            ExecutionSnapshot first = snapshots[0];
+            Assert.True(first.HasOrderBook);
+            Assert.Equal(sim.Start, first.IntervalStart);
+            Assert.Equal(sim.Start.AddMinutes(15), first.Products[0].Product);    // next product to be delivered
+            Assert.Equal(0, first.Products[0].PositionMW);                       // inside gate closure at the start
+            Assert.Equal(4, first.Products[2].PositionMW, 9);                    // 09:45, traded at 09:15
+            Assert.All(first.Products, p => Assert.Equal(4, p.PlannedMW, 9));
+
+            foreach (ExecutionSnapshot s in snapshots)
+                Assert.Equal(sim.Recorder.NetCharge[s.IntervalEnd], s.DeliveredMW);
+
+            ExecutionSnapshot last = snapshots[^1];
+            Assert.Equal(sim.Executor!.GrossBoughtMWh + sim.Executor.GrossSoldMWh, last.GrossTradedMWh);
+            Assert.Equal(sim.Executor.TradeCount, last.TradeCount);
+        }
+
+        [Fact]
+        public async Task StepCompletedHasNoPositionsWithSinglePrice()
+        {
+            ExecutionSnapshot? snapshot = null;
+            using var sim = new BatterySimulator.BatterySimulator(new ConstantPlanner(-4));
+            sim.SetUp(new SimulationSettings { DurationHours = 1, TimeStepSeconds = 900, SleepMilliseconds = 0 });
+            sim.StepCompleted += (_, s) => snapshot ??= s;
+            sim.SimulationEnabled = true;
+            await sim.Simulate();
+
+            Assert.NotNull(snapshot);
+            Assert.False(snapshot!.HasOrderBook);
+            Assert.All(snapshot.Products, p => Assert.True(double.IsNaN(p.PositionMW)));
+            Assert.All(snapshot.Products, p => Assert.Equal(4, p.PlannedMW, 9));
+            Assert.Equal(0, snapshot.TradeCount);
+        }
+
         private class ConstantPlanner : IBatteryPlanner
         {
             private readonly double _productionMW;

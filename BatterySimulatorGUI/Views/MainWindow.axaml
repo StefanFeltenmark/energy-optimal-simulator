@@ -27,6 +27,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="240"/>
@@ -40,7 +41,7 @@
            <TextBlock FontSize="36" Name="Title" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground  ="White">Volue Battery Simulator </TextBlock>
             </Border>
 
-        <ScrollViewer Grid.Column="0" Grid.Row="1" Grid.RowSpan="4" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Column="0" Grid.Row="1" Grid.RowSpan="5" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="5 0">
                 <StackPanel.Styles>
                     <Style Selector="TextBlock.label">
@@ -174,6 +175,7 @@
             <TextBlock  Margin="0 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas" Text="{Binding CurrentPnL, Mode = OneWay}"></TextBlock>
             <TextBlock Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas">EFC: </TextBlock>
             <TextBlock  Margin="0 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas" Text="{Binding EquivalentCycles, Mode = OneWay}"></TextBlock>
+            <TextBlock  Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="18" FontFamily="Consolas" Text="{Binding ExecutionSummary, Mode = OneWay}"></TextBlock>
             <TextBlock  Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="18" FontFamily="Consolas" Foreground="Red" Text="{Binding StatusMessage, Mode = OneWay}"></TextBlock>
         </StackPanel>
         <Border Grid.Column="2" Grid.Row="2" Background="White"
@@ -201,6 +203,20 @@
             </lvc:CartesianChart>
         </Border>
         <Border Grid.Column="1" Grid.Row="4" Background="White"
+                BorderBrush="Black"
+                BorderThickness="2"
+                CornerRadius="3"
+                Padding="10" Margin="10">
+            <lvc:CartesianChart
+                x:Name ="positions"
+                Series="{Binding Positions}"
+                XAxes="{Binding timeAxis}"
+                YAxes="{Binding positionAxes}"
+                LegendPosition="Top"
+                EasingFunction="{x:Null}">
+            </lvc:CartesianChart>
+        </Border>
+        <Border Grid.Column="1" Grid.Row="5" Background="White"
                 BorderBrush="Black"
                 BorderThickness="2"
                 CornerRadius="3"

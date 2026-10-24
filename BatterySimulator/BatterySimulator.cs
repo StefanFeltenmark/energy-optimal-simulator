@@ -244,6 +244,32 @@ namespace BatterySimulator
         /// <summary>The order-book executor when <see cref="MarketModel.OrderBook"/> is selected, otherwise null.</summary>
         public OrderBookExecutor? Executor => _executor;
 
+        /// <summary>Raised on the simulation thread after every step with positions, plan and execution totals.</summary>
+        public event EventHandler<ExecutionSnapshot>? StepCompleted;
+
+        private ExecutionSnapshot BuildSnapshot(DateTime from, DateTime to, DateTime planEnd)
+        {
+            TimeSpan productLength = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes);
+            DateTime last = planEnd < _end ? planEnd : _end;
+
+            var products = new List<ProductSnapshot>();
+            for (DateTime product = OrderBookExecutor.ProductStart(to); product < last; product += productLength)
+            {
+                double planned = -_planner.GetPlannedProduction(product).CovertToUnit(Units.MegaWatt).Value;
+                double position = _executor != null ? _executor.Position(product) / productLength.TotalHours : double.NaN;
+                products.Add(new ProductSnapshot(product, position, planned));
+            }
+
+            return new ExecutionSnapshot(
+                from, to, _recorder.NetCharge[to], products,
+                HasOrderBook: _executor != null,
+                GrossTradedMWh: _executor != null ? _executor.GrossBoughtMWh + _executor.GrossSoldMWh : 0,
+                TradeCount: _executor?.TradeCount ?? 0,
+                ShortImbalanceMWh: _executor?.ShortImbalanceMWh ?? 0,
+                LongImbalanceMWh: _executor?.LongImbalanceMWh ?? 0,
+                ImbalanceNetCost: _executor?.ImbalanceNetCost ?? 0);
+        }
+
         /// <summary>
         /// Pushes the planner-related <see cref="Settings"/> into the planner. Called in SetUp and before
         /// every re-plan, so these settings can be changed while a simulation runs. Invalid settings
@@ -347,6 +373,8 @@ namespace BatterySimulator
                         // Energy traded over [t, tNext) is settled at the prices valid at t.
                         _pnlManager.UpdatePnL(tNext, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
                     }
+
+                    StepCompleted?.Invoke(this, BuildSnapshot(t, tNext, planEnd));
 
                     t = tNext;
                 }
