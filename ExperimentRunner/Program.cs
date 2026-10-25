@@ -6,7 +6,8 @@ using ExperimentRunner;
 //   dotnet run --project ExperimentRunner -- --weeks 4 --seeds 5 --planners PriceLevel,POMA --markets single,book
 //
 // Options (defaults in brackets):
-//   --start     first period start, local time [2018-01-04T09:00]
+//   --data      price data: recent (SE3 2025/26, 15-minute day-ahead) or 2018 (hourly Nord Pool file) [recent]
+//   --start     first period start, local time [the data's default: 2025-11-06T09:00 or 2018-01-04T09:00]
 //   --weeks     number of periods, one week apart; periods touching a DST switch are skipped [1]
 //   --hours     length of each period [168]
 //   --seeds     order-book seeds 1..N; the single-price market is deterministic and runs once [1]
@@ -18,9 +19,12 @@ using ExperimentRunner;
 
 var options = ParseOptions(args);
 var stdout = Console.Out;
-// Leave the current culture alone: the price file's decimal commas are parsed with it.
+// Leave the current culture alone: the 2018 price file's decimal commas are parsed with it.
 
-DateTime firstStart = DateTime.Parse(Get("start", "2018-01-04T09:00"), CultureInfo.InvariantCulture);
+string data = Get("data", "recent");
+DateTime firstStart = options.ContainsKey("start")
+    ? DateTime.Parse(options["start"], CultureInfo.InvariantCulture)
+    : Experiment.DataSettings(data).Start;
 int weeks = int.Parse(Get("weeks", "1"));
 int hours = int.Parse(Get("hours", "168"));
 int seeds = int.Parse(Get("seeds", "1"));
@@ -65,7 +69,7 @@ using (var csv = new StreamWriter(outFile))
         RunResult r;
         try
         {
-            r = await Experiment.Run(key, hours, overrides);
+            r = await Experiment.Run(key, hours, overrides, data);
         }
         catch (Exception e)
         {

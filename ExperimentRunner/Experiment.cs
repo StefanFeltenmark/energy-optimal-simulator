@@ -47,16 +47,26 @@ namespace ExperimentRunner
             _ => throw new ArgumentException($"Unknown planner '{name}'. Known: {string.Join(", ", PlannerNames)}.")
         };
 
-        public static SimulationSettings CreateSettings(DateTime start, int hours, MarketCase market, int seed) => new()
+        /// <summary>The price data to run on: "recent" (SE3, 15-minute day-ahead, 2025/26) or "2018" (hourly Nord Pool file).</summary>
+        public static SimulationSettings DataSettings(string data) => data.ToLowerInvariant() switch
         {
-            Start = start,
-            DurationHours = hours,
-            TimeStepSeconds = 900,
-            SleepMilliseconds = 0,
-            MarketModel = market == MarketCase.Single ? MarketModel.SinglePrice : MarketModel.OrderBook,
-            BookAwarePlanning = market == MarketCase.Book,
-            OrderBookSeed = seed
+            "recent" => SimulationSettings.Recent(),
+            "2018" => new SimulationSettings(),
+            _ => throw new ArgumentException($"Unknown data '{data}'. Known: recent, 2018.")
         };
+
+        public static SimulationSettings CreateSettings(DateTime start, int hours, MarketCase market, int seed, string data = "recent")
+        {
+            SimulationSettings settings = DataSettings(data);
+            settings.Start = start;
+            settings.DurationHours = hours;
+            settings.TimeStepSeconds = 900;
+            settings.SleepMilliseconds = 0;
+            settings.MarketModel = market == MarketCase.Single ? MarketModel.SinglePrice : MarketModel.OrderBook;
+            settings.BookAwarePlanning = market == MarketCase.Book;
+            settings.OrderBookSeed = seed;
+            return settings;
+        }
 
         /// <summary>Settings that identify a run (<see cref="RunKey"/>) or are fixed by the runner; not overridable.</summary>
         private static readonly HashSet<string> RunnerControlled = new()
@@ -88,10 +98,10 @@ namespace ExperimentRunner
         }
 
         /// <summary>Runs one simulation to the end and measures it against the perfect-foresight bound.</summary>
-        public static async Task<RunResult> Run(RunKey key, int hours, IReadOnlyList<string>? overrides = null)
+        public static async Task<RunResult> Run(RunKey key, int hours, IReadOnlyList<string>? overrides = null, string data = "recent")
         {
             using var simulator = new BatterySimulator.BatterySimulator(CreatePlanner(key.Planner));
-            SimulationSettings settings = CreateSettings(key.Start, hours, key.Market, key.Seed);
+            SimulationSettings settings = CreateSettings(key.Start, hours, key.Market, key.Seed, data);
             ApplyOverrides(settings, overrides ?? Array.Empty<string>());
             simulator.SetUp(settings);
             simulator.SimulationEnabled = true;
@@ -131,14 +141,22 @@ namespace ExperimentRunner
         }
 
         /// <summary>
-        /// True if the period, including the planners' look-ahead beyond its end, avoids the 2018 daylight-saving
-        /// switches, where the price file has a missing or a duplicated hour on the local clock.
+        /// True if the period, including the planners' look-ahead beyond its end, avoids the daylight-saving
+        /// switches (EU rule: last Sundays of March and October), where the price data has a missing or a
+        /// duplicated hour on the local clock.
         /// </summary>
         public static bool AvoidsDaylightSavingSwitch(DateTime start, int hours, double lookBeyondHours = 24)
         {
             DateTime end = start.AddHours(hours + lookBeyondHours);
-            return !new[] { new DateTime(2018, 3, 25), new DateTime(2018, 10, 28) }
+            return !Enumerable.Range(start.Year, end.Year - start.Year + 1)
+                .SelectMany(year => new[] { LastSunday(year, 3), LastSunday(year, 10) })
                 .Any(day => start < day.AddDays(1) && end > day);
+        }
+
+        private static DateTime LastSunday(int year, int month)
+        {
+            DateTime day = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+            return day.AddDays(-(int)day.DayOfWeek);
         }
 
         /// <summary>Checks the local POMA service's health endpoint (Negotiate authentication with the current user).</summary>

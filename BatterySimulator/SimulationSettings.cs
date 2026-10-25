@@ -14,7 +14,22 @@ namespace BatterySimulator
     /// </summary>
     public class SimulationSettings
     {
+        /// <summary>Nord Pool hourly Elspot prices for 2018, all areas. The defaults below (and the unit tests) use it.</summary>
         public const string DefaultPriceFile = @"C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\Data\Prices\elspot-prices_2018_hourly_eur.csv";
+
+        /// <summary>SE3 day-ahead prices from Volue Insight, 2025-10-01 to 2026-10-24, 15-minute products (scripts/fetch_volue_prices.py).</summary>
+        public const string RecentPriceFile = @"C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\Data\Prices\se3_2025-10-01_2026-10-25_min15.csv";
+
+        /// <summary>
+        /// Settings on <see cref="RecentPriceFile"/>, the data the GUI, console and experiment runner start from.
+        /// The start is a Thursday 09:00 like the 2018 default, after the October 2025 DST switch.
+        /// </summary>
+        public static SimulationSettings Recent() => new()
+        {
+            PriceFile = RecentPriceFile,
+            PriceArea = "SE3",
+            Start = new DateTime(2025, 11, 6, 9, 0, 0, DateTimeKind.Local)
+        };
 
         // Simulation
         public DateTime Start { get; set; } = new DateTime(2018, 1, 4, 9, 0, 0, DateTimeKind.Local);

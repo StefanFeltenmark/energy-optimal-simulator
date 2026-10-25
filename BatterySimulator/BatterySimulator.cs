@@ -109,6 +109,13 @@ namespace BatterySimulator
             return SpotPriceReader.ReadFile(priceFile).Keys.ToList();
         }
 
+        /// <summary>The first and last delivery times with a price in <paramref name="priceFile"/> (over all areas).</summary>
+        public static (DateTime First, DateTime Last) ReadPriceRange(string priceFile)
+        {
+            var points = SpotPriceReader.ReadFile(priceFile).Values.SelectMany(ts => ts.TimePoints()).ToList();
+            return (points.Min(), points.Max());
+        }
+
         public void SetUp(int nHours, int deltaSeconds)
         {
             Settings.DurationHours = nHours;
@@ -131,8 +138,10 @@ namespace BatterySimulator
 
             // Planners look beyond the simulation end (look-ahead, planning horizon, POMA's 24 h storage value),
             // so the price data must cover that too.
-            DateTime dataStart = areaPrices.TimePoints().First();
-            DateTime dataEnd = areaPrices.TimePoints().Last().AddHours(1);
+            var timePoints = areaPrices.TimePoints().Take(2).ToList();
+            DateTime dataStart = timePoints[0];
+            // The last price is valid for one resolution step (an hour or a quarter-hour).
+            DateTime dataEnd = areaPrices.TimePoints().Last() + (timePoints[1] - timePoints[0]);
             double lookBeyondHours = Math.Max(24, Math.Max(settings.LookAheadHours, settings.PlanningHorizonHours));
             if (_start < dataStart || _end.AddHours(lookBeyondHours) > dataEnd)
                 throw new ArgumentException($"Prices cover {dataStart:yyyy-MM-dd HH:mm} to {dataEnd:yyyy-MM-dd HH:mm}; " +

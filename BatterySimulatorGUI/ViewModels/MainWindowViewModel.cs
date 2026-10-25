@@ -63,7 +63,14 @@ namespace BatterySimulatorGUI.ViewModels
         private int _maxItems = 180;
 
         // Edited by the parameter panel and applied on every Start/Restart.
-        private readonly SimulationSettings _settings = new SimulationSettings { DurationHours = 1000, TimeStepSeconds = 300 };
+        private readonly SimulationSettings _settings = GuiDefaults(SimulationSettings.Recent());
+
+        private static SimulationSettings GuiDefaults(SimulationSettings settings)
+        {
+            settings.DurationHours = 1000;
+            settings.TimeStepSeconds = 300;
+            return settings;
+        }
         private IReadOnlyList<string> _priceAreas = Array.Empty<string>();
 
         public MainWindowViewModel()
@@ -76,6 +83,7 @@ namespace BatterySimulatorGUI.ViewModels
             _simulator = simulator;
 
             _priceAreas = BatterySimulator.BatterySimulator.ReadPriceAreas(_settings.PriceFile);
+            (PriceDataStart, PriceDataEnd) = BatterySimulator.BatterySimulator.ReadPriceRange(_settings.PriceFile);
             ApplySelectedPlanner();
             _simulator.SetUp(_settings);
 
@@ -863,6 +871,11 @@ namespace BatterySimulatorGUI.ViewModels
 
         // Market
         public IReadOnlyList<string> PriceAreas => _priceAreas;
+
+        /// <summary>The price file's date range, for the start date picker.</summary>
+        public DateTime PriceDataStart { get; private set; }
+
+        public DateTime PriceDataEnd { get; private set; }
 
         public string? SelectedPriceArea
         {

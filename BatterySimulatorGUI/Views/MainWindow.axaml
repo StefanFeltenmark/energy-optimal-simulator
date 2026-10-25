@@ -72,7 +72,7 @@
                     <StackPanel>
                         <TextBlock Classes="label">Start date</TextBlock>
                         <CalendarDatePicker SelectedDate="{Binding StartDate}" HorizontalAlignment="Stretch"
-                                            DisplayDateStart="2018-01-01" DisplayDateEnd="2018-12-31"/>
+                                            DisplayDateStart="{Binding PriceDataStart}" DisplayDateEnd="{Binding PriceDataEnd}"/>
                         <TextBlock Classes="label">Start hour</TextBlock>
                         <NumericUpDown Value="{Binding StartHour}" Minimum="0" Maximum="23" Increment="1" FormatString="0"/>
                         <TextBlock Classes="label">Duration (h)</TextBlock>
