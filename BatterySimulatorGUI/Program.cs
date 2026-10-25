@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using System;
 using Avalonia.Reactive;
-using Avalonia.ReactiveUI;
+using ReactiveUI.Avalonia;
 using ReactiveUI;
 
 namespace BatterySimulatorGUI
@@ -21,6 +21,6 @@ namespace BatterySimulatorGUI
                 .UsePlatformDetect()
                 .WithInterFont()
                 .LogToTrace()
-                .UseReactiveUI();
+                .UseReactiveUI(_ => { });
     }
 }
