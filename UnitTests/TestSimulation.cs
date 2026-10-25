@@ -192,6 +192,37 @@ namespace UnitTests
             Assert.Equal(new[] { 32, 32, 32 }, calls);
         }
 
+        [Fact]
+        public async Task PausedRunHoldsItsClockUntilResumedAndCanBeStopped()
+        {
+            using var simulator = new BatterySimulator.BatterySimulator(new FixedPlanner(_ => 0));
+            simulator.SetUp(new SimulationSettings { DurationHours = 2, TimeStepSeconds = 900, SleepMilliseconds = 20 });
+            simulator.SimulationEnabled = true;
+
+            Task run = simulator.Simulate();
+            simulator.Pause();
+            await Task.Delay(300);
+            DateTime held = simulator.SimulationTime;
+            await Task.Delay(300);
+            Assert.Equal(held, simulator.SimulationTime);
+            Assert.True(held < simulator.End);
+
+            simulator.Resume();
+            await run.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(simulator.End, simulator.SimulationTime);
+
+            // Stopping a paused run ends it.
+            using var cts = new CancellationTokenSource();
+            simulator.SetUp(new SimulationSettings { DurationHours = 2, TimeStepSeconds = 900, SleepMilliseconds = 20 });
+            simulator.SimulationEnabled = true;
+            run = simulator.Simulate(cts.Token);
+            simulator.Pause();
+            await Task.Delay(100);
+            cts.Cancel();
+            await run.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.True(simulator.SimulationTime < simulator.End);
+        }
+
         private class FixedPlanner : IBatteryPlanner
         {
             private readonly Func<DateTime, double> _production;

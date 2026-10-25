@@ -53,7 +53,7 @@ namespace BatterySimulatorGUI.Views
         /// unobserved task exception, reporting it on the view model and resetting
         /// the toggle button.
         /// </summary>
-        private static async Task RunGuarded(MainWindowViewModel vm, Func<Task> run, ToggleButton button, string idleLabel)
+        private async Task RunGuarded(MainWindowViewModel vm, Func<Task> run, ToggleButton button, string idleLabel)
         {
             try
             {
@@ -67,6 +67,25 @@ namespace BatterySimulatorGUI.Views
             {
                 button.IsChecked = false;
                 button.Content = idleLabel;
+                // A finished or stopped run is not paused; the next one starts running.
+                PauseButton.IsChecked = false;
+                PauseButton.Content = "Pause";
+            }
+        }
+
+        private void Button_Pause(object? sender, RoutedEventArgs e)
+        {
+            var vm = (MainWindowViewModel)DataContext;
+            var button = (ToggleButton)sender;
+            if (button.IsChecked == true)
+            {
+                vm.PauseSimulation();
+                button.Content = "Resume";
+            }
+            else
+            {
+                vm.ResumeSimulation();
+                button.Content = "Pause";
             }
         }
     }

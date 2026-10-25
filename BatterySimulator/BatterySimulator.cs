@@ -464,8 +464,36 @@ namespace BatterySimulator
             }
         }
 
+        // Completed while running; a pending source while paused. The loop awaits it before every step.
+        private TaskCompletionSource _running = CompletedSource();
+        private readonly object _pauseLock = new();
+
+        private static TaskCompletionSource CompletedSource()
+        {
+            var source = new TaskCompletionSource();
+            source.SetResult();
+            return source;
+        }
+
+        public bool IsPaused => !_running.Task.IsCompleted;
+
+        /// <summary>Holds the simulation before its next step until <see cref="Resume"/>. Cancelling still stops a paused run.</summary>
+        public void Pause()
+        {
+            lock (_pauseLock)
+            {
+                if (_running.Task.IsCompleted) _running = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
+        }
+
+        public void Resume()
+        {
+            lock (_pauseLock) _running.TrySetResult();
+        }
+
         public async Task Simulate(CancellationToken cancellationToken = default)
         {
+            Resume();   // a new run starts running, whatever the previous one was left in
             var priceUnit = new PriceUnit(Currencies.Euro, Units.MegaWattHour);
             DateTime t = TimeProvider.GetTime();
             TimeSpan replanningInterval = TimeSpan.FromMinutes(Settings.ReplanIntervalMinutes);
@@ -498,6 +526,8 @@ namespace BatterySimulator
             {
                 while(t < _end && SimulationEnabled && !cancellationToken.IsCancellationRequested)
                 {
+                    if (IsPaused) await _running.Task.WaitAsync(cancellationToken);
+
                     // Horizon and re-plan interval may be changed while running; ignore invalid edits.
                     if (Settings.Validate().Count == 0)
                     {

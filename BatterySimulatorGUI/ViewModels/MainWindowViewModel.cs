@@ -617,6 +617,11 @@ namespace BatterySimulatorGUI.ViewModels
             if (_simulator != null) _simulator.SimulationEnabled = false;
         }
 
+        /// <summary>Holds a running simulation before its next step; settings edits and Stop still work while paused.</summary>
+        public void PauseSimulation() => _simulator?.Pause();
+
+        public void ResumeSimulation() => _simulator?.Resume();
+
         private void SoC_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             if (e.Action != NotifyCollectionChangedAction.Add || e.NewItems == null) return;

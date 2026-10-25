@@ -59,6 +59,7 @@
 
                 <ToggleButton Margin="0 5" Click="Button_OnClick_Run" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="DarkSlateGray">Start simulation</ToggleButton>
                 <ToggleButton Margin="0 5" Click="Button_Restart" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="DarkSlateGray">Restart</ToggleButton>
+                <ToggleButton x:Name="PauseButton" Margin="0 5" Click="Button_Pause" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Foreground="DarkSlateGray">Pause</ToggleButton>
 
                 <TextBlock Classes="label">Algorithm</TextBlock>
                 <ComboBox SelectedIndex="{Binding SelectedAlgorithmIndex}" HorizontalAlignment="Stretch">
