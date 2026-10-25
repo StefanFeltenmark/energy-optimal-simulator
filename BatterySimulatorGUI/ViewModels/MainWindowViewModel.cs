@@ -274,9 +274,12 @@ namespace BatterySimulatorGUI.ViewModels
                     _bookNowLine.IsVisible = true;
                 }
 
-                ExecutionSummary = snapshot.HasOrderBook
-                    ? $"Traded {snapshot.GrossTradedMWh:F1} MWh ({snapshot.TradeCount} trades)  Imbalance {snapshot.ShortImbalanceMWh + snapshot.LongImbalanceMWh:F1} MWh, {snapshot.ImbalanceNetCost:F0} €"
-                    : null;
+                ExecutionSummary = !snapshot.HasOrderBook ? null
+                    : snapshot.HasDayAhead
+                        // Profit = day-ahead + intraday - imbalance cost.
+                        ? $"Day-ahead {snapshot.DayAheadNetCash:+0;-0;0} €  Intraday {snapshot.IntradayNetCash:+0;-0;0} € ({snapshot.GrossTradedMWh:F1} MWh, {snapshot.TradeCount} trades)  " +
+                          $"Imbalance {snapshot.ShortImbalanceMWh + snapshot.LongImbalanceMWh:F1} MWh, {-snapshot.ImbalanceNetCost:+0;-0;0} €"
+                        : $"Traded {snapshot.GrossTradedMWh:F1} MWh ({snapshot.TradeCount} trades)  Imbalance {snapshot.ShortImbalanceMWh + snapshot.LongImbalanceMWh:F1} MWh, {snapshot.ImbalanceNetCost:F0} €";
             });
         }
 
@@ -919,6 +922,12 @@ namespace BatterySimulatorGUI.ViewModels
         {
             get => _settings.BookAwarePlanning;
             set { _settings.BookAwarePlanning = value; OnSettingChanged(); }
+        }
+
+        public bool DayAheadMarket
+        {
+            get => _settings.DayAheadMarket;
+            set { _settings.DayAheadMarket = value; OnSettingChanged(); }
         }
 
         public decimal? SpreadNearDelivery

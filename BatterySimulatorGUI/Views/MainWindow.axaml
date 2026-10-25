@@ -104,6 +104,7 @@
                         <TextBlock Classes="label">Gate closure (min before delivery)</TextBlock>
                         <NumericUpDown Value="{Binding GateClosureMinutes}" Minimum="0" Maximum="240" Increment="5" FormatString="0"/>
                         <CheckBox Margin="0 6 0 0" IsChecked="{Binding BookAwarePlanning}">POMA plans against bid/ask and positions</CheckBox>
+                        <CheckBox Margin="0 6 0 0" IsChecked="{Binding DayAheadMarket}">Bid day-ahead from forecast (12:00), trade intraday from 15:00</CheckBox>
                         <TextBlock Classes="label">Market volatility, all products (€/MWh/√h)</TextBlock>
                         <NumericUpDown Value="{Binding MidVolatility}" Minimum="0" Maximum="100" Increment="0.5"/>
                         <TextBlock Classes="label">Product-specific volatility (€/MWh/√h)</TextBlock>
@@ -178,7 +179,6 @@
             <TextBlock  Margin="0 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas" Text="{Binding CurrentPnL, Mode = OneWay}"></TextBlock>
             <TextBlock Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas">EFC: </TextBlock>
             <TextBlock  Margin="0 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas" Text="{Binding EquivalentCycles, Mode = OneWay}"></TextBlock>
-            <TextBlock  Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="18" FontFamily="Consolas" Text="{Binding ExecutionSummary, Mode = OneWay}"></TextBlock>
             <TextBlock  Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="18" FontFamily="Consolas" Foreground="Red" Text="{Binding StatusMessage, Mode = OneWay}"></TextBlock>
         </StackPanel>
         <Border Grid.Column="2" Grid.Row="2" Background="White"
@@ -225,15 +225,19 @@
                     BorderThickness="2"
                     CornerRadius="3"
                     Padding="10" Margin="10">
-                <lvc:CartesianChart
-                    x:Name ="orderBook"
-                    Series="{Binding OrderBook}"
-                    XAxes="{Binding bookTimeAxis}"
-                    YAxes="{Binding bookAxes}"
-                    Sections="{Binding BookSections}"
-                    LegendPosition="Top"
-                    EasingFunction="{x:Null}">
-                </lvc:CartesianChart>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Bottom" Margin="5 5 5 0" FontSize="14" FontFamily="Consolas" TextWrapping="Wrap"
+                               Text="{Binding ExecutionSummary, Mode = OneWay}"/>
+                    <lvc:CartesianChart
+                        x:Name ="orderBook"
+                        Series="{Binding OrderBook}"
+                        XAxes="{Binding bookTimeAxis}"
+                        YAxes="{Binding bookAxes}"
+                        Sections="{Binding BookSections}"
+                        LegendPosition="Top"
+                        EasingFunction="{x:Null}">
+                    </lvc:CartesianChart>
+                </DockPanel>
             </Border>
         </Grid>
         <Border Grid.Column="1" Grid.Row="5" Background="White"
