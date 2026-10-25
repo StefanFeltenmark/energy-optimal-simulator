@@ -93,6 +93,12 @@ namespace BatterySimulator
         /// instead of the reference price, so revising a position costs the spread inside the optimisation.
         /// </summary>
         public bool BookAwarePlanning { get; set; } = true;
+        /// <summary>
+        /// Minimum change of a product's position worth trading before its last chance, MWh. Smaller revisions are
+        /// left until the product is the front product (the last one tradable before its gate closure), which
+        /// always trades fully. 0 trades every revision of the plan at once.
+        /// </summary>
+        public double IntradayTradeThresholdMWh { get; set; } = 0;
 
         // Day-ahead market (with the order book): bid the next day from a forecast, then trade intraday from there.
         /// <summary>
@@ -172,6 +178,7 @@ namespace BatterySimulator
                 if (FarDepthFraction is < 0 or > 1) errors.Add("Far-from-delivery depth fraction must be between 0 and 1.");
                 if (LiquidityRecoveryMinutes <= 0) errors.Add("Liquidity recovery time must be positive.");
                 if (ImbalancePenalty < 0) errors.Add("Imbalance penalty cannot be negative.");
+                if (IntradayTradeThresholdMWh < 0) errors.Add("Intraday trade threshold cannot be negative.");
             }
             if (DayAheadMarket)
             {

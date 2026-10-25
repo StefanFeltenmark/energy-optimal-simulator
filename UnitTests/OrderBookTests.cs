@@ -206,6 +206,25 @@ namespace UnitTests
         }
 
         [Fact]
+        public void SmallRevisionsWaitForTheFrontProduct()
+        {
+            var settings = new SimulationSettings { MarketModel = MarketModel.OrderBook, IntradayTradeThresholdMWh = 1, LevelVolumeMWh = 100 };
+            var executor = new OrderBookExecutor(new SyntheticOrderBook(Prices(), settings), settings, Delivery.AddHours(4));
+            DateTime t = Delivery.AddHours(-2), planEnd = Delivery.AddHours(1);
+            DateTime front = executor.FirstTradableProduct(t);
+
+            executor.Trade(t, new ConstantPlanner(-8), planEnd);          // 2 MWh per product: above the threshold
+            Assert.All(executor.Positions.Values, v => Assert.Equal(2, v, 9));
+
+            executor.Trade(t, new ConstantPlanner(-10), planEnd);         // +0.5 MWh: only the front product trades
+            Assert.Equal(2.5, executor.Position(front), 9);
+            Assert.All(executor.Positions.Where(p => p.Key > front), p => Assert.Equal(2, p.Value, 9));
+
+            executor.Trade(t, new ConstantPlanner(-4), planEnd);          // -1 MWh (from 2): at the threshold, all trade
+            Assert.All(executor.Positions.Where(p => p.Key > front), p => Assert.Equal(1, p.Value, 9));
+        }
+
+        [Fact]
         public void ImbalanceIsSettledAtRealizedPriceWithPenalty()
         {
             var settings = Settings();   // penalty 5

@@ -121,8 +121,9 @@ namespace BatterySimulator
             double buyCost = 0, sellIncome = 0;
 
             DateTime last = planEnd < _runEnd ? planEnd : _runEnd;
+            DateTime front = FirstTradableProduct(t);
 
-            for (DateTime product = FirstTradableProduct(t); product < last; product += ProductLength)
+            for (DateTime product = front; product < last; product += ProductLength)
             {
                 // Later products open no earlier than this one.
                 if (!_book.HasOpened(product, t)) break;
@@ -130,6 +131,9 @@ namespace BatterySimulator
                 double target = -planner.GetPlannedProduction(product).CovertToUnit(Units.MegaWatt).Value * ProductLength.TotalHours;
                 double delta = target - Position(product);
                 if (Math.Abs(delta) < MinTradeMWh) continue;
+                // Revise ahead of time only for changes worth the spread; the front product is the last chance to
+                // trade before its gate closure and always trades fully.
+                if (product > front && Math.Abs(delta) < _settings.IntradayTradeThresholdMWh) continue;
 
                 Fill fill = _book.ExecuteMarketOrder(product, delta, t);
                 _positions[product] = Position(product) + fill.VolumeMWh;
