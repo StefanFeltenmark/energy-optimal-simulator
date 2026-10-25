@@ -216,8 +216,9 @@
                 <lvc:CartesianChart
                     x:Name ="positions"
                     Series="{Binding Positions}"
-                    XAxes="{Binding timeAxis}"
+                    XAxes="{Binding positionTimeAxis}"
                     YAxes="{Binding positionAxes}"
+                    Sections="{Binding PositionSections}"
                     LegendPosition="Top">
                 </lvc:CartesianChart>
             </Border>

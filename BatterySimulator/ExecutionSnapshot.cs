@@ -2,8 +2,10 @@ namespace BatterySimulator
 {
     /// <summary>Position and plan for one 15-minute product, as average power (MW, + = charging).</summary>
     /// <param name="PositionMW">Held position; NaN with the single-price market model, which has no positions.</param>
+    /// <param name="PlannedMW">The planner's wish; NaN beyond the current plan (products held from day-ahead).</param>
     /// <param name="AverageFillPrice">Volume-weighted average fill price (EUR/MWh); NaN if not traded (or single price).</param>
-    public readonly record struct ProductSnapshot(DateTime Product, double PositionMW, double PlannedMW, double AverageFillPrice);
+    /// <param name="DayAheadMW">Accepted day-ahead volume (part of the position); NaN without the day-ahead market.</param>
+    public readonly record struct ProductSnapshot(DateTime Product, double PositionMW, double PlannedMW, double AverageFillPrice, double DayAheadMW = double.NaN);
 
     /// <summary>Top of the book for one product at one trading time (EUR/MWh). Bid/ask are NaN when that side is empty.</summary>
     /// <param name="ReferencePrice">The product's realized intraday price, i.e. its mid at delivery (hindsight, for display only).</param>
@@ -14,7 +16,7 @@ namespace BatterySimulator
     /// the simulation thread so observers such as the GUI never read planner or executor state while it changes.
     /// </summary>
     /// <param name="DeliveredMW">Average net grid charge over [IntervalStart, IntervalEnd) (+ = charging).</param>
-    /// <param name="Products">Products from the one being delivered next up to the end of the current plan.</param>
+    /// <param name="Products">Products from the one being delivered next up to the end of the current plan, or further to the last product with a position (e.g. tomorrow's day-ahead volumes).</param>
     /// <param name="Quotes">
     /// Top of the book at IntervalEnd for the current delivery day's products and, once open, the next day's;
     /// bid/ask are NaN for products that cannot be traded. Empty without the order book.

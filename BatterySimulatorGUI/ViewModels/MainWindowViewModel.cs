@@ -44,6 +44,7 @@ namespace BatterySimulatorGUI.ViewModels
         private ObservableCollection<DateTimePoint> _positionValues;
         private ObservableCollection<DateTimePoint> _plannedPowerValues;
         private ObservableCollection<DateTimePoint> _deliveredValues;
+        private ObservableCollection<DateTimePoint> _dayAheadValues = new();
         private string? _executionSummary;
 
         // Order book panel: top of the book for the front (first tradable) product
@@ -203,6 +204,17 @@ namespace BatterySimulatorGUI.ViewModels
                 GeometryFill = null,
                 GeometryStroke = null
             });
+            // With the day-ahead market: the accepted day-ahead volumes. The gap to the traded position is what
+            // intraday trading changed on top of day-ahead.
+            _positionSeries.Add(new StepLineSeries<DateTimePoint>
+            {
+                Values = _dayAheadValues,
+                Name = "Day-ahead position",
+                Stroke = new SolidColorPaint(SKColors.MediumPurple) { StrokeThickness = 2, PathEffect = new DashEffect(new float[] { 2, 3 }) },
+                Fill = null,
+                GeometryFill = null,
+                GeometryStroke = null
+            });
             // Drawn last: the position usually equals the plan, so the dashes run along the blue line and
             // only separate from it where a fill was partial or a product had passed gate closure.
             _positionSeries.Add(new StepLineSeries<DateTimePoint>
@@ -246,15 +258,21 @@ namespace BatterySimulatorGUI.ViewModels
         {
             OnUiThread(() =>
             {
+                // Positions over delivery time on a fixed axis covering the current and next delivery day, like the
+                // order book; history is kept back to the start of the day and a vertical line marks the current time.
+                DateTime today = snapshot.IntervalEnd.Date;
                 _deliveredValues.Add(new DateTimePoint(snapshot.IntervalStart, snapshot.DeliveredMW));
-                DropBefore(_deliveredValues, snapshot.IntervalStart - _visibleHorizon);
+                DropBefore(_deliveredValues, today);
 
                 if (snapshot.Products.Count > 0)
                 {
-                    ReplaceFromFirstProduct(_plannedPowerValues, snapshot.Products, p => p.PlannedMW);
+                    ReplaceFromFirstProduct(_plannedPowerValues, snapshot.Products, p => p.PlannedMW, today);
                     if (snapshot.HasOrderBook)
-                        ReplaceFromFirstProduct(_positionValues, snapshot.Products, p => p.PositionMW);
+                        ReplaceFromFirstProduct(_positionValues, snapshot.Products, p => p.PositionMW, today);
+                    if (snapshot.HasDayAhead)
+                        ReplaceFromFirstProduct(_dayAheadValues, snapshot.Products, p => p.DayAheadMW, today);
                 }
+                ShowDeliveryDays(positionTimeAxis, _positionNowLine, today, snapshot.IntervalEnd);
 
                 if (snapshot.Quotes.Count > 0)
                 {
@@ -264,14 +282,7 @@ namespace BatterySimulatorGUI.ViewModels
                     SetCurve(_bidValues, snapshot.Quotes, q => q.BestBid);
                     SetCurve(_midValues, snapshot.Quotes, q => q.Mid);
                     SetCurve(_bookReferenceValues, snapshot.Quotes, q => q.ReferencePrice);
-                    DateTime today = snapshot.IntervalEnd.Date;
-                    if (bookTimeAxis[0].MinLimit != today.Ticks)
-                    {
-                        bookTimeAxis[0].MinLimit = today.Ticks;
-                        bookTimeAxis[0].MaxLimit = today.AddDays(2).Ticks;
-                    }
-                    _bookNowLine.Xi = _bookNowLine.Xj = snapshot.IntervalEnd.Ticks;
-                    _bookNowLine.IsVisible = true;
+                    ShowDeliveryDays(bookTimeAxis, _bookNowLine, today, snapshot.IntervalEnd);
                 }
 
                 ExecutionSummary = !snapshot.HasOrderBook ? null
@@ -287,16 +298,18 @@ namespace BatterySimulatorGUI.ViewModels
         /// Keeps the history before the first product (frozen positions / last plan for delivered products) and
         /// overwrites everything from it onwards with the snapshot, closing the last step at its product end.
         /// Existing points are updated in place rather than removed and re-added, so the chart does not
-        /// re-draw (and animate) the whole line every step.
+        /// re-draw (and animate) the whole line every step. History before <paramref name="keepFrom"/> is dropped.
         /// </summary>
-        private void ReplaceFromFirstProduct(ObservableCollection<DateTimePoint> values, IReadOnlyList<ProductSnapshot> products, Func<ProductSnapshot, double> select)
+        private static void ReplaceFromFirstProduct(ObservableCollection<DateTimePoint> values, IReadOnlyList<ProductSnapshot> products, Func<ProductSnapshot, double> select, DateTime keepFrom)
         {
             DateTime from = products[0].Product;
             int i = values.Count;
             while (i > 0 && values[i - 1].DateTime >= from) i--;
 
-            void Set(DateTime time, double value)
+            void Set(DateTime time, double price)
             {
+                // NaN (e.g. no plan beyond the horizon) leaves a gap.
+                double? value = double.IsNaN(price) ? null : price;
                 if (i < values.Count)
                 {
                     DateTimePoint point = values[i];
@@ -310,11 +323,19 @@ namespace BatterySimulatorGUI.ViewModels
                 i++;
             }
 
-            foreach (ProductSnapshot product in products) Set(product.Product, select(product));
-            Set(products[^1].Product.AddMinutes(SimulationSettings.ProductMinutes), select(products[^1]));
+            double previous = double.NaN;
+            foreach (ProductSnapshot product in products)
+            {
+                double value = select(product);
+                // Close the last step before a gap, so the product before it keeps its full width.
+                if (double.IsNaN(value) && !double.IsNaN(previous)) Set(product.Product, previous);
+                Set(product.Product, value);
+                previous = value;
+            }
+            Set(products[^1].Product.AddMinutes(SimulationSettings.ProductMinutes), previous);
             while (values.Count > i) values.RemoveAt(values.Count - 1);
 
-            DropBefore(values, from - _visibleHorizon);
+            DropBefore(values, keepFrom);
         }
 
         private static void DropBefore(ObservableCollection<DateTimePoint> values, DateTime cutoff)
@@ -368,14 +389,34 @@ namespace BatterySimulatorGUI.ViewModels
 
         public ObservableCollection<ISeries> Positions => _positionSeries;
 
-        /// <summary>Vertical line at the current trading time in the order book panel.</summary>
-        private readonly RectangularSection _bookNowLine = new()
+        /// <summary>Vertical lines at the current trading time in the order book and positions panels.</summary>
+        private readonly RectangularSection _bookNowLine = NowLine();
+        private readonly RectangularSection _positionNowLine = NowLine();
+
+        private static RectangularSection NowLine() => new()
         {
             Stroke = new SolidColorPaint(SKColors.Black) { StrokeThickness = 2 },
             IsVisible = false
         };
 
         public RectangularSection[] BookSections => [_bookNowLine];
+
+        public RectangularSection[] PositionSections => [_positionNowLine];
+
+        /// <summary>
+        /// Fixes <paramref name="axis"/> to the current and next delivery day (it moves only at midnight) and
+        /// moves <paramref name="nowLine"/> to the current time.
+        /// </summary>
+        private static void ShowDeliveryDays(Axis[] axis, RectangularSection nowLine, DateTime today, DateTime now)
+        {
+            if (axis[0].MinLimit != today.Ticks)
+            {
+                axis[0].MinLimit = today.Ticks;
+                axis[0].MaxLimit = today.AddDays(2).Ticks;
+            }
+            nowLine.Xi = nowLine.Xj = now.Ticks;
+            nowLine.IsVisible = true;
+        }
 
         public ObservableCollection<ISeries> OrderBook => _bookSeries;
 
@@ -557,12 +598,15 @@ namespace BatterySimulatorGUI.ViewModels
             _positionValues.Clear();
             _plannedPowerValues.Clear();
             _deliveredValues.Clear();
+            _dayAheadValues.Clear();
             _askValues.Clear();
             _bidValues.Clear();
             _midValues.Clear();
             _bookReferenceValues.Clear();
             _bookNowLine.IsVisible = false;
+            _positionNowLine.IsVisible = false;
             bookTimeAxis[0].MinLimit = bookTimeAxis[0].MaxLimit = null;
+            positionTimeAxis[0].MinLimit = positionTimeAxis[0].MaxLimit = null;
             ExecutionSummary = null;
         }
 
@@ -760,21 +804,22 @@ namespace BatterySimulatorGUI.ViewModels
                 }
             ];
 
-        /// <summary>Delivery-time axis for the order book panel (its own; the other charts share timeAxis).</summary>
-        public Axis[] bookTimeAxis { get; set; }
-            =
-            [
-                new DateTimeAxis(TimeSpan.FromMinutes(SimulationSettings.ProductMinutes), date => date.ToString("ddd HH:mm"))
-                {
-                    Name = "Delivery",
-                    NameTextSize = 14,
-                    ShowSeparatorLines = true,
-                    TicksAtCenter = false,
-                    SeparatorsAtCenter = false,
-                    MinStep = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes).Ticks,
-                    TextSize = 16
-                }
-            ];
+        /// <summary>Delivery-time axes for the order book and positions panels (their own; the other charts share timeAxis).</summary>
+        public Axis[] bookTimeAxis { get; set; } = [DeliveryAxis()];
+
+        public Axis[] positionTimeAxis { get; set; } = [DeliveryAxis()];
+
+        private static Axis DeliveryAxis() =>
+            new DateTimeAxis(TimeSpan.FromMinutes(SimulationSettings.ProductMinutes), date => date.ToString("ddd HH:mm"))
+            {
+                Name = "Delivery",
+                NameTextSize = 14,
+                ShowSeparatorLines = true,
+                TicksAtCenter = false,
+                SeparatorsAtCenter = false,
+                MinStep = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes).Ticks,
+                TextSize = 16
+            };
 
         public Axis[] bookAxes { get; set; }
             = [

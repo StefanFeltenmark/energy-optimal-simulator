@@ -327,15 +327,24 @@ namespace BatterySimulator
         private ExecutionSnapshot BuildSnapshot(DateTime from, DateTime to, DateTime planEnd)
         {
             TimeSpan productLength = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes);
-            DateTime last = planEnd < _end ? planEnd : _end;
+            DateTime lastPlanned = planEnd < _end ? planEnd : _end;
+            // Also cover products already held beyond the plan, e.g. tomorrow's day-ahead volumes from 13:00.
+            DateTime last = lastPlanned;
+            if (_executor != null && _executor.Positions.Count > 0)
+            {
+                DateTime lastHeld = _executor.Positions.Keys.Max() + productLength;
+                if (lastHeld > last) last = lastHeld;
+            }
+            bool dayAhead = _runSettings.DayAheadMarket && _executor != null;
 
             var products = new List<ProductSnapshot>();
             for (DateTime product = OrderBookExecutor.ProductStart(to); product < last; product += productLength)
             {
-                double planned = -_planner.GetPlannedProduction(product).CovertToUnit(Units.MegaWatt).Value;
+                double planned = product < lastPlanned ? -_planner.GetPlannedProduction(product).CovertToUnit(Units.MegaWatt).Value : double.NaN;
                 double position = _executor != null ? _executor.Position(product) / productLength.TotalHours : double.NaN;
                 double fillPrice = _executor?.AverageFillPrice(product) ?? double.NaN;
-                products.Add(new ProductSnapshot(product, position, planned, fillPrice));
+                double dayAheadMW = dayAhead ? _executor!.DayAheadVolume(product) / productLength.TotalHours : double.NaN;
+                products.Add(new ProductSnapshot(product, position, planned, fillPrice, dayAheadMW));
             }
 
             return new ExecutionSnapshot(

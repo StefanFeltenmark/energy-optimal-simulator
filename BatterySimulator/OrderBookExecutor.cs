@@ -46,6 +46,11 @@ namespace BatterySimulator
         /// <summary>Net cash from day-ahead settlement, income - cost, EUR.</summary>
         public double DayAheadNetCash { get; private set; }
 
+        private readonly Dictionary<DateTime, double> _dayAheadVolumes = new();
+
+        /// <summary>Accepted day-ahead volume in <paramref name="product"/>, MWh (+ = bought); part of its <see cref="Position"/>.</summary>
+        public double DayAheadVolume(DateTime product) => _dayAheadVolumes.TryGetValue(product, out double v) ? v : 0;
+
         /// <summary>
         /// Settles day-ahead bids (average MW per product, + = buy) at the day-ahead price and adds the accepted
         /// volumes to the products' positions. Bids are price-independent: buys are always accepted, sells are bid
@@ -67,6 +72,7 @@ namespace BatterySimulator
                 }
 
                 _positions[product] = Position(product) + volume;
+                _dayAheadVolumes[product] = DayAheadVolume(product) + volume;
                 var f = _fills.TryGetValue(product, out var prev) ? prev : default;
                 _fills[product] = (f.Volume + Math.Abs(volume), f.Cash + Math.Abs(volume * price));
                 if (volume > 0)

@@ -101,6 +101,41 @@ namespace UnitTests
             Assert.Equal(spy.BidMW * 0.25, simulator.Executor!.Position(tomorrow), 9);
         }
 
+        [Fact]
+        public async Task SnapshotsShowTomorrowsDayAheadPositionsFromPublication()
+        {
+            var settings = SimulationSettings.Recent();
+            settings.DurationHours = 30;           // Thu 09:00 to Fri 15:00
+            settings.TimeStepSeconds = 900;
+            settings.SleepMilliseconds = 0;
+            settings.MarketModel = MarketModel.OrderBook;
+            settings.DayAheadMarket = true;
+
+            using var simulator = new BatterySimulator.BatterySimulator(new SpyBidder());
+            simulator.SetUp(settings);
+            DateTime start = simulator.Start, tomorrow = start.Date.AddDays(1);
+            ExecutionSnapshot? beforePublication = null, afterPublication = null;
+            simulator.StepCompleted += (_, s) =>
+            {
+                if (s.IntervalEnd == start.Date.AddHours(13)) beforePublication = s;
+                if (s.IntervalEnd == start.Date.AddHours(13.25)) afterPublication = s;
+            };
+            simulator.SimulationEnabled = true;
+            await simulator.Simulate();
+
+            // Before 13:00 the snapshot ends with today's (warm-start) day-ahead positions, at midnight.
+            Assert.Equal(tomorrow.AddMinutes(-15), beforePublication!.Products[^1].Product);
+
+            // From 13:00 it covers tomorrow's held products up to the run end, beyond the plan.
+            var tomorrows = afterPublication!.Products.Where(p => p.Product >= tomorrow).ToList();
+            Assert.Equal(tomorrow, tomorrows[0].Product);
+            Assert.Equal(simulator.End.AddMinutes(-15), tomorrows[^1].Product);
+            Assert.All(tomorrows, p => Assert.Equal(2, p.DayAheadMW, 9));
+            Assert.All(tomorrows, p => Assert.Equal(2, p.PositionMW, 9));
+            Assert.All(tomorrows, p => Assert.True(double.IsNaN(p.PlannedMW)));     // beyond the plan
+            Assert.All(afterPublication.Products.Where(p => p.Product < start.Date.AddHours(20)), p => Assert.False(double.IsNaN(p.PlannedMW)));
+        }
+
         /// <summary>Records day-ahead requests and bids a constant purchase; does nothing intraday.</summary>
         private class SpyBidder : IBatteryPlanner, IDayAheadBidder
         {
