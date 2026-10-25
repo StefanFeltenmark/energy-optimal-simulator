@@ -100,7 +100,7 @@
 
                 <Expander Header="Order book">
                     <StackPanel>
-                        <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">Used when the market model is Order book. 15-minute products; the mid price ends at the realized price at delivery.</TextBlock>
+                        <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">Used when the market model is Order book. 15-minute products, open from 15:00 the day before delivery at the day-ahead price; the mid at delivery is the realized intraday price.</TextBlock>
                         <TextBlock Classes="label">Gate closure (min before delivery)</TextBlock>
                         <NumericUpDown Value="{Binding GateClosureMinutes}" Minimum="0" Maximum="240" Increment="5" FormatString="0"/>
                         <CheckBox Margin="0 6 0 0" IsChecked="{Binding BookAwarePlanning}">POMA plans against bid/ask and positions</CheckBox>

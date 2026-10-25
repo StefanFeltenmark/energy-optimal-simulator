@@ -6,7 +6,7 @@ namespace BatterySimulator
     public readonly record struct ProductSnapshot(DateTime Product, double PositionMW, double PlannedMW, double AverageFillPrice);
 
     /// <summary>Top of the book for one product at one trading time (EUR/MWh). Bid/ask are NaN when that side is empty.</summary>
-    /// <param name="ReferencePrice">The realized price the product's mid converges to at delivery (for display only).</param>
+    /// <param name="ReferencePrice">The product's realized intraday price, i.e. its mid at delivery (hindsight, for display only).</param>
     public readonly record struct BookQuote(DateTime Product, double BestBid, double BestAsk, double Mid, double ReferencePrice);
 
     /// <summary>

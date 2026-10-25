@@ -4,7 +4,7 @@ using Powel.Optimal.MultiAsset.Domain.Quantities;
 namespace BatterySimulator
 {
     /// <summary>
-    /// Turns a planner's plan into intraday trades. For every 15-minute product between gate closure and the
+    /// Turns a planner's plan into intraday trades. For every open 15-minute product between gate closure and the
     /// end of the current plan, it trades the difference between the planned and the held position with a
     /// market order. During delivery the battery follows the held (frozen) position, and any deviation is
     /// settled at the imbalance price.
@@ -72,6 +72,9 @@ namespace BatterySimulator
 
             for (DateTime product = FirstTradableProduct(t); product < last; product += ProductLength)
             {
+                // Later products open no earlier than this one.
+                if (!_book.HasOpened(product, t)) break;
+
                 double target = -planner.GetPlannedProduction(product).CovertToUnit(Units.MegaWatt).Value * ProductLength.TotalHours;
                 double delta = target - Position(product);
                 if (Math.Abs(delta) < MinTradeMWh) continue;

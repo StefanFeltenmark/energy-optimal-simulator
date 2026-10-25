@@ -230,7 +230,7 @@ namespace BatterySimulator
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
 
-            // The book's mid converges to the realized (sell) price; BuySellSpread is not used with the order book.
+            // The book's mids start at the price file's (day-ahead) prices; BuySellSpread is not used with the order book.
             // The book gets a snapshot: its parameters apply on Start/Restart, not to a running simulation.
             var bookSettings = settings.Clone();
             _executor = settings.MarketModel == MarketModel.OrderBook
@@ -243,7 +243,7 @@ namespace BatterySimulator
 
         public DateTime End => _end;
 
-        /// <summary>Realized (sell) prices keyed by local delivery hour; the order book's mids converge to these.</summary>
+        /// <summary>The price file's (sell) prices keyed by local delivery hour: realized prices in the single-price market, day-ahead prices where the order book's mids start.</summary>
         public TimeSeries SellPrices => _market.Ts.EnergySellPrice;
 
         /// <summary>Single-price buy prices: <see cref="SellPrices"/> plus the buy/sell spread.</summary>
@@ -307,9 +307,9 @@ namespace BatterySimulator
                 double positionMW = _executor.Position(product) / hours;
                 double mid = book.Mid(product, t);
 
-                if (product < firstTradable)
+                if (product < firstTradable || !book.HasOpened(product, t))
                 {
-                    // Past gate closure: only the existing position can be delivered.
+                    // Past gate closure (or not open yet): only the existing position can be delivered.
                     quotes.Add(new ProductQuote(product, mid, mid, 0, 0, positionMW));
                     continue;
                 }
@@ -356,7 +356,7 @@ namespace BatterySimulator
                     bids.Count > 0 ? bids[0].Price : double.NaN,
                     asks.Count > 0 ? asks[0].Price : double.NaN,
                     executor.Book.Mid(product, t),
-                    _market.Ts.EnergySellPrice[product]));
+                    executor.Book.RealizedPrice(product)));
             }
             return quotes;
         }
@@ -458,7 +458,7 @@ namespace BatterySimulator
                     if (_executor != null)
                     {
                         // Cash from this step's fills plus imbalance for what was delivered over [t, tNext).
-                        var imbalance = _executor.SettleImbalance(t, tNext, _recorder.NetCharge[tNext], _market.Ts.EnergySellPrice[t]);
+                        var imbalance = _executor.SettleImbalance(t, tNext, _recorder.NetCharge[tNext], _executor.Book.RealizedPrice(OrderBookExecutor.ProductStart(t)));
                         _pnlManager.RecordCashFlows(tNext, trades.BuyCost + imbalance.BuyCost, trades.SellIncome + imbalance.SellIncome);
                     }
                     else

@@ -21,7 +21,7 @@ namespace UnitTests
         private static SimulationSettings Settings() => new SimulationSettings { MarketModel = MarketModel.OrderBook };
 
         [Fact]
-        public void MidEndsAtRealizedPriceAndIsIndependentOfQueryOrder()
+        public void MidStartsAtDayAheadEndsAtRealizedAndIsIndependentOfQueryOrder()
         {
             var a = new SyntheticOrderBook(Prices(), Settings());
             var b = new SyntheticOrderBook(Prices(), Settings());
@@ -34,15 +34,70 @@ namespace UnitTests
 
             Assert.Equal(aDelivery, bDelivery);
             Assert.Equal(aOther, bOther);
-            Assert.NotEqual(Prices()[Delivery], aDelivery);          // it does wander before delivery
-            Assert.Equal(Prices()[Delivery], a.Mid(Delivery, Delivery), 9);
+
+            // Trading opens at 15:00 the day before, at the day-ahead price; the mid then wanders and stops at delivery.
+            DateTime open = new DateTime(2018, 1, 3, 15, 0, 0, DateTimeKind.Local);
+            Assert.Equal(open, a.TradingOpens(Delivery));
+            Assert.Equal(Prices()[Delivery], a.Mid(Delivery, open.AddHours(-1)), 9);
+            Assert.Equal(Prices()[Delivery], a.Mid(Delivery, open), 9);
+            Assert.NotEqual(Prices()[Delivery], aDelivery);
+            Assert.Equal(a.RealizedPrice(Delivery), a.Mid(Delivery, Delivery), 9);
+            Assert.Equal(a.RealizedPrice(Delivery), a.Mid(Delivery, Delivery.AddHours(2)), 9);
+            Assert.NotEqual(Prices()[Delivery], a.RealizedPrice(Delivery));
+        }
+
+        [Fact]
+        public void MidsAreFairPricesForRealizedPrices()
+        {
+            // Over many seeds: a mid 4 h before delivery is an unbiased forecast of the realized price, and the
+            // gap between two quarter-hours of the same hour does not predict how that gap changes until delivery.
+            // (A gap that reliably closes would be free money for a storage trader.)
+            DateTime first = Delivery, second = Delivery.AddMinutes(15), t = Delivery.AddHours(-4);
+            var forecastErrors = new List<double>();
+            var gaps = new List<double>();
+            var gapChanges = new List<double>();
+            for (int seed = 1; seed <= 300; seed++)
+            {
+                var book = new SyntheticOrderBook(Prices(), new SimulationSettings { MarketModel = MarketModel.OrderBook, OrderBookSeed = seed });
+                forecastErrors.Add(book.RealizedPrice(first) - book.Mid(first, t));
+                double gap = book.Mid(second, t) - book.Mid(first, t);
+                gaps.Add(gap);
+                gapChanges.Add(book.RealizedPrice(second) - book.RealizedPrice(first) - gap);
+            }
+
+            // Forecast error std is about sqrt(4 x (3^2 + 0.5^2)) = 6.1, so the mean of 300 has a std error of 0.35.
+            Assert.InRange(forecastErrors.Average(), -1.5, 1.5);
+
+            double gapMean = gaps.Average(), changeMean = gapChanges.Average();
+            double slope = gaps.Zip(gapChanges, (g, c) => (g - gapMean) * (c - changeMean)).Sum()
+                           / gaps.Sum(g => (g - gapMean) * (g - gapMean));
+            Assert.InRange(slope, -0.25, 0.25);   // a gap pinned to close at delivery gives -1
+        }
+
+        [Fact]
+        public void ProductsAreNotTradedBeforeTradingOpens()
+        {
+            var prices = new TimeSeries(true, true);
+            for (int h = 0; h < 72; h++) prices.SetValueAt(new DateTime(2018, 1, 3, 0, 0, 0, DateTimeKind.Local).AddHours(h), 40);
+            prices.IsBreakPointSeries = true;
+            var settings = Settings();
+            var executor = new OrderBookExecutor(new SyntheticOrderBook(prices, settings), settings, new DateTime(2018, 1, 5, 0, 0, 0, DateTimeKind.Local));
+            DateTime midnight = new DateTime(2018, 1, 4, 0, 0, 0, DateTimeKind.Local);
+
+            // At 14:00 only today's products are open; tomorrow's open at 15:00.
+            executor.Trade(midnight.AddHours(-10), new ConstantPlanner(-8), midnight.AddHours(2));
+            Assert.NotEmpty(executor.Positions);
+            Assert.All(executor.Positions.Keys, p => Assert.True(p < midnight));
+
+            executor.Trade(midnight.AddHours(-9), new ConstantPlanner(-8), midnight.AddHours(2));
+            Assert.Contains(executor.Positions.Keys, p => p >= midnight);
         }
 
         [Fact]
         public void NeighbouringProductsMoveTogether()
         {
             // Without product noise, the market factor moves all mids together: the difference between two
-            // products' deviations from their realized prices does not change with trading time.
+            // products' deviations from their day-ahead prices does not change with trading time.
             var book = new SyntheticOrderBook(Prices(), new SimulationSettings { MarketModel = MarketModel.OrderBook, ProductNoiseVolatility = 0 });
             DateTime next = Delivery.AddMinutes(15);
             double Gap(DateTime t) => (book.Mid(next, t) - Prices()[next]) - (book.Mid(Delivery, t) - Prices()[Delivery]);

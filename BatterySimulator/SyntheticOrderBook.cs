@@ -12,20 +12,24 @@ namespace BatterySimulator
 
     /// <summary>
     /// A synthetic continuous-intraday order book. Each product is a delivery period identified by its
-    /// local delivery start; all products trade at the same time. A product's mid price is
-    /// <c>realized + MidVolatility x (F(now) - F(delivery)) + ProductNoiseVolatility x W_product(time to delivery)</c>,
+    /// local delivery start; all open products trade at the same time. Trading in a product opens on the day
+    /// before delivery (<see cref="TradingOpens"/>), and from then on its mid price is
+    /// <c>day-ahead + MidVolatility x (F(now) - F(open)) + ProductNoiseVolatility x W_product(now - open)</c>,
     /// where F is a market-wide random walk in absolute time shared by all products and W is the product's own
-    /// random walk. Both terms vanish at delivery, so the mid ends exactly at the realized price, and neighbouring
-    /// products move almost together. The spread narrows and depth builds up as delivery approaches. Volume taken
-    /// by market orders is removed from the book and replenished over time.
+    /// random walk, both frozen at delivery. Where the mid is at delivery is the product's realized intraday price
+    /// (<see cref="RealizedPrice"/>), so the mids are martingales: their future moves cannot be predicted from
+    /// anything visible now, and quarter-hours of the same hour can settle at different prices. The spread narrows
+    /// and depth builds up as delivery approaches. Volume taken by market orders is removed from the book and
+    /// replenished over time.
     /// </summary>
     public class SyntheticOrderBook
     {
-        private const double PathGridMinutes = 5;
+        /// <summary>Mid-price random walks are generated on this grid and interpolated linearly in between.</summary>
+        public const int PriceGridMinutes = 5;
         private const double MaxPathHours = 48;
         private static readonly DateTime FactorEpoch = new DateTime(2000, 1, 1);
 
-        private readonly TimeSeries _realizedPrices;
+        private readonly TimeSeries _dayAheadPrices;
         private readonly SimulationSettings _settings;
         private readonly Dictionary<DateTime, double[]> _paths = new();
         private readonly List<double> _factor = new() { 0 };
@@ -33,42 +37,52 @@ namespace BatterySimulator
         private readonly Random _factorRng;
         private readonly Dictionary<(DateTime Product, bool AskSide), (double Volume, DateTime At)> _consumed = new();
 
-        /// <param name="realizedPrices">Realized prices keyed by local delivery time (the simulator's time axis).</param>
-        public SyntheticOrderBook(TimeSeries realizedPrices, SimulationSettings settings)
+        /// <param name="dayAheadPrices">Day-ahead prices keyed by local delivery time (the simulator's time axis).</param>
+        public SyntheticOrderBook(TimeSeries dayAheadPrices, SimulationSettings settings)
         {
-            _realizedPrices = realizedPrices;
+            _dayAheadPrices = dayAheadPrices;
             _settings = settings;
 
-            // The market factor starts well before the run (products can be quoted up to MaxPathHours ahead of
-            // delivery) at a point fixed by the run start, so it does not depend on query order.
+            // The market factor starts before trading opens for the run's first products (the day before the
+            // start) at a point fixed by the run start, so it does not depend on query order.
             DateTime origin = settings.Start.Date.AddHours(-MaxPathHours - 24);
-            _factorOffset = (long)((origin - FactorEpoch).TotalMinutes / PathGridMinutes);
+            _factorOffset = (long)((origin - FactorEpoch).TotalMinutes / PriceGridMinutes);
             _factorRng = new Random(unchecked(settings.OrderBookSeed * 7919 + 17));
         }
 
+        /// <summary>When trading in <paramref name="product"/> opens: <see cref="SimulationSettings.TradingOpensHour"/> on the day before delivery.</summary>
+        public DateTime TradingOpens(DateTime product) => product.Date.AddDays(-1).AddHours(_settings.TradingOpensHour);
+
+        /// <summary>Whether trading in <paramref name="product"/> has opened at <paramref name="tradingTime"/> (gate closure is the executor's concern).</summary>
+        public bool HasOpened(DateTime product, DateTime tradingTime) => tradingTime >= TradingOpens(product);
+
         public double Mid(DateTime product, DateTime tradingTime)
         {
+            DateTime open = TradingOpens(product);
+            DateTime now = tradingTime < product ? tradingTime : product;
+            if (now <= open) return _dayAheadPrices[product];
+
             double[] path = Path(product);
-            double x = Math.Min(HoursToDelivery(product, tradingTime), MaxPathHours) * 60 / PathGridMinutes;
+            double x = Math.Min((now - open).TotalHours, MaxPathHours) * 60.0 / PriceGridMinutes;
             int i = (int)Math.Floor(x);
             double own = i + 1 < path.Length ? path[i] + (path[i + 1] - path[i]) * (x - i) : path[^1];
 
-            // Market-wide shock still to come before delivery; clamped like the product path to MaxPathHours.
-            DateTime from = tradingTime < product ? tradingTime : product;
-            if ((product - from).TotalHours > MaxPathHours) from = product.AddHours(-MaxPathHours);
-            double common = Factor(from) - Factor(product);
+            double common = Factor(now) - Factor(open);
 
-            return _realizedPrices[product] + _settings.MidVolatility * common + _settings.ProductNoiseVolatility * own;
+            return _dayAheadPrices[product] + _settings.MidVolatility * common + _settings.ProductNoiseVolatility * own;
         }
+
+        /// <summary>The product's realized intraday price: its mid at delivery.</summary>
+        public double RealizedPrice(DateTime product) => Mid(product, product);
 
         /// <summary>Market-wide standard random walk in absolute time, generated in order on a fixed grid.</summary>
         private double Factor(DateTime time)
         {
-            double x = (time - FactorEpoch).TotalMinutes / PathGridMinutes - _factorOffset;
+            double x = (time - FactorEpoch).TotalMinutes / PriceGridMinutes - _factorOffset;
             if (x < 0) throw new ArgumentOutOfRangeException(nameof(time), "Order book queried more than 72 h before the run start.");
 
             int i = (int)Math.Floor(x);
-            double stepStd = Math.Sqrt(PathGridMinutes / 60);
+            double stepStd = Math.Sqrt(PriceGridMinutes / 60.0);
             while (_factor.Count <= i + 1)
             {
                 double u1 = 1 - _factorRng.NextDouble(), u2 = _factorRng.NextDouble();
@@ -166,15 +180,15 @@ namespace BatterySimulator
 
         private static double HoursToDelivery(DateTime product, DateTime tradingTime) => Math.Max(0, (product - tradingTime).TotalHours);
 
-        /// <summary>Standard random walk in time-to-delivery, starting at 0 at delivery; deterministic per product.</summary>
+        /// <summary>Standard random walk in time since trading opened, starting at 0; deterministic per product.</summary>
         private double[] Path(DateTime product)
         {
             if (_paths.TryGetValue(product, out double[]? path)) return path;
 
-            int n = (int)(MaxPathHours * 60 / PathGridMinutes) + 1;
+            int n = (int)(MaxPathHours * 60.0 / PriceGridMinutes) + 1;
             path = new double[n];
             var rng = new Random(unchecked((int)((product.Ticks / TimeSpan.TicksPerMinute) * 2654435761L) ^ (_settings.OrderBookSeed * 97)));
-            double stepStd = Math.Sqrt(PathGridMinutes / 60);
+            double stepStd = Math.Sqrt(PriceGridMinutes / 60.0);
             for (int k = 1; k < n; k++)
             {
                 double u1 = 1 - rng.NextDouble(), u2 = rng.NextDouble();

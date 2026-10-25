@@ -35,11 +35,16 @@ namespace BatterySimulator
         /// <summary>Trading in a product stops this long before its delivery starts.</summary>
         public double GateClosureMinutes { get; set; } = 30;
         /// <summary>
-        /// Volatility of the market-wide factor that moves all products' mids together, EUR/MWh per sqrt(hour).
-        /// Each mid ends at its realized price at delivery.
+        /// Trading in a product opens at this local hour on the day before its delivery day; its mid starts at the
+        /// day-ahead (price file) price then.
+        /// </summary>
+        public double TradingOpensHour { get; set; } = 15;
+        /// <summary>
+        /// Volatility of the market-wide factor that moves all open products' mids together, EUR/MWh per sqrt(hour).
+        /// Where a mid is at delivery is the product's realized intraday price.
         /// </summary>
         public double MidVolatility { get; set; } = 3;
-        /// <summary>Volatility of each product's own, independent mid noise, EUR/MWh per sqrt(hour). Limits cross-product mispricing.</summary>
+        /// <summary>Volatility of each product's own, independent mid noise, EUR/MWh per sqrt(hour).</summary>
         public double ProductNoiseVolatility { get; set; } = 0.5;
         /// <summary>Bid/ask spread close to gate closure, EUR/MWh.</summary>
         public double SpreadNearDelivery { get; set; } = 0.5;
@@ -111,11 +116,14 @@ namespace BatterySimulator
             if (MarketModel == MarketModel.OrderBook)
             {
                 if (TimeStepSeconds > 0 && (ProductMinutes * 60) % TimeStepSeconds != 0) errors.Add($"With the order book, the time step must divide {ProductMinutes} minutes ({ProductMinutes * 60} s).");
+                // Prices are interpolated between grid points; trading inside a grid cell would see where they are heading.
+                if (TimeStepSeconds % (SyntheticOrderBook.PriceGridMinutes * 60) != 0) errors.Add($"With the order book, the time step must be a multiple of {SyntheticOrderBook.PriceGridMinutes} minutes.");
                 if (Start.Minute % ProductMinutes != 0 || Start.Second != 0) errors.Add($"With the order book, the start must be on a {ProductMinutes}-minute boundary.");
                 // Plans must start on product boundaries and cover whole products.
                 if (ReplanIntervalMinutes % ProductMinutes != 0) errors.Add($"With the order book, the re-plan interval must be a multiple of {ProductMinutes} minutes.");
                 if (PlanningHorizonHours * 60 % ProductMinutes != 0) errors.Add($"With the order book, the planning horizon must be a multiple of {ProductMinutes} minutes.");
                 if (GateClosureMinutes < 0) errors.Add("Gate closure cannot be negative.");
+                if (TradingOpensHour is < 0 or >= 24) errors.Add("Trading opening hour must be in [0, 24).");
                 if (MidVolatility < 0 || ProductNoiseVolatility < 0) errors.Add("Mid-price volatilities cannot be negative.");
                 if (SpreadNearDelivery < 0 || SpreadFarFromDelivery < 0) errors.Add("Spreads cannot be negative.");
                 if (LiquidityBuildUpHours <= 0) errors.Add("Liquidity build-up time must be positive.");
