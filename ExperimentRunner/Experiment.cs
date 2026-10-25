@@ -7,9 +7,10 @@ namespace ExperimentRunner
 {
     /// <summary>
     /// A market set-up to compare planners in. "single" is the hourly single-price market; "book" the synthetic
-    /// order book with book-aware planning; "naive" the order book with planners seeing only reference prices.
+    /// order book with book-aware planning; "naive" the order book with planners seeing only reference prices;
+    /// "dayahead" the order book with book-aware planning after bidding each day in day-ahead from the forecast.
     /// </summary>
-    public enum MarketCase { Single, Book, Naive }
+    public enum MarketCase { Single, Book, Naive, DayAhead }
 
     public record RunKey(DateTime Start, MarketCase Market, int Seed, string Planner);
 
@@ -25,7 +26,11 @@ namespace ExperimentRunner
         double ShortImbalanceMWh,
         double LongImbalanceMWh,
         double ImbalanceNetCost,
-        TimeSpan Runtime)
+        TimeSpan Runtime,
+        double DayAheadNetCash = 0,
+        double IntradayNetCash = 0,
+        double DayAheadTradedMWh = 0,
+        double DayAheadRejectedSellMWh = 0)
     {
         /// <summary>
         /// Share captured of the perfect-foresight profit for ending with at least the same energy: a fair
@@ -63,7 +68,8 @@ namespace ExperimentRunner
             settings.TimeStepSeconds = 900;
             settings.SleepMilliseconds = 0;
             settings.MarketModel = market == MarketCase.Single ? MarketModel.SinglePrice : MarketModel.OrderBook;
-            settings.BookAwarePlanning = market == MarketCase.Book;
+            settings.BookAwarePlanning = market is MarketCase.Book or MarketCase.DayAhead;
+            settings.DayAheadMarket = market == MarketCase.DayAhead;
             settings.OrderBookSeed = seed;
             return settings;
         }
@@ -137,7 +143,11 @@ namespace ExperimentRunner
                 executor?.ShortImbalanceMWh ?? 0,
                 executor?.LongImbalanceMWh ?? 0,
                 executor?.ImbalanceNetCost ?? 0,
-                stopwatch.Elapsed);
+                stopwatch.Elapsed,
+                executor?.DayAheadNetCash ?? 0,
+                executor?.IntradayNetCash ?? 0,
+                executor != null ? executor.DayAheadBoughtMWh + executor.DayAheadSoldMWh : 0,
+                executor?.DayAheadRejectedSellMWh ?? 0);
         }
 
         /// <summary>

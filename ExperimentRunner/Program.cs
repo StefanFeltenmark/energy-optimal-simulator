@@ -12,7 +12,8 @@ using ExperimentRunner;
 //   --hours     length of each period [168]
 //   --seeds     order-book seeds 1..N; the single-price market is deterministic and runs once [1]
 //   --planners  PriceLevel, POMA, Retro, Random [PriceLevel,POMA]
-//   --markets   single, book (book-aware planning), naive (order book, reference-price planning) [single]
+//   --markets   single, book (book-aware planning), naive (order book, reference-price planning),
+//               dayahead (book-aware planning after a day-ahead bid from the forecast) [single]
 //   --baseline  planner that paired differences are taken against [first planner]
 //   --set       settings overrides for every run, e.g. "MidVolatility=1;ImbalancePenalty=20" []
 //   --out       per-run CSV [experiment-results.csv]
@@ -62,7 +63,7 @@ Console.SetOut(TextWriter.Null);
 var results = new List<RunResult>();
 using (var csv = new StreamWriter(outFile))
 {
-    csv.WriteLine("start,market,seed,planner,profit,bound_free_end,bound_same_end_energy,capture,end_soc_pct,bought_mwh,sold_mwh,gross_traded_mwh,short_imbalance_mwh,long_imbalance_mwh,imbalance_net_cost,runtime_s");
+    csv.WriteLine("start,market,seed,planner,profit,bound_free_end,bound_same_end_energy,capture,end_soc_pct,bought_mwh,sold_mwh,gross_traded_mwh,short_imbalance_mwh,long_imbalance_mwh,imbalance_net_cost,runtime_s,dayahead_net_cash,intraday_net_cash,dayahead_traded_mwh,dayahead_rejected_sell_mwh");
     for (int i = 0; i < keys.Count; i++)
     {
         RunKey key = keys[i];
@@ -81,7 +82,8 @@ using (var csv = new StreamWriter(outFile))
             key.Start.ToString("yyyy-MM-ddTHH:mm"), key.Market, key.Seed, key.Planner,
             F(r.Profit), F(r.Bound), F(r.BoundSameEndEnergy), F(r.Capture, "F4"), F(r.EndSoCPercent, "F1"),
             F(r.BoughtMWh), F(r.SoldMWh), F(r.GrossTradedMWh), F(r.ShortImbalanceMWh), F(r.LongImbalanceMWh),
-            F(r.ImbalanceNetCost), F(r.Runtime.TotalSeconds, "F1")));
+            F(r.ImbalanceNetCost), F(r.Runtime.TotalSeconds, "F1"),
+            F(r.DayAheadNetCash), F(r.IntradayNetCash), F(r.DayAheadTradedMWh), F(r.DayAheadRejectedSellMWh)));
         csv.Flush();
         stdout.WriteLine($"[{i + 1}/{keys.Count}] {Describe(key)}: profit {r.Profit:F2}, end SoC {r.EndSoCPercent:F0} %, bound {r.BoundSameEndEnergy:F2} ({r.Capture:P1}) in {r.Runtime.TotalSeconds:F0} s");
     }
@@ -102,6 +104,18 @@ void PrintSummary(List<RunResult> results)
         double meanBound = g.Average(r => r.BoundSameEndEnergy);
         stdout.WriteLine($"{g.Key.Market,-7} {g.Key.Planner,-11} {profits.Count,4} {profits.Average(),12:F2} {StDev(profits),9:F2} {profits.Min(),9:F2} {profits.Max(),9:F2} " +
                          $"{g.Average(r => r.EndSoCPercent),9:F1} {meanBound,11:F2} {profits.Average() / meanBound,8:P1} {g.Average(r => r.Bound),15:F2}");
+    }
+
+    // Where the order-book profit comes from (means over runs): profit = day-ahead + intraday - imbalance.
+    var bookRuns = results.Where(r => r.Key.Market != MarketCase.Single).ToList();
+    if (bookRuns.Count > 0)
+    {
+        stdout.WriteLine();
+        stdout.WriteLine("Profit by market (means; profit = day-ahead + intraday - imbalance):");
+        stdout.WriteLine($"{"market",-8} {"planner",-11} {"day-ahead",10} {"intraday",10} {"imbalance",10} {"DA MWh",8} {"ID MWh",8} {"rejected",9}");
+        foreach (var g in bookRuns.GroupBy(r => (r.Key.Market, r.Key.Planner)).OrderBy(g => g.Key.Market).ThenBy(g => planners.IndexOf(g.Key.Planner)))
+            stdout.WriteLine($"{g.Key.Market,-8} {g.Key.Planner,-11} {g.Average(r => r.DayAheadNetCash),10:F2} {g.Average(r => r.IntradayNetCash),10:F2} " +
+                             $"{g.Average(r => r.ImbalanceNetCost),10:F2} {g.Average(r => r.DayAheadTradedMWh),8:F1} {g.Average(r => r.GrossTradedMWh),8:F1} {g.Average(r => r.DayAheadRejectedSellMWh),9:F1}");
     }
 
     // Paired differences: same period, market and seed, so the market noise cancels.
