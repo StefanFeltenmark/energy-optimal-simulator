@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BatteryPomaPlanner\BatteryPomaPlanner.csproj" />
     <ProjectReference Include="..\BatterySimulator\BatterySimulator.csproj" />
+    <ProjectReference Include="..\ExperimentRunner\ExperimentRunner.csproj" />
   </ItemGroup>
 
 </Project>
