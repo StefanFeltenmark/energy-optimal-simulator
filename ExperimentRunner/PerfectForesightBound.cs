@@ -65,22 +65,32 @@ namespace ExperimentRunner
 
         /// <summary>
         /// The bound for a simulator after <c>SetUp</c>, over its own period and time step. With the order book,
-        /// prices are the realized prices on both sides (the book's mids converge to them and imbalance is settled
-        /// around them), which bounds the expected profit, not every seed.
+        /// prices are each product's realized intraday price on both sides (the mid at delivery, around which
+        /// imbalance is settled). The book's mids are martingales ending there, so this bounds the expected profit
+        /// over seeds, not every seed.
         /// </summary>
         public static BoundResult ForSimulation(BatterySimulator.BatterySimulator simulator, double minFinalEnergyMWh = 0)
         {
             var settings = simulator.Settings;
             TimeSpan step = TimeSpan.FromSeconds(settings.TimeStepSeconds);
-            bool singlePrice = settings.MarketModel == BatterySimulator.MarketModel.SinglePrice;
+            var book = simulator.Executor?.Book;
 
             var buy = new List<double>();
             var sell = new List<double>();
             for (DateTime t = simulator.Start; t < simulator.End; t += step)
             {
                 // Same lookups as the simulator's PnL booking: prices valid at the start of the step.
-                sell.Add(simulator.SellPrices[t]);
-                buy.Add(singlePrice ? simulator.BuyPrices[t] : simulator.SellPrices[t]);
+                if (book == null)
+                {
+                    sell.Add(simulator.SellPrices[t]);
+                    buy.Add(simulator.BuyPrices[t]);
+                }
+                else
+                {
+                    double realized = book.RealizedPrice(BatterySimulator.OrderBookExecutor.ProductStart(t));
+                    sell.Add(realized);
+                    buy.Add(realized);
+                }
             }
 
             return Solve(buy, sell, step.TotalHours, settings.PowerMW, settings.EnergyMWh,
