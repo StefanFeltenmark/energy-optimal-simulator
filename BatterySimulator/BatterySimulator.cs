@@ -241,6 +241,14 @@ namespace BatterySimulator
 
         }
 
+        public DateTime End => _end;
+
+        /// <summary>Realized (sell) prices keyed by local delivery hour; the order book's mids converge to these.</summary>
+        public TimeSeries SellPrices => _market.Ts.EnergySellPrice;
+
+        /// <summary>Single-price buy prices: <see cref="SellPrices"/> plus the buy/sell spread.</summary>
+        public TimeSeries BuyPrices => _market.Ts.EnergyBuyPrice;
+
         /// <summary>The order-book executor when <see cref="MarketModel.OrderBook"/> is selected, otherwise null.</summary>
         public OrderBookExecutor? Executor => _executor;
 

@@ -40,3 +40,9 @@ BatterySimulatorConsole/obj/
 BatterySimulatorGUI/obj/
 
 BatterySimulator/obj/
+
+ExperimentRunner/bin/
+
+ExperimentRunner/obj/
+
+experiment-results.csv

@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BatteryPomaPlanner", "..\Ba
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "..\Domain\Domain.csproj", "{43F8B245-1887-4632-905E-DD7268C32569}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExperimentRunner", "..\ExperimentRunner\ExperimentRunner.csproj", "{5FD468D9-476D-4300-883D-F7CAD5289886}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{43F8B245-1887-4632-905E-DD7268C32569}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43F8B245-1887-4632-905E-DD7268C32569}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43F8B245-1887-4632-905E-DD7268C32569}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FD468D9-476D-4300-883D-F7CAD5289886}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FD468D9-476D-4300-883D-F7CAD5289886}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FD468D9-476D-4300-883D-F7CAD5289886}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FD468D9-476D-4300-883D-F7CAD5289886}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
