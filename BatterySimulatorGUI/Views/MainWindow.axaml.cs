@@ -14,6 +14,20 @@ namespace BatterySimulatorGUI.Views
             InitializeComponent();
         }
 
+        // Soak test for GUI package upgrades (see CLAUDE.md): with BATSIM_SOAK=<delay ms> set, the window starts an
+        // order-book + day-ahead run with that step delay as soon as it opens, so crashes reproduce without clicking.
+        protected override void OnOpened(EventArgs e)
+        {
+            base.OnOpened(e);
+            string? soak = Environment.GetEnvironmentVariable("BATSIM_SOAK");
+            if (soak == null) return;
+            var vm = (MainWindowViewModel)DataContext!;
+            vm.MarketModelIndex = 1;
+            vm.DayAheadMarket = true;
+            vm.DelayMilliseconds = decimal.Parse(soak);
+            _ = vm.StartSimulation();
+        }
+
 
         private async void Button_OnClick_Run(object? sender, RoutedEventArgs e)
         {
