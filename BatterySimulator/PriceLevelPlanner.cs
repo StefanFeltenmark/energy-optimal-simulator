@@ -90,11 +90,13 @@ namespace BatterySimulator
             var buyat = minPrice + _buyPriceThreshold.ToFraction() * (maxPrice - minPrice);
             var sellat = maxPrice - _sellPriceThreshold.ToFraction() * (maxPrice - minPrice);
 
-            PlanningPeriod planningPeriod = new PlanningPeriod(planStart, resolution, nPeriods);
-            foreach (PlanningInterval simulationInterval in planningPeriod.Intervals)
+            // Step through local clock times: the prices and the plan are keyed by them. (PlanningPeriod's
+            // intervals are UTC and would shift both lookups by an hour.)
+            for (int k = 0; k < nPeriods; k++)
             {
+                DateTime t = planStart + k * resolution;
                 double prod = 0.0;
-                double price = _energyPriceForecastForecast[simulationInterval.Start];
+                double price = _energyPriceForecastForecast[t];
 
                 if(price <= buyat)
                 {
@@ -105,7 +107,7 @@ namespace BatterySimulator
                     prod = Battery1.InitialCapacityC.CovertToUnit(Units.MegaWatt).Value;
                 }
                 
-                _plan.SetValueAt(simulationInterval.Start, prod);
+                _plan.SetValueAt(t, prod);
             }
         }
     }
