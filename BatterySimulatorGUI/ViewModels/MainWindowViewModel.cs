@@ -250,13 +250,20 @@ namespace BatterySimulatorGUI.ViewModels
 
                 if (snapshot.Quotes.Count > 0)
                 {
-                    // The whole intraday curve as it looks now: every open product against delivery time.
+                    // The intraday curve as it looks now against delivery time, on a fixed axis covering the
+                    // current and next delivery day; a vertical line marks the current time.
                     SetCurve(_askValues, snapshot.Quotes, q => q.BestAsk);
                     SetCurve(_bidValues, snapshot.Quotes, q => q.BestBid);
                     SetCurve(_midValues, snapshot.Quotes, q => q.Mid);
                     SetCurve(_bookReferenceValues, snapshot.Quotes, q => q.ReferencePrice);
-                    bookTimeAxis[0].MinLimit = snapshot.Quotes[0].Product.Ticks;
-                    bookTimeAxis[0].MaxLimit = snapshot.Quotes[^1].Product.AddMinutes(SimulationSettings.ProductMinutes).Ticks;
+                    DateTime today = snapshot.IntervalEnd.Date;
+                    if (bookTimeAxis[0].MinLimit != today.Ticks)
+                    {
+                        bookTimeAxis[0].MinLimit = today.Ticks;
+                        bookTimeAxis[0].MaxLimit = today.AddDays(2).Ticks;
+                    }
+                    _bookNowLine.Xi = _bookNowLine.Xj = snapshot.IntervalEnd.Ticks;
+                    _bookNowLine.IsVisible = true;
                 }
 
                 ExecutionSummary = snapshot.HasOrderBook
@@ -349,6 +356,15 @@ namespace BatterySimulatorGUI.ViewModels
         }
 
         public ObservableCollection<ISeries> Positions => _positionSeries;
+
+        /// <summary>Vertical line at the current trading time in the order book panel.</summary>
+        private readonly RectangularSection _bookNowLine = new()
+        {
+            Stroke = new SolidColorPaint(SKColors.Black) { StrokeThickness = 2 },
+            IsVisible = false
+        };
+
+        public RectangularSection[] BookSections => [_bookNowLine];
 
         public ObservableCollection<ISeries> OrderBook => _bookSeries;
 
@@ -534,6 +550,8 @@ namespace BatterySimulatorGUI.ViewModels
             _bidValues.Clear();
             _midValues.Clear();
             _bookReferenceValues.Clear();
+            _bookNowLine.IsVisible = false;
+            bookTimeAxis[0].MinLimit = bookTimeAxis[0].MaxLimit = null;
             ExecutionSummary = null;
         }
 
@@ -730,7 +748,7 @@ namespace BatterySimulatorGUI.ViewModels
         public Axis[] bookTimeAxis { get; set; }
             =
             [
-                new DateTimeAxis(TimeSpan.FromMinutes(SimulationSettings.ProductMinutes), Formatter)
+                new DateTimeAxis(TimeSpan.FromMinutes(SimulationSettings.ProductMinutes), date => date.ToString("ddd HH:mm"))
                 {
                     Name = "Delivery",
                     NameTextSize = 14,

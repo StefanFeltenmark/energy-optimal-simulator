@@ -337,20 +337,28 @@ namespace BatterySimulator
             aware.SetMarketView(new MarketView(quotes, midSum / midCount));
         }
 
-        /// <summary>How far ahead (from the trading time) <see cref="ExecutionSnapshot.Quotes"/> covers open products.</summary>
-        public const double QuoteHorizonHours = 12;
-
-        /// <summary>Top of the book for all open products, as the market looks at trading time <paramref name="t"/>.</summary>
+        /// <summary>
+        /// The intraday curve as the market looks at trading time <paramref name="t"/>: every product of the current
+        /// delivery day (from the run start), plus the next day's once their trading has opened, limited to the price
+        /// data the run checked. Bid and ask are NaN for products that cannot be traded (past gate closure or not open
+        /// yet); a delivered product's mid is its realized price.
+        /// </summary>
         private List<BookQuote> Quotes(OrderBookExecutor executor, DateTime t)
         {
             TimeSpan productLength = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes);
-            DateTime last = t.AddHours(QuoteHorizonHours);
+            SyntheticOrderBook book = executor.Book;
+            DateTime today = t.Date, tomorrow = t.Date.AddDays(1);
+            DateTime first = OrderBookExecutor.ProductStart(_start > today ? _start : today);
+            DateTime last = book.HasOpened(tomorrow, t) ? tomorrow.AddDays(1) : tomorrow;
+            if (last > _end.AddHours(24)) last = _end.AddHours(24);
+            DateTime firstTradable = executor.FirstTradableProduct(t);
 
             var quotes = new List<BookQuote>();
-            for (DateTime product = executor.FirstTradableProduct(t); product < last; product += productLength)
+            for (DateTime product = first; product < last; product += productLength)
             {
-                var bids = executor.Book.Bids(product, t);
-                var asks = executor.Book.Asks(product, t);
+                bool tradable = product >= firstTradable && book.HasOpened(product, t);
+                var bids = tradable ? book.Bids(product, t) : Array.Empty<BookLevel>();
+                var asks = tradable ? book.Asks(product, t) : Array.Empty<BookLevel>();
                 quotes.Add(new BookQuote(
                     product,
                     bids.Count > 0 ? bids[0].Price : double.NaN,

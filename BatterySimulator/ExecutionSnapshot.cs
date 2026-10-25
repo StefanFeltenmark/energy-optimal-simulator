@@ -16,8 +16,8 @@ namespace BatterySimulator
     /// <param name="DeliveredMW">Average net grid charge over [IntervalStart, IntervalEnd) (+ = charging).</param>
     /// <param name="Products">Products from the one being delivered next up to the end of the current plan.</param>
     /// <param name="Quotes">
-    /// Top of the book at IntervalEnd for every open product from the first tradable one (after gate closure)
-    /// up to <see cref="BatterySimulator.QuoteHorizonHours"/> ahead; empty without the order book.
+    /// Top of the book at IntervalEnd for the current delivery day's products and, once open, the next day's;
+    /// bid/ask are NaN for products that cannot be traded. Empty without the order book.
     /// </param>
     public sealed record ExecutionSnapshot(
         DateTime IntervalStart,

@@ -230,6 +230,7 @@
                     Series="{Binding OrderBook}"
                     XAxes="{Binding bookTimeAxis}"
                     YAxes="{Binding bookAxes}"
+                    Sections="{Binding BookSections}"
                     LegendPosition="Top"
                     EasingFunction="{x:Null}">
                 </lvc:CartesianChart>

@@ -277,17 +277,21 @@ namespace UnitTests
             {
                 Assert.Equal(sim.Recorder.NetCharge[s.IntervalEnd], s.DeliveredMW);
 
-                // Quotes: all open products from the first after gate closure, 12 h ahead, bid < mid < ask.
-                Assert.Equal(sim.Executor!.FirstTradableProduct(s.IntervalEnd), s.Quotes[0].Product);
-                Assert.True(s.Quotes[^1].Product < s.IntervalEnd.AddHours(BatterySimulator.BatterySimulator.QuoteHorizonHours));
-                Assert.All(s.Quotes, q => Assert.True(q.BestBid < q.Mid && q.Mid < q.BestAsk));
+                // Quotes: the delivery day from the run start; tomorrow's products are not open before 15:00.
+                // Bid < mid < ask for tradable products; no bid/ask inside gate closure.
+                DateTime firstTradable = sim.Executor!.FirstTradableProduct(s.IntervalEnd);
+                Assert.Equal(sim.Start, s.Quotes[0].Product);
+                Assert.Equal(sim.Start.Date.AddDays(1).AddMinutes(-15), s.Quotes[^1].Product);
+                Assert.All(s.Quotes.Where(q => q.Product >= firstTradable), q => Assert.True(q.BestBid < q.Mid && q.Mid < q.BestAsk));
+                Assert.All(s.Quotes.Where(q => q.Product < firstTradable), q => Assert.True(double.IsNaN(q.BestBid) && double.IsNaN(q.BestAsk)));
                 for (int i = 1; i < s.Quotes.Count; i++) Assert.Equal(s.Quotes[i - 1].Product.AddMinutes(15), s.Quotes[i].Product);
             }
-            // At 09:15: products 09:45 (after the 30 min gate) up to 21:00 -> 46 products.
-            Assert.Equal(sim.Start.AddMinutes(45), snapshots[0].Quotes[0].Product);
-            Assert.Equal(46, snapshots[0].Quotes.Count);
+            // 09:00 to 24:00 -> 60 products; at 09:15 the first tradable one is 09:45 (after the 30 min gate).
+            Assert.Equal(60, snapshots[0].Quotes.Count);
+            BookQuote front = snapshots[0].Quotes.First(q => !double.IsNaN(q.BestBid));
+            Assert.Equal(sim.Start.AddMinutes(45), front.Product);
             // Spreads are wider far from delivery than near it.
-            Assert.True(snapshots[0].Quotes[^1].BestAsk - snapshots[0].Quotes[^1].BestBid > snapshots[0].Quotes[0].BestAsk - snapshots[0].Quotes[0].BestBid);
+            Assert.True(snapshots[0].Quotes[^1].BestAsk - snapshots[0].Quotes[^1].BestBid > front.BestAsk - front.BestBid);
 
             ExecutionSnapshot last = snapshots[^1];
             Assert.Equal(sim.Executor!.GrossBoughtMWh + sim.Executor.GrossSoldMWh, last.GrossTradedMWh);
