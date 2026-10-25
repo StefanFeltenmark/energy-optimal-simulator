@@ -57,6 +57,27 @@ namespace BatterySimulator
             return spotPrices;
         }
 
+        /// <summary>
+        /// One named column of a file in the fetch script's format (e.g. "SE3 forecast" from the forecast file),
+        /// keyed by local clock time; empty cells are skipped.
+        /// </summary>
+        public static TimeSeries ReadColumn(string filename, string column)
+        {
+            var lines = File.ReadAllText(filename).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            int index = Array.IndexOf(lines[0].Split(','), column);
+            if (!lines[0].StartsWith("start,") || index < 1)
+                throw new ArgumentException($"Column '{column}' not found in {filename}.");
+
+            var series = new TimeSeries { IsBreakPointSeries = true };
+            foreach (string line in lines.Skip(1))
+            {
+                string[] data = line.Split(',');
+                if (index < data.Length && double.TryParse(data[index], NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
+                    series.SetValueAt(DateTimeOffset.Parse(data[0], CultureInfo.InvariantCulture).DateTime, value);
+            }
+            return series;
+        }
+
         private static Dictionary<string, TimeSeries> ReadNordPoolHourly(string str)
         {
             Dictionary<string, TimeSeries> spotPrices = new Dictionary<string, TimeSeries>();

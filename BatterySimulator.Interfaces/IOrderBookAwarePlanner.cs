@@ -38,3 +38,20 @@ public interface IOrderBookAwarePlanner
     /// <param name="view">The current market, or null to plan against the reference price.</param>
     void SetMarketView(MarketView? view);
 }
+
+/// <summary>
+/// A planner that can bid in the day-ahead auction. Bids are price-independent volumes, so the planner decides
+/// only how much to buy or sell in each product of the coming delivery day.
+/// </summary>
+public interface IDayAheadBidder
+{
+    /// <summary>
+    /// Plans the day-ahead bid. <paramref name="view"/> covers every product from <paramref name="planStart"/>:
+    /// products already held have MaxBuyMW = MaxSellMW = 0 and their fixed position; the products to bid have
+    /// zero position, the forecast as both prices and the battery's power as limits.
+    /// <see cref="MarketView.MeanMidNext24h"/> is the forecast's mean over the bid day, for valuing energy left at its end.
+    /// Must not change the planner's current intraday plan.
+    /// </summary>
+    /// <returns>Volume to bid per biddable product, as average power over the product (MW, + = buy).</returns>
+    Task<IReadOnlyDictionary<DateTime, double>> PlanDayAhead(DateTime planStart, MarketView view);
+}

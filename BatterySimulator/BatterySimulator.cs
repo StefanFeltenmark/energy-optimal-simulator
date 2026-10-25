@@ -246,8 +246,68 @@ namespace BatterySimulator
                 ? new OrderBookExecutor(new SyntheticOrderBook(_market.Ts.EnergySellPrice, bookSettings), bookSettings, _end)
                 : null;
 
+            // Day-ahead forecasts as known at gate closure; like the book, a snapshot for the run.
+            _runSettings = bookSettings;
+            _forecast = null;
+            if (settings.DayAheadMarket)
+            {
+                _forecast = settings.DayAheadPerfectForecast
+                    ? _market.Ts.EnergySellPrice
+                    : SpotPriceReader.ReadColumn(settings.ForecastFile, $"{settings.PriceArea} forecast");
+                var forecastPoints = _forecast.TimePoints().ToList();
+                if (forecastPoints.Count == 0 || forecastPoints[0] > OrderBookExecutor.ProductStart(_start) || forecastPoints[^1] < _end.AddMinutes(-SimulationSettings.ProductMinutes))
+                    throw new ArgumentException($"The day-ahead forecast in {settings.ForecastFile} must cover the whole run.");
+            }
+            _knowledge = new PriceKnowledge(_market.Ts.EnergySellPrice, _forecast, _executor?.Book, bookSettings);
+            _pendingDayAheadBid = null;
+
             _sleepTime = TimeSpan.FromMilliseconds(settings.SleepMilliseconds);
 
+        }
+
+        private SimulationSettings _runSettings = new();
+        private TimeSeries? _forecast;
+        private PriceKnowledge? _knowledge;
+        private IReadOnlyDictionary<DateTime, double>? _pendingDayAheadBid;
+
+        /// <summary>When the day-ahead auction for delivery day <paramref name="day"/> closes.</summary>
+        private DateTime DayAheadGateClosure(DateTime day) => day.AddDays(-1).AddHours(_runSettings.DayAheadGateClosureHour);
+
+        /// <summary>
+        /// Plans the day-ahead bid for the products of delivery day <paramref name="day"/> that the run delivers,
+        /// at trading time <paramref name="t"/>. Products before them (the rest of today) are fixed at their
+        /// current positions; no further trading in them is assumed. With <paramref name="warmStart"/>, the auction
+        /// closed before the run and the bid uses the forecast even though the result is already published.
+        /// </summary>
+        private async Task<IReadOnlyDictionary<DateTime, double>> PlanDayAheadBid(DateTime t, DateTime day, bool warmStart)
+        {
+            var none = new Dictionary<DateTime, double>();
+            if (_planner is not IDayAheadBidder bidder || _executor == null || _knowledge == null || _forecast == null) return none;
+
+            TimeSpan productLength = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes);
+            DateTime from = day > _start ? day : OrderBookExecutor.ProductStart(_start);
+            DateTime to = day.AddDays(1) < _end ? day.AddDays(1) : _end;
+            if (from >= to) return none;
+
+            double hours = productLength.TotalHours;
+            double powerMW = _battery.NominalChargeCapacity.CovertToUnit(Units.MegaWatt).Value;
+            var quotes = new List<ProductQuote>();
+            for (DateTime product = OrderBookExecutor.ProductStart(t); product < to; product += productLength)
+            {
+                if (product < from)
+                {
+                    double expected = _knowledge.Expected(product, t);
+                    quotes.Add(new ProductQuote(product, expected, expected, 0, 0, _executor.Position(product) / hours));
+                }
+                else
+                {
+                    double forecast = warmStart ? _forecast[product] : _knowledge.DayAheadView(product, t);
+                    quotes.Add(new ProductQuote(product, forecast, forecast, powerMW, powerMW, 0));
+                }
+            }
+
+            double meanForecast = quotes.Where(q => q.Product >= from).Average(q => q.SellPrice);
+            return await bidder.PlanDayAhead(t, new MarketView(quotes, meanForecast));
         }
 
         public DateTime End => _end;
@@ -286,7 +346,10 @@ namespace BatterySimulator
                 ShortImbalanceMWh: _executor?.ShortImbalanceMWh ?? 0,
                 LongImbalanceMWh: _executor?.LongImbalanceMWh ?? 0,
                 ImbalanceNetCost: _executor?.ImbalanceNetCost ?? 0,
-                Quotes: _executor != null ? Quotes(_executor, to) : Array.Empty<BookQuote>());
+                Quotes: _executor != null ? Quotes(_executor, to) : Array.Empty<BookQuote>(),
+                HasDayAhead: _runSettings.DayAheadMarket && _executor != null,
+                DayAheadNetCash: _executor?.DayAheadNetCash ?? 0,
+                IntradayNetCash: _executor?.IntradayNetCash ?? 0);
         }
 
         /// <summary>
@@ -314,7 +377,7 @@ namespace BatterySimulator
             for (DateTime product = OrderBookExecutor.ProductStart(t); product < planEnd; product += productLength)
             {
                 double positionMW = _executor.Position(product) / hours;
-                double mid = book.Mid(product, t);
+                double mid = _knowledge!.Expected(product, t);
 
                 if (product < firstTradable || !book.HasOpened(product, t))
                 {
@@ -334,12 +397,13 @@ namespace BatterySimulator
                     positionMW));
             }
 
-            // What the market currently expects energy to be worth over the next day (beyond the plan).
+            // What the market currently expects energy to be worth over the next day (beyond the plan): book mids, the
+            // day-ahead price, or its forecast before the day-ahead result is published.
             double midSum = 0;
             int midCount = 0;
             for (DateTime product = OrderBookExecutor.ProductStart(t); product < t.AddHours(24); product += productLength)
             {
-                midSum += book.Mid(product, t);
+                midSum += _knowledge!.Expected(product, t);
                 midCount++;
             }
 
@@ -408,6 +472,21 @@ namespace BatterySimulator
             TimeSpan planResolution = TimeSpan.FromMinutes(15);
             int planPeriods = (int)Math.Round(TimeSpan.FromHours(Settings.PlanningHorizonHours) / planResolution);
 
+            // Day-ahead cash not yet booked; it goes into the next step's cash flows.
+            (double BuyCost, double SellIncome) dayAhead = default;
+            bool dayAheadMarket = _runSettings.DayAheadMarket && _executor != null;
+            if (dayAheadMarket)
+            {
+                // Days whose auction closed before the run were bid then, from the forecast known at the time, and
+                // start with their accepted volumes.
+                for (DateTime day = _start.Date; day < _end && DayAheadGateClosure(day) < _start; day = day.AddDays(1))
+                {
+                    var bid = await PlanDayAheadBid(_start, day, warmStart: true);
+                    var cash = _executor!.SettleDayAhead(bid, product => _market.Ts.EnergySellPrice[product]);
+                    dayAhead = (dayAhead.BuyCost + cash.BuyCost, dayAhead.SellIncome + cash.SellIncome);
+                }
+            }
+
             PrepareMarketView(_start, _start + planPeriods * planResolution);
             var planningTask = _planner.UpdatePlan(_start, planResolution, planPeriods);
             await planningTask;
@@ -424,6 +503,20 @@ namespace BatterySimulator
                     {
                         replanningInterval = TimeSpan.FromMinutes(Settings.ReplanIntervalMinutes);
                         planPeriods = (int)Math.Round(TimeSpan.FromHours(Settings.PlanningHorizonHours) / planResolution);
+                    }
+
+                    if (dayAheadMarket)
+                    {
+                        // Bid tomorrow at gate closure; at publication the accepted volumes become positions.
+                        DateTime tomorrow = t.Date.AddDays(1);
+                        if (t == DayAheadGateClosure(tomorrow) && tomorrow < _end)
+                            _pendingDayAheadBid = await PlanDayAheadBid(t, tomorrow, warmStart: false);
+                        if (_pendingDayAheadBid != null && t == t.Date.AddHours(_runSettings.DayAheadPublicationHour))
+                        {
+                            var cash = _executor!.SettleDayAhead(_pendingDayAheadBid, product => _market.Ts.EnergySellPrice[product]);
+                            dayAhead = (dayAhead.BuyCost + cash.BuyCost, dayAhead.SellIncome + cash.SellIncome);
+                            _pendingDayAheadBid = null;
+                        }
                     }
 
                     if (t - lastPlanning >= replanningInterval)
@@ -474,9 +567,12 @@ namespace BatterySimulator
 
                     if (_executor != null)
                     {
-                        // Cash from this step's fills plus imbalance for what was delivered over [t, tNext).
+                        // Cash from this step's fills and day-ahead settlement, plus imbalance for what was delivered over [t, tNext).
                         var imbalance = _executor.SettleImbalance(t, tNext, _recorder.NetCharge[tNext], _executor.Book.RealizedPrice(OrderBookExecutor.ProductStart(t)));
-                        _pnlManager.RecordCashFlows(tNext, trades.BuyCost + imbalance.BuyCost, trades.SellIncome + imbalance.SellIncome);
+                        _pnlManager.RecordCashFlows(tNext,
+                            trades.BuyCost + dayAhead.BuyCost + imbalance.BuyCost,
+                            trades.SellIncome + dayAhead.SellIncome + imbalance.SellIncome);
+                        dayAhead = default;
                     }
                     else
                     {

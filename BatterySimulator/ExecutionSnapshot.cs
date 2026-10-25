@@ -30,5 +30,8 @@ namespace BatterySimulator
         double ShortImbalanceMWh,
         double LongImbalanceMWh,
         double ImbalanceNetCost,
-        IReadOnlyList<BookQuote> Quotes);
+        IReadOnlyList<BookQuote> Quotes,
+        bool HasDayAhead = false,
+        double DayAheadNetCash = 0,
+        double IntradayNetCash = 0);
 }

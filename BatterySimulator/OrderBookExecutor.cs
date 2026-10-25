@@ -37,6 +37,52 @@ namespace BatterySimulator
         public double LongImbalanceMWh { get; private set; }
         /// <summary>Net imbalance settlement (cost - income), EUR.</summary>
         public double ImbalanceNetCost { get; private set; }
+        /// <summary>Net cash from intraday (order book) trades, income - cost, EUR.</summary>
+        public double IntradayNetCash { get; private set; }
+        public double DayAheadBoughtMWh { get; private set; }
+        public double DayAheadSoldMWh { get; private set; }
+        /// <summary>Sell volume bid in day-ahead but not accepted because the price cleared below 0 EUR/MWh.</summary>
+        public double DayAheadRejectedSellMWh { get; private set; }
+        /// <summary>Net cash from day-ahead settlement, income - cost, EUR.</summary>
+        public double DayAheadNetCash { get; private set; }
+
+        /// <summary>
+        /// Settles day-ahead bids (average MW per product, + = buy) at the day-ahead price and adds the accepted
+        /// volumes to the products' positions. Bids are price-independent: buys are always accepted, sells are bid
+        /// from 0 EUR/MWh and so only accepted when the price clears at or above 0.
+        /// </summary>
+        /// <returns>The settlement's buy cost and sell income, both >= 0.</returns>
+        public (double BuyCost, double SellIncome) SettleDayAhead(IReadOnlyDictionary<DateTime, double> bidMW, Func<DateTime, double> dayAheadPrice)
+        {
+            double buyCost = 0, sellIncome = 0;
+            foreach (var (product, mw) in bidMW)
+            {
+                double volume = mw * ProductLength.TotalHours;
+                if (Math.Abs(volume) < 1e-9) continue;
+                double price = dayAheadPrice(product);
+                if (volume < 0 && price < 0)
+                {
+                    DayAheadRejectedSellMWh -= volume;
+                    continue;
+                }
+
+                _positions[product] = Position(product) + volume;
+                var f = _fills.TryGetValue(product, out var prev) ? prev : default;
+                _fills[product] = (f.Volume + Math.Abs(volume), f.Cash + Math.Abs(volume * price));
+                if (volume > 0)
+                {
+                    DayAheadBoughtMWh += volume;
+                    buyCost += volume * price;
+                }
+                else
+                {
+                    DayAheadSoldMWh -= volume;
+                    sellIncome -= volume * price;
+                }
+            }
+            DayAheadNetCash += sellIncome - buyCost;
+            return (buyCost, sellIncome);
+        }
 
         public IReadOnlyDictionary<DateTime, double> Positions => _positions;
 
@@ -93,6 +139,7 @@ namespace BatterySimulator
                 else GrossSoldMWh -= fill.VolumeMWh;
             }
 
+            IntradayNetCash += sellIncome - buyCost;
             return (buyCost, sellIncome);
         }
 

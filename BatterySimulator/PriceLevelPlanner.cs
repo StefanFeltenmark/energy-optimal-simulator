@@ -8,7 +8,7 @@ using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatterySimulator
 {
-    public class PriceLevelPlanner : IBatteryPlanner
+    public class PriceLevelPlanner : IBatteryPlanner, IDayAheadBidder
     {
         private TimeSeries _plan;
         private Battery? _battery;
@@ -79,13 +79,46 @@ namespace BatterySimulator
             get { return _plannedSoC; }
         }
 
-        public async Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
+        public Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
         {
-            // update
             _plan = new TimeSeries(true, true);
-            
-            double maxPrice = _energyPriceForecastForecast.GetSubSeries(planStart,planStart+LookaAhead).Values().Max();
-            double minPrice = _energyPriceForecastForecast.GetSubSeries(planStart,planStart+LookaAhead).Values().Min();
+            Apply(_plan, _energyPriceForecastForecast, planStart, resolution, nPeriods);
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// The same rule on the day-ahead forecast: the bid day is split into blocks of <see cref="LookaAhead"/>,
+        /// and in each block the battery buys at full power where the forecast is low and sells where it is high,
+        /// with thresholds from that block's forecast range. Like the intraday plan, it ignores the state of charge.
+        /// </summary>
+        public Task<IReadOnlyDictionary<DateTime, double>> PlanDayAhead(DateTime planStart, MarketView view)
+        {
+            var biddable = view.Products.Where(q => q.MaxBuyMW > 0 || q.MaxSellMW > 0).ToList();
+            var forecast = new TimeSeries(true, true) { IsBreakPointSeries = true };
+            foreach (ProductQuote q in biddable) forecast.SetValueAt(q.Product, q.SellPrice);
+
+            TimeSpan resolution = TimeSpan.FromMinutes(ProductQuote.ProductMinutes);
+            var plan = new TimeSeries(true, true);
+            for (int i = 0; i < biddable.Count; i += (int)(LookaAhead / resolution))
+            {
+                int n = Math.Min((int)(LookaAhead / resolution), biddable.Count - i);
+                Apply(plan, forecast, biddable[i].Product, resolution, n);
+            }
+
+            IReadOnlyDictionary<DateTime, double> bid = biddable.ToDictionary(q => q.Product, q => -plan[q.Product]);
+            return Task.FromResult(bid);
+        }
+
+        /// <summary>
+        /// Writes full-power production (sell) or consumption (buy) into <paramref name="plan"/> for
+        /// <paramref name="nPeriods"/> periods from <paramref name="start"/>, with buy and sell thresholds placed in
+        /// the price range over the look-ahead window from <paramref name="start"/>.
+        /// </summary>
+        private void Apply(TimeSeries plan, TimeSeries prices, DateTime start, TimeSpan resolution, int nPeriods)
+        {
+            var window = prices.GetSubSeries(start, start + LookaAhead).Values().ToList();
+            double maxPrice = window.Max();
+            double minPrice = window.Min();
 
             var buyat = minPrice + _buyPriceThreshold.ToFraction() * (maxPrice - minPrice);
             var sellat = maxPrice - _sellPriceThreshold.ToFraction() * (maxPrice - minPrice);
@@ -94,9 +127,9 @@ namespace BatterySimulator
             // intervals are UTC and would shift both lookups by an hour.)
             for (int k = 0; k < nPeriods; k++)
             {
-                DateTime t = planStart + k * resolution;
+                DateTime t = start + k * resolution;
                 double prod = 0.0;
-                double price = _energyPriceForecastForecast[t];
+                double price = prices[t];
 
                 if(price <= buyat)
                 {
@@ -106,8 +139,8 @@ namespace BatterySimulator
                 {
                     prod = Battery1.InitialCapacityC.CovertToUnit(Units.MegaWatt).Value;
                 }
-                
-                _plan.SetValueAt(t, prod);
+
+                plan.SetValueAt(t, prod);
             }
         }
     }

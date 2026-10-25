@@ -27,9 +27,16 @@ namespace BatterySimulator
         public static SimulationSettings Recent() => new()
         {
             PriceFile = RecentPriceFile,
+            ForecastFile = RecentForecastFile,
             PriceArea = "SE3",
             Start = new DateTime(2025, 11, 6, 9, 0, 0, DateTimeKind.Local)
         };
+
+        /// <summary>
+        /// SE3 day-ahead price forecasts for the same period as <see cref="RecentPriceFile"/>: for each delivery day,
+        /// the latest Volue Insight forecast issued before day-ahead gate closure (scripts/fetch_volue_forecasts.py).
+        /// </summary>
+        public const string RecentForecastFile = @"C:\Users\stefan.feltenmark\Documents\energy-optimal-simulator\Data\Prices\se3_2025-10-01_2026-10-25_min15_da_forecast.csv";
 
         // Simulation
         public DateTime Start { get; set; } = new DateTime(2018, 1, 4, 9, 0, 0, DateTimeKind.Local);
@@ -86,6 +93,23 @@ namespace BatterySimulator
         /// instead of the reference price, so revising a position costs the spread inside the optimisation.
         /// </summary>
         public bool BookAwarePlanning { get; set; } = true;
+
+        // Day-ahead market (with the order book): bid the next day from a forecast, then trade intraday from there.
+        /// <summary>
+        /// Every day at <see cref="DayAheadGateClosureHour"/>, planners that support it bid the next day's volumes,
+        /// planned against the day-ahead forecast in <see cref="ForecastFile"/>. Bids are price-independent (buys at
+        /// the maximum price, sells from 0 EUR/MWh); the accepted volumes become the products' starting positions
+        /// and are settled at the day-ahead price when it is published.
+        /// </summary>
+        public bool DayAheadMarket { get; set; } = false;
+        /// <summary>Day-ahead price forecasts as known at gate closure, in the fetch script's CSV format.</summary>
+        public string ForecastFile { get; set; } = "";
+        /// <summary>Control experiment: bid against the actual day-ahead prices instead of the forecast.</summary>
+        public bool DayAheadPerfectForecast { get; set; } = false;
+        /// <summary>Local hour on the day before delivery when day-ahead bids must be in.</summary>
+        public double DayAheadGateClosureHour { get; set; } = 12;
+        /// <summary>Local hour on the day before delivery when day-ahead prices and accepted volumes are published.</summary>
+        public double DayAheadPublicationHour { get; set; } = 13;
 
         // Battery
         public double PowerMW { get; set; } = 10;
@@ -148,6 +172,16 @@ namespace BatterySimulator
                 if (FarDepthFraction is < 0 or > 1) errors.Add("Far-from-delivery depth fraction must be between 0 and 1.");
                 if (LiquidityRecoveryMinutes <= 0) errors.Add("Liquidity recovery time must be positive.");
                 if (ImbalancePenalty < 0) errors.Add("Imbalance penalty cannot be negative.");
+            }
+            if (DayAheadMarket)
+            {
+                if (MarketModel != MarketModel.OrderBook) errors.Add("The day-ahead market needs the order book market model.");
+                if (string.IsNullOrWhiteSpace(ForecastFile)) errors.Add("The day-ahead market needs a forecast file.");
+                if (DayAheadGateClosureHour is < 0 or >= 24 || DayAheadPublicationHour <= DayAheadGateClosureHour || DayAheadPublicationHour > TradingOpensHour)
+                    errors.Add("Day-ahead times must satisfy 0 <= gate closure < publication <= intraday opening < 24 h.");
+                // Gate closure and publication must fall on a simulation step.
+                if (TimeStepSeconds > 0 && ((DayAheadGateClosureHour * 3600) % TimeStepSeconds != 0 || (DayAheadPublicationHour * 3600) % TimeStepSeconds != 0))
+                    errors.Add("Day-ahead gate closure and publication must be on a time step boundary.");
             }
             return errors;
         }

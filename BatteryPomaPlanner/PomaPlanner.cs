@@ -15,7 +15,7 @@ using Powel.Optimal.MultiAsset.Domain.Quantities;
 
 namespace BatteryPomaPlanner
 {
-    public class PomaPlanner : IBatteryPlanner, IOrderBookAwarePlanner, IObserver<BatteryState>
+    public class PomaPlanner : IBatteryPlanner, IOrderBookAwarePlanner, IDayAheadBidder, IObserver<BatteryState>
     {
         private const double Unlimited = 1000000;
         private TimeSeries _referenceBuyPrice = new TimeSeries();
@@ -244,6 +244,43 @@ namespace BatteryPomaPlanner
 
         public async Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
         {
+            _solution = await Optimize(planStart, resolution, nPeriods);
+
+            // update plan
+            _plan = _solution.Solution.BatterySolution.NetCharge[_battery];
+
+            _plannedSoC.Series = _solution.Solution.BatterySolution.SOC[_battery];
+        }
+
+        /// <summary>
+        /// Optimises from <paramref name="planStart"/> to the end of the view against the forecast, with the
+        /// already-held products fixed, and returns the planned net purchase per biddable product. The intraday
+        /// plan, planned SoC and market view are left as they were.
+        /// </summary>
+        public async Task<IReadOnlyDictionary<DateTime, double>> PlanDayAhead(DateTime planStart, MarketView view)
+        {
+            TimeSpan resolution = TimeSpan.FromMinutes(ProductQuote.ProductMinutes);
+            DateTime end = view.Products[^1].Product + resolution;
+            int nPeriods = (int)Math.Round((end - planStart) / resolution);
+
+            MarketView? intradayView = _marketView;
+            _marketView = view;
+            try
+            {
+                PomaSolutionSet solution = await Optimize(planStart, resolution, nPeriods);
+                TimeSeries production = solution.Solution.BatterySolution.NetCharge[_battery];
+                return view.Products
+                    .Where(q => q.MaxBuyMW > 0 || q.MaxSellMW > 0)
+                    .ToDictionary(q => q.Product, q => -production[DateTime.SpecifyKind(q.Product, DateTimeKind.Local).ToUniversalTime()]);
+            }
+            finally
+            {
+                _marketView = intradayView;
+            }
+        }
+
+        private async Task<PomaSolutionSet> Optimize(DateTime planStart, TimeSpan resolution, int nPeriods)
+        {
             _data.CommonData.PlanPeriod = new PlanningPeriod(planStart, resolution, nPeriods);
             _data.CommonData.EnergyMarketPeriod = _data.CommonData.PlanPeriod;
 
@@ -269,16 +306,8 @@ namespace BatteryPomaPlanner
                 new PriceUnit(Currencies.Euro, Units.MegaWattHour));
 
             _data.OptimizationId = Guid.NewGuid();
-            
-            _solution = await CallMultiAssetService(_data); 
-          
-            //_solution = CallMultiAssetService(_data).Result; 
 
-            // update plan
-            _plan = _solution.Solution.BatterySolution.NetCharge[_battery];
-
-            _plannedSoC.Series = _solution.Solution.BatterySolution.SOC[_battery];
-
+            return await CallMultiAssetService(_data);
         }
 
      
