@@ -22,6 +22,10 @@ dotnet run --project BatterySimulatorConsole
 # Run the Avalonia GUI (live charts of SoC / charge / price / PnL)
 dotnet run --project BatterySimulatorGUI
 
+# Compare planners over many weeks / order-book seeds against the perfect-foresight bound
+# (options documented at the top of ExperimentRunner/Program.cs; exit code 2 if the sanity check fails)
+dotnet run --project ExperimentRunner -- --weeks 4 --seeds 10 --planners PriceLevel,POMA --markets single,book
+
 # Tests (xUnit)
 dotnet test UnitTests/UnitTests.csproj
 dotnet test --filter FullyQualifiedName~SerializationTests   # one test class
@@ -42,8 +46,12 @@ BatterySimulatorConsole  -->  BatterySimulator
 BatterySimulatorGUI      -->  BatterySimulator        (Avalonia + ReactiveUI + LiveCharts)
 BatterySimulator         -->  BatteryPomaPlanner, BatterySimulator.Interfaces, Domain
 BatteryPomaPlanner       -->  BatterySimulator.Interfaces, Domain
-UnitTests                -->  BatterySimulator, BatteryPomaPlanner
+ExperimentRunner         -->  BatterySimulator        (+ Google.OrTools for the LP)
+UnitTests                -->  BatterySimulator, BatteryPomaPlanner, ExperimentRunner
 ```
+
+### Evaluating strategies (`ExperimentRunner`)
+`PerfectForesightBound` is an LP (OR-Tools GLOP) over the same battery model and cash booking as the simulator, on realized prices; a test replays its schedule through the simulator and gets exactly the LP profit. The runner reports each run against the bound **constrained to end with at least the energy the run ended with** — a valid bound for every single-price run, and for the *expected* profit in the order book (only if the book's mids are fair martingales). The runner checks each (week, planner) mean over seeds against it, so a planner beating it in the book points to free money in the market model, not to a good strategy. Compare planners with the printed paired differences (same week, market, seed), not with means. Weeks touching a DST switch are skipped; POMA is skipped if its service is down.
 
 The simulation loop lives in `BatterySimulator/BatterySimulator.cs`. `SetUp(nHours, deltaSeconds)` wires everything; `async Task Simulate(CancellationToken)` runs the clock until the end time, `SimulationEnabled` goes false, or the token is cancelled. Each tick it:
 1. asks the planner for planned production (`GetPlannedProduction(t)`), inverts the sign, and applies it as the EMS charge setpoint,
