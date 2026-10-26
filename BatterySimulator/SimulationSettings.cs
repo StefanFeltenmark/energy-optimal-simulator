@@ -1,3 +1,5 @@
+using BatterySimulator.Interfaces;
+
 namespace BatterySimulator
 {
     public enum MarketModel
@@ -142,6 +144,27 @@ namespace BatterySimulator
         public double DischargeEfficiency { get; set; } = 0.95;
         public double InitialSoCPercent { get; set; } = 50;
 
+        // Battery wear (BatteryWearModel.FromSettings builds POMA's degradation map from these). Placeholders, not
+        // calibrated: the defaults cost about 5 EUR per MWh charged or discharged at 50 % SoC.
+        /// <summary>Charge the cost of battery wear in the profit (and give it to the bound and planners).</summary>
+        public bool BatteryWear { get; set; } = false;
+        /// <summary>Give the wear model to planners that support it (POMA, PriceLevel); the profit includes wear either way.</summary>
+        public bool WearAwarePlanning { get; set; } = true;
+        /// <summary>Full cycles (a full charge plus a full discharge) at 50 % SoC until end of life.</summary>
+        public double WearCycleLife { get; set; } = 6000;
+        /// <summary>Remaining capacity at end of life, % of nominal.</summary>
+        public double WearEndOfLifeCapacityPercent { get; set; } = 80;
+        /// <summary>
+        /// Cost of replacing what wears out (cells/modules, not inverters or grid connection) per MWh of nominal
+        /// capacity, EUR/MWh. A rough guess; 120 000 (a whole system) gave about 10 EUR/MWh of wear and cut POMA's
+        /// profit by 43 %.
+        /// </summary>
+        public double WearReplacementCostPerMWh { get; set; } = 60000;
+        /// <summary>How many times faster cycling wears the battery at empty or full than at 50 % SoC.</summary>
+        public double WearExtremeSoCFactor { get; set; } = 1.5;
+        /// <summary>Extra calendar ageing while held full, % of nominal capacity per year, falling linearly to 0 at 50 % SoC.</summary>
+        public double WearCalendarLossAtFullPercentPerYear { get; set; } = 1;
+
         // PriceLevelPlanner
         public double BuyThresholdPercent { get; set; } = 15;
         public double SellThresholdPercent { get; set; } = 15;
@@ -150,6 +173,34 @@ namespace BatterySimulator
         // POMA
         public double SocSoftMinPercent { get; set; } = 5;
         public double SocSoftMaxPercent { get; set; } = 95;
+
+        /// <summary>
+        /// POMA's degradation map built from the wear settings, or null with <see cref="BatteryWear"/> off. Points at
+        /// SoC 0, 50 and 100 % and net charge -P, 0 and +P: cycling loses (100 - end-of-life capacity) % of nominal
+        /// capacity over the cycle life (a cycle is a full charge plus a full discharge, counted at the grid
+        /// connection), <see cref="WearExtremeSoCFactor"/> times faster at empty or full than at 50 %; holding the
+        /// battery above 50 % adds calendar ageing rising to <see cref="WearCalendarLossAtFullPercentPerYear"/> at
+        /// full. A lost MWh of capacity costs the replacement cost divided by the share of capacity lost over the
+        /// battery's life.
+        /// </summary>
+        public BatteryWearModel? CreateWearModel()
+        {
+            if (!BatteryWear) return null;
+            double lifeLoss = 1 - WearEndOfLifeCapacityPercent / 100.0;
+            // Capacity lost per MWh through the grid connection: lifeLoss * E over 2 * E * cycle life MWh.
+            double lossPerMWh = lifeLoss / (2 * WearCycleLife);
+            double calendarAtFull = WearCalendarLossAtFullPercentPerYear / 100.0 * EnergyMWh / 8760;
+
+            var points = new List<WearPoint>();
+            foreach (double soc in new[] { 0.0, 0.5, 1.0 })
+            {
+                double cycleFactor = soc == 0.5 ? 1 : WearExtremeSoCFactor;
+                double calendar = soc > 0.5 ? (soc - 0.5) / 0.5 * calendarAtFull : 0;
+                foreach (double netCharge in new[] { -PowerMW, 0, PowerMW })
+                    points.Add(new WearPoint(soc, netCharge, calendar + cycleFactor * lossPerMWh * Math.Abs(netCharge)));
+            }
+            return new BatteryWearModel(points, WearReplacementCostPerMWh / lifeLoss);
+        }
 
         /// <summary>A copy, for components that must not see later edits (all properties are value types or strings).</summary>
         public SimulationSettings Clone() => (SimulationSettings)MemberwiseClone();
@@ -175,6 +226,14 @@ namespace BatterySimulator
             if (InitialSoCPercent is < 0 or > 100) errors.Add("Initial SoC must be between 0 and 100 %.");
             if (BuyThresholdPercent is < 0 or > 100 || SellThresholdPercent is < 0 or > 100) errors.Add("Price thresholds must be between 0 and 100 %.");
             if (LookAheadHours <= 0) errors.Add("Look-ahead must be positive.");
+            if (BatteryWear)
+            {
+                if (WearCycleLife <= 0) errors.Add("Cycle life must be positive.");
+                if (WearEndOfLifeCapacityPercent is <= 0 or >= 100) errors.Add("End-of-life capacity must be between 0 and 100 %.");
+                if (WearReplacementCostPerMWh < 0) errors.Add("Replacement cost cannot be negative.");
+                if (WearExtremeSoCFactor < 0) errors.Add("Wear factor at empty or full cannot be negative.");
+                if (WearCalendarLossAtFullPercentPerYear < 0) errors.Add("Calendar ageing cannot be negative.");
+            }
             if (SocSoftMinPercent < 0 || SocSoftMaxPercent > 100 || SocSoftMinPercent >= SocSoftMaxPercent) errors.Add("Soft SoC limits must satisfy 0 <= min < max <= 100 %.");
             if (MarketModel == MarketModel.OrderBook)
             {
