@@ -25,6 +25,7 @@ namespace BatterySimulator
         private Battery? _battery;
         private TimeSpan _sleepTime;
         private OrderBookExecutor? _executor;
+        private BatteryWearModel? _wear;
 
         public BatterySimulator(IBatteryPlanner planner)
         {
@@ -212,18 +213,23 @@ namespace BatterySimulator
             _recorder.Subscribe(_ems);
             
 
+            // A snapshot like the book's: wear parameters apply on Start/Restart.
+            _wear = settings.CreateWearModel();
+            BatteryWearModel? plannerWear = settings.WearAwarePlanning ? _wear : null;
+
             // Generate a plan
             if (_planner is PriceLevelPlanner priceLevelPlanner)
             {
                 priceLevelPlanner.EnergyPriceForecast = _priceForecaster.PriceForecast;
                 priceLevelPlanner.Battery1 = _battery;
                 priceLevelPlanner.EnergyContentMWh = initialState.EnergyContent.CovertToUnit(Units.MegaWattHour).Value;
+                priceLevelPlanner.WearCostPerMWh = plannerWear?.MarginalCostPerMWh(settings.PowerMW) ?? 0;
                 _ems.Subscribe(priceLevelPlanner);
             }
             ApplyPlannerSettings();
             if(_planner is PomaPlanner pomaPlanner)
             {
-                pomaPlanner.SetUp(_battery, _market);
+                pomaPlanner.SetUp(_battery, _market, plannerWear);
                 pomaPlanner.Subscribe(_ems);
             }
             if (_planner is RandomBatteryPlanner randomBatteryPlanner)
@@ -313,6 +319,21 @@ namespace BatterySimulator
         }
 
         public DateTime End => _end;
+
+        /// <summary>The battery wear charged in the profit, or null without <see cref="SimulationSettings.BatteryWear"/>.</summary>
+        public BatteryWearModel? Wear => _wear;
+
+        /// <summary>
+        /// Wear over a step of length <paramref name="step"/> from SoC <paramref name="socAtStart"/> (fraction) with
+        /// the recorded net charge (charge positive); POMA's net charge has the opposite sign.
+        /// </summary>
+        private Wear StepWear(double socAtStart, TimeSpan step, double recordedNetChargeMW)
+        {
+            if (_wear == null) return default;
+            double lossMWh = _wear.LossRate(socAtStart, -recordedNetChargeMW) * step.TotalHours;
+            double envelopeCost = _wear.CostPerMWhLost * _wear.EnvelopeLossRate(socAtStart, -recordedNetChargeMW) * step.TotalHours;
+            return new Wear(_wear.CostPerMWhLost * lossMWh, lossMWh, envelopeCost);
+        }
 
         /// <summary>The price file's (sell) prices keyed by local delivery hour: realized prices in the single-price market, day-ahead prices where the order book's mids start.</summary>
         public TimeSeries SellPrices => _market.Ts.EnergySellPrice;
@@ -602,7 +623,10 @@ namespace BatterySimulator
                     TimeProvider.Increment();
                     DateTime tNext = TimeProvider.GetTime();
 
+                    // Wear depends on the SoC at the start of the step, as in POMA.
+                    double socAtStart = _ems.GetSoC().ToFraction();
                     await _ems.UpdateState(tNext);
+                    Wear wear = StepWear(socAtStart, tNext - t, _recorder.NetCharge[tNext]);
 
                     await Console.Out.WriteLineAsync($"{t}-{tNext:HH:mm}: Net charge = {_ems.GetChargeLevel()} SoC = {_ems.GetSoC().ToFraction():P1}");
 
@@ -612,13 +636,13 @@ namespace BatterySimulator
                         var imbalance = _executor.SettleImbalance(t, tNext, _recorder.NetCharge[tNext], _executor.Book.RealizedPrice(OrderBookExecutor.ProductStart(t)));
                         _pnlManager.RecordCashFlows(tNext,
                             trades.BuyCost + dayAhead.BuyCost + imbalance.BuyCost,
-                            trades.SellIncome + dayAhead.SellIncome + imbalance.SellIncome);
+                            trades.SellIncome + dayAhead.SellIncome + imbalance.SellIncome, wear);
                         dayAhead = default;
                     }
                     else
                     {
                         // Energy traded over [t, tNext) is settled at the prices valid at t.
-                        _pnlManager.UpdatePnL(tNext, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit));
+                        _pnlManager.UpdatePnL(tNext, new UnitPrice(_market.Ts.EnergyBuyPrice[t],priceUnit),new UnitPrice(_market.Ts.EnergySellPrice[t],priceUnit), wear);
                     }
 
                     StepCompleted?.Invoke(this, BuildSnapshot(t, tNext, planEnd));
