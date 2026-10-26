@@ -10,7 +10,7 @@ namespace BatterySimulator
     /// <summary>
     /// Baseline strategy: buy at full power where the price is in the bottom <see cref="BuyPriceThreshold"/> of the
     /// price range over the look-ahead window, sell where it is in the top <see cref="SellPriceThreshold"/>, and
-    /// only if the round trip pays for the charge and discharge losses. The plan follows the battery's energy from
+    /// only if the round trip pays for the charge and discharge losses (and wear, see <see cref="WearCostPerMWh"/>). The plan follows the battery's energy from
     /// its current state (it observes the EMS), so it never plans to charge a full battery or discharge an empty
     /// one, and products that can no longer be traded keep their positions. With a market view (order book) it
     /// buys at the asks and sells at the bids, with thresholds from the expected prices; without one it plans
@@ -45,6 +45,9 @@ namespace BatterySimulator
             get => _plan;
             set => _plan = value;
         }
+
+        /// <summary>Wear cost per MWh charged or discharged, EUR/MWh; a round trip must also pay for it. 0 ignores wear.</summary>
+        public double WearCostPerMWh { get; set; }
 
         public TimeSeries EnergyPriceForecast
         {
@@ -177,9 +180,10 @@ namespace BatterySimulator
                     double buyAt = minPrice + _buyPriceThreshold.ToFraction() * (maxPrice - minPrice);
                     double sellAt = maxPrice - _sellPriceThreshold.ToFraction() * (maxPrice - minPrice);
 
-                    // Buy only what can later be sold above its cost after losses, and vice versa.
-                    if (slot.BuyPrice <= buyAt && slot.BuyPrice < sellAt * etaC * etaD) production = slot.MinProduction;
-                    else if (slot.SellPrice > sellAt && slot.SellPrice * etaC * etaD > buyAt) production = slot.MaxProduction;
+                    // Buy only what can later be sold above its cost after losses and the wear of both legs, and vice versa.
+                    double wear = WearCostPerMWh * (1 + etaC * etaD);
+                    if (slot.BuyPrice <= buyAt && slot.BuyPrice < sellAt * etaC * etaD - wear) production = slot.MinProduction;
+                    else if (slot.SellPrice > sellAt && slot.SellPrice * etaC * etaD - wear > buyAt) production = slot.MaxProduction;
                 }
 
                 // Within the market's range and the battery's energy. Where held positions leave no feasible choice,
