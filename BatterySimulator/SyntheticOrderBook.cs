@@ -14,13 +14,16 @@ namespace BatterySimulator
     /// A synthetic continuous-intraday order book. Each product is a delivery period identified by its
     /// local delivery start; all open products trade at the same time. Trading in a product opens on the day
     /// before delivery (<see cref="TradingOpens"/>), and from then on its mid price is
-    /// <c>day-ahead + MidVolatility x (F(now) - F(open)) + ProductNoiseVolatility x W_product(now - open)</c>,
-    /// where F is a market-wide random walk in absolute time shared by all products and W is the product's own
-    /// random walk, both frozen at delivery. Where the mid is at delivery is the product's realized intraday price
-    /// (<see cref="RealizedPrice"/>), so the mids are martingales: their future moves cannot be predicted from
-    /// anything visible now, and quarter-hours of the same hour can settle at different prices. The spread narrows
-    /// and depth builds up as delivery approaches. Volume taken by market orders is removed from the book and
-    /// replenished over time.
+    /// <c>day-ahead + opening deviation + integral from open to now of s(delivery - u) x (MidVolatility dF(u) + ProductNoiseVolatility dW_product(u))</c>.
+    /// The opening deviation is a jump away from the day-ahead price when trading opens, partly common to the
+    /// delivery day and partly per product. F is a market-wide random walk in absolute time shared by all
+    /// products; the product walks W are correlated across the delivery day's consecutive quarter-hours (an AR(1)
+    /// chain of their increments). s raises the volatility towards delivery. All of it freezes at delivery, where
+    /// the mid is the product's realized intraday price (<see cref="RealizedPrice"/>). Every term has mean zero
+    /// given what is visible before it, so the mids are martingales: their future moves cannot be predicted from
+    /// anything visible now. The defaults are fitted to SE3 auction and index prices by
+    /// scripts/calibrate_order_book.py. The spread narrows and depth builds up as delivery approaches. Volume taken
+    /// by market orders is removed from the book and replenished over time.
     /// </summary>
     public class SyntheticOrderBook
     {
@@ -31,7 +34,8 @@ namespace BatterySimulator
 
         private readonly TimeSeries _dayAheadPrices;
         private readonly SimulationSettings _settings;
-        private readonly Dictionary<DateTime, double[]> _paths = new();
+        private readonly Dictionary<DateTime, ProductPath> _paths = new();
+        private readonly Dictionary<DateTime, ChainState> _chains = new();
         private readonly List<double> _factor = new() { 0 };
         private readonly long _factorOffset;
         private readonly Random _factorRng;
@@ -60,16 +64,26 @@ namespace BatterySimulator
         {
             DateTime open = TradingOpens(product);
             DateTime now = tradingTime < product ? tradingTime : product;
-            if (now <= open) return _dayAheadPrices[product];
+            if (now < open) return _dayAheadPrices[product];
 
-            double[] path = Path(product);
+            ProductPath path = Path(product);
             double x = Math.Min((now - open).TotalHours, MaxPathHours) * 60.0 / PriceGridMinutes;
+
+            return _dayAheadPrices[product] + path.Opening
+                   + _settings.MidVolatility * Interpolate(path.Common, x) + _settings.ProductNoiseVolatility * Interpolate(path.Own, x);
+        }
+
+        private static double Interpolate(double[] path, double x)
+        {
             int i = (int)Math.Floor(x);
-            double own = i + 1 < path.Length ? path[i] + (path[i + 1] - path[i]) * (x - i) : path[^1];
+            return i + 1 < path.Length ? path[i] + (path[i + 1] - path[i]) * (x - i) : path[^1];
+        }
 
-            double common = Factor(now) - Factor(open);
-
-            return _dayAheadPrices[product] + _settings.MidVolatility * common + _settings.ProductNoiseVolatility * own;
+        /// <summary>Volatility multiplier <paramref name="hoursToDelivery"/> before delivery: 1 far from delivery, <see cref="SimulationSettings.VolatilityAtDeliveryFactor"/> at delivery.</summary>
+        public double VolatilityScale(double hoursToDelivery)
+        {
+            double factor = _settings.VolatilityAtDeliveryFactor;
+            return Math.Sqrt(1 + (factor * factor - 1) * Math.Exp(-Math.Max(0, hoursToDelivery) / _settings.VolatilityBuildUpHours));
         }
 
         /// <summary>The product's realized intraday price: its mid at delivery.</summary>
@@ -84,10 +98,7 @@ namespace BatterySimulator
             int i = (int)Math.Floor(x);
             double stepStd = Math.Sqrt(PriceGridMinutes / 60.0);
             while (_factor.Count <= i + 1)
-            {
-                double u1 = 1 - _factorRng.NextDouble(), u2 = _factorRng.NextDouble();
-                _factor.Add(_factor[^1] + stepStd * Math.Sqrt(-2 * Math.Log(u1)) * Math.Cos(2 * Math.PI * u2));
-            }
+                _factor.Add(_factor[^1] + stepStd * StandardNormal(_factorRng));
             return _factor[i] + (_factor[i + 1] - _factor[i]) * (x - i);
         }
 
@@ -180,23 +191,91 @@ namespace BatterySimulator
 
         private static double HoursToDelivery(DateTime product, DateTime tradingTime) => Math.Max(0, (product - tradingTime).TotalHours);
 
-        /// <summary>Standard random walk in time since trading opened, starting at 0; deterministic per product.</summary>
-        private double[] Path(DateTime product)
-        {
-            if (_paths.TryGetValue(product, out double[]? path)) return path;
+        /// <summary>
+        /// A product's opening deviation (EUR/MWh) and its common and own walks since trading opened, on the price
+        /// grid from the opening (0) to delivery, with the steps scaled by <see cref="VolatilityScale"/>.
+        /// </summary>
+        private sealed record ProductPath(double Opening, double[] Own, double[] Common);
 
-            int n = (int)(MaxPathHours * 60.0 / PriceGridMinutes) + 1;
-            path = new double[n];
-            var rng = new Random(unchecked((int)((product.Ticks / TimeSpan.TicksPerMinute) * 2654435761L) ^ (_settings.OrderBookSeed * 97)));
-            double stepStd = Math.Sqrt(PriceGridMinutes / 60.0);
-            for (int k = 1; k < n; k++)
+        /// <summary>
+        /// A product's standard normal walk increments (one per price-grid step after the opening) and opening
+        /// deviation, correlated with the previous quarter-hours of its delivery day; OpeningChain is the opening's
+        /// AR(1) part.
+        /// </summary>
+        private sealed record ChainState(double[] Steps, double OpeningChain, double Opening);
+
+        private ProductPath Path(DateTime product)
+        {
+            if (_paths.TryGetValue(product, out ProductPath? path)) return path;
+
+            DateTime open = TradingOpens(product);
+            double gridHours = PriceGridMinutes / 60.0;
+            double life = Math.Min((product - open).TotalHours, MaxPathHours);
+            int n = (int)Math.Ceiling(life / gridHours - 1e-9);
+            ChainState chain = Chain(product);
+
+            var own = new double[n + 1];
+            var common = new double[n + 1];
+            for (int k = 0; k < n; k++)
             {
-                double u1 = 1 - rng.NextDouble(), u2 = rng.NextDouble();
-                path[k] = path[k - 1] + stepStd * Math.Sqrt(-2 * Math.Log(u1)) * Math.Cos(2 * Math.PI * u2);
+                double scale = VolatilityScale(life - (k + 0.5) * gridHours);
+                own[k + 1] = own[k] + scale * Math.Sqrt(gridHours) * chain.Steps[k];
+                if (_settings.MidVolatility != 0)
+                    common[k + 1] = common[k] + scale * (Factor(open.AddMinutes((k + 1) * PriceGridMinutes)) - Factor(open.AddMinutes(k * PriceGridMinutes)));
             }
 
+            double opening = _settings.OpeningCommonStd * DayDeviation(product.Date) + _settings.OpeningProductStd * chain.Opening;
+            path = new ProductPath(opening, own, common);
             _paths[product] = path;
             return path;
+        }
+
+        /// <summary>
+        /// Builds the AR(1) chains from the first quarter-hour of <paramref name="product"/>'s delivery day (all of
+        /// whose products open together) up to it: each product's walk increments and opening deviation are the
+        /// previous product's times the correlation plus fresh noise, so they stay standard normal.
+        /// </summary>
+        private ChainState Chain(DateTime product)
+        {
+            if (_chains.TryGetValue(product, out ChainState? state)) return state;
+
+            TimeSpan quarter = TimeSpan.FromMinutes(SimulationSettings.ProductMinutes);
+            DateTime first = product;
+            while (first - quarter >= product.Date && !_chains.ContainsKey(first - quarter)) first -= quarter;
+
+            double phi = _settings.ProductNoiseCorrelation, phiOpen = _settings.OpeningProductCorrelation, share = _settings.OpeningQuarterShare;
+            for (DateTime p = first; p <= product; p += quarter)
+            {
+                var (steps, openingChain, independent) = Innovations(p);
+                if (p - quarter >= p.Date && _chains.TryGetValue(p - quarter, out ChainState? previous))
+                {
+                    for (int k = 0; k < steps.Length; k++)
+                        steps[k] = phi * previous.Steps[k] + Math.Sqrt(1 - phi * phi) * steps[k];
+                    openingChain = phiOpen * previous.OpeningChain + Math.Sqrt(1 - phiOpen * phiOpen) * openingChain;
+                }
+                state = new ChainState(steps, openingChain, Math.Sqrt(share) * independent + Math.Sqrt(1 - share) * openingChain);
+                _chains[p] = state;
+            }
+            return state!;
+        }
+
+        /// <summary>A product's own independent standard normals: walk increments, then two for the opening; deterministic per product.</summary>
+        private (double[] Steps, double OpeningChain, double OpeningIndependent) Innovations(DateTime product)
+        {
+            var rng = new Random(unchecked((int)((product.Ticks / TimeSpan.TicksPerMinute) * 2654435761L) ^ (_settings.OrderBookSeed * 97)));
+            var steps = new double[(int)(MaxPathHours * 60.0 / PriceGridMinutes)];
+            for (int k = 0; k < steps.Length; k++) steps[k] = StandardNormal(rng);
+            return (steps, StandardNormal(rng), StandardNormal(rng));
+        }
+
+        /// <summary>The standard normal opening deviation common to all products of delivery day <paramref name="day"/>.</summary>
+        private double DayDeviation(DateTime day) =>
+            StandardNormal(new Random(unchecked((int)(day.Ticks / TimeSpan.TicksPerDay) * 40503 ^ (_settings.OrderBookSeed * 7907 + 3))));
+
+        private static double StandardNormal(Random rng)
+        {
+            double u1 = 1 - rng.NextDouble(), u2 = rng.NextDouble();
+            return Math.Sqrt(-2 * Math.Log(u1)) * Math.Cos(2 * Math.PI * u2);
         }
     }
 }

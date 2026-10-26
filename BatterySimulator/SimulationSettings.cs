@@ -57,17 +57,35 @@ namespace BatterySimulator
         /// <summary>Trading in a product stops this long before its delivery starts.</summary>
         public double GateClosureMinutes { get; set; } = 30;
         /// <summary>
-        /// Trading in a product opens at this local hour on the day before its delivery day; its mid starts at the
-        /// day-ahead (price file) price then.
+        /// Trading in a product opens at this local hour on the day before its delivery day; its mid then jumps
+        /// from the day-ahead (price file) price by the opening deviation.
         /// </summary>
         public double TradingOpensHour { get; set; } = 15;
+
+        // Mid-price model. Defaults fitted to SE3 day-ahead, IDA1-3 and hourly intraday index prices, 2025-10 to
+        // 2026-10, by scripts/calibrate_order_book.py (see there for the method and its limits).
         /// <summary>
-        /// Volatility of the market-wide factor that moves all open products' mids together, EUR/MWh per sqrt(hour).
-        /// Where a mid is at delivery is the product's realized intraday price.
+        /// Volatility far from delivery of the market-wide factor that moves all open products' mids together,
+        /// EUR/MWh per sqrt(hour). Where a mid is at delivery is the product's realized intraday price. The fit
+        /// gives 0: within a delivery day, the strongly correlated product noise carries the common moves.
         /// </summary>
-        public double MidVolatility { get; set; } = 3;
-        /// <summary>Volatility of each product's own, independent mid noise, EUR/MWh per sqrt(hour).</summary>
-        public double ProductNoiseVolatility { get; set; } = 0.5;
+        public double MidVolatility { get; set; } = 0;
+        /// <summary>Volatility far from delivery of each product's own mid noise, EUR/MWh per sqrt(hour).</summary>
+        public double ProductNoiseVolatility { get; set; } = 2.4;
+        /// <summary>Correlation between the mid moves of consecutive quarter-hours of a delivery day (k apart: this to the k-th power).</summary>
+        public double ProductNoiseCorrelation { get; set; } = 0.986;
+        /// <summary>Volatility at delivery as a multiple of the volatility far from delivery (both volatilities).</summary>
+        public double VolatilityAtDeliveryFactor { get; set; } = 4.4;
+        /// <summary>Time constant of the volatility's rise towards delivery, hours.</summary>
+        public double VolatilityBuildUpHours { get; set; } = 5.1;
+        /// <summary>Std of the jump from the day-ahead price when trading opens, common to a delivery day's products, EUR/MWh.</summary>
+        public double OpeningCommonStd { get; set; } = 4.1;
+        /// <summary>Std of the per-product part of the jump from the day-ahead price when trading opens, EUR/MWh.</summary>
+        public double OpeningProductStd { get; set; } = 6.6;
+        /// <summary>Correlation of the per-product opening jumps of consecutive quarter-hours, apart from <see cref="OpeningQuarterShare"/>.</summary>
+        public double OpeningProductCorrelation { get; set; } = 0.89;
+        /// <summary>Share of the per-product opening jump's variance that is independent per quarter-hour.</summary>
+        public double OpeningQuarterShare { get; set; } = 0.18;
         /// <summary>Bid/ask spread close to gate closure, EUR/MWh.</summary>
         public double SpreadNearDelivery { get; set; } = 0.5;
         /// <summary>Bid/ask spread long before delivery, EUR/MWh.</summary>
@@ -170,6 +188,11 @@ namespace BatterySimulator
                 if (GateClosureMinutes < 0) errors.Add("Gate closure cannot be negative.");
                 if (TradingOpensHour is < 0 or >= 24) errors.Add("Trading opening hour must be in [0, 24).");
                 if (MidVolatility < 0 || ProductNoiseVolatility < 0) errors.Add("Mid-price volatilities cannot be negative.");
+                if (ProductNoiseCorrelation is < 0 or >= 1 || OpeningProductCorrelation is < 0 or >= 1) errors.Add("Correlations between quarter-hours must be in [0, 1).");
+                if (VolatilityAtDeliveryFactor <= 0) errors.Add("Volatility factor at delivery must be positive.");
+                if (VolatilityBuildUpHours <= 0) errors.Add("Volatility build-up time must be positive.");
+                if (OpeningCommonStd < 0 || OpeningProductStd < 0) errors.Add("Opening deviations cannot be negative.");
+                if (OpeningQuarterShare is < 0 or > 1) errors.Add("Opening quarter-hour share must be between 0 and 1.");
                 if (SpreadNearDelivery < 0 || SpreadFarFromDelivery < 0) errors.Add("Spreads cannot be negative.");
                 if (LiquidityBuildUpHours <= 0) errors.Add("Liquidity build-up time must be positive.");
                 if (BookLevels < 1) errors.Add("The book needs at least one level per side.");

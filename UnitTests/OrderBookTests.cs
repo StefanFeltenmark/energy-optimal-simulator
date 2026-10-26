@@ -21,7 +21,7 @@ namespace UnitTests
         private static SimulationSettings Settings() => new SimulationSettings { MarketModel = MarketModel.OrderBook };
 
         [Fact]
-        public void MidStartsAtDayAheadEndsAtRealizedAndIsIndependentOfQueryOrder()
+        public void MidJumpsFromDayAheadAtOpeningEndsAtRealizedAndIsIndependentOfQueryOrder()
         {
             var a = new SyntheticOrderBook(Prices(), Settings());
             var b = new SyntheticOrderBook(Prices(), Settings());
@@ -35,11 +35,11 @@ namespace UnitTests
             Assert.Equal(aDelivery, bDelivery);
             Assert.Equal(aOther, bOther);
 
-            // Trading opens at 15:00 the day before, at the day-ahead price; the mid then wanders and stops at delivery.
+            // Trading opens at 15:00 the day before; the mid jumps away from the day-ahead price then, wanders and stops at delivery.
             DateTime open = new DateTime(2018, 1, 3, 15, 0, 0, DateTimeKind.Local);
             Assert.Equal(open, a.TradingOpens(Delivery));
-            Assert.Equal(Prices()[Delivery], a.Mid(Delivery, open.AddHours(-1)), 9);
-            Assert.Equal(Prices()[Delivery], a.Mid(Delivery, open), 9);
+            Assert.Equal(Prices()[Delivery], a.Mid(Delivery, open.AddMinutes(-5)), 9);
+            Assert.NotEqual(Prices()[Delivery], a.Mid(Delivery, open));
             Assert.NotEqual(Prices()[Delivery], aDelivery);
             Assert.Equal(a.RealizedPrice(Delivery), a.Mid(Delivery, Delivery), 9);
             Assert.Equal(a.RealizedPrice(Delivery), a.Mid(Delivery, Delivery.AddHours(2)), 9);
@@ -65,8 +65,9 @@ namespace UnitTests
                 gapChanges.Add(book.RealizedPrice(second) - book.RealizedPrice(first) - gap);
             }
 
-            // Forecast error std is about sqrt(4 x (3^2 + 0.5^2)) = 6.1, so the mean of 300 has a std error of 0.35.
-            Assert.InRange(forecastErrors.Average(), -1.5, 1.5);
+            // Forecast error std is about 2.4 x sqrt(54.6) = 17.7 (variance rate integrated with the volatility rise
+            // over the last 4 h), so the mean of 300 has a std error of 1.0.
+            Assert.InRange(forecastErrors.Average(), -4, 4);
 
             double gapMean = gaps.Average(), changeMean = gapChanges.Average();
             double slope = gaps.Zip(gapChanges, (g, c) => (g - gapMean) * (c - changeMean)).Sum()
@@ -97,13 +98,57 @@ namespace UnitTests
         public void NeighbouringProductsMoveTogether()
         {
             // Without product noise, the market factor moves all mids together: the difference between two
-            // products' deviations from their day-ahead prices does not change with trading time.
-            var book = new SyntheticOrderBook(Prices(), new SimulationSettings { MarketModel = MarketModel.OrderBook, ProductNoiseVolatility = 0 });
+            // products' deviations from their day-ahead prices does not change with trading time. (The rise in
+            // volatility towards delivery scales each product's moves by its own time to delivery, so it is off here.)
+            var book = new SyntheticOrderBook(Prices(), new SimulationSettings
+            {
+                MarketModel = MarketModel.OrderBook, MidVolatility = 3, ProductNoiseVolatility = 0, VolatilityAtDeliveryFactor = 1
+            });
             DateTime next = Delivery.AddMinutes(15);
             double Gap(DateTime t) => (book.Mid(next, t) - Prices()[next]) - (book.Mid(Delivery, t) - Prices()[Delivery]);
 
             Assert.Equal(Gap(Delivery.AddHours(-8)), Gap(Delivery.AddHours(-1)), 9);
             Assert.NotEqual(book.Mid(Delivery, Delivery.AddHours(-8)), book.Mid(Delivery, Delivery.AddHours(-1)));   // but they do move
+        }
+
+        [Fact]
+        public void CalibratedMidsHaveTheFittedStructure()
+        {
+            // Over seeds, with the default (fitted) settings: the jump at opening, neighbouring quarter-hours moving
+            // almost together and distant ones less, and the volatility rising towards delivery.
+            var settings = new SimulationSettings { MarketModel = MarketModel.OrderBook };
+            DateTime open = new DateTime(2018, 1, 3, 15, 0, 0, DateTimeKind.Local);
+            DateTime next = Delivery.AddMinutes(15), distant = Delivery.AddHours(-8);
+            var opening = new List<double>();
+            var moves = new List<(double Product, double Next, double Distant)>();
+            var early = new List<double>();
+            var late = new List<double>();
+            for (int seed = 1; seed <= 400; seed++)
+            {
+                settings.OrderBookSeed = seed;
+                var book = new SyntheticOrderBook(Prices(), settings);
+                opening.Add(book.Mid(Delivery, open) - Prices()[Delivery]);
+                double Move(DateTime p) => book.RealizedPrice(p) - book.Mid(p, open);
+                moves.Add((Move(Delivery), Move(next), Move(distant)));
+                early.Add(book.Mid(Delivery, Delivery.AddHours(-19)) - book.Mid(Delivery, Delivery.AddHours(-20)));
+                late.Add(book.Mid(Delivery, Delivery) - book.Mid(Delivery, Delivery.AddHours(-1)));
+            }
+
+            static double Std(IEnumerable<double> x) { var a = x.ToList(); double m = a.Average(); return Math.Sqrt(a.Sum(v => (v - m) * (v - m)) / (a.Count - 1)); }
+            static double Corr(IReadOnlyList<double> x, IReadOnlyList<double> y)
+            {
+                double mx = x.Average(), my = y.Average();
+                return x.Zip(y, (a, b) => (a - mx) * (b - my)).Sum() / Math.Sqrt(x.Sum(a => (a - mx) * (a - mx)) * y.Sum(b => (b - my) * (b - my)));
+            }
+
+            // Opening std sqrt(4.1^2 + 6.6^2) = 7.8.
+            Assert.InRange(Std(opening), 6.8, 8.8);
+            var own = moves.Select(m => m.Product).ToList();
+            Assert.InRange(Corr(own, moves.Select(m => m.Next).ToList()), 0.95, 1);                // 0.986
+            Assert.InRange(Corr(moves.Select(m => m.Next).ToList(), moves.Select(m => m.Distant).ToList()), 0.2, 0.85);   // 0.986^33 = 0.63 for the common part
+            // Volatility in the last hour vs 19-20 h before delivery: about 4 x.
+            Assert.InRange(Std(late) / Std(early), 3, 5.5);
+            Assert.Equal(settings.VolatilityAtDeliveryFactor, new SyntheticOrderBook(Prices(), settings).VolatilityScale(0), 9);
         }
 
         [Fact]
@@ -258,6 +303,8 @@ namespace UnitTests
                 GateClosureMinutes = 0,
                 MidVolatility = 0,
                 ProductNoiseVolatility = 0,
+                OpeningCommonStd = 0,
+                OpeningProductStd = 0,
                 SpreadNearDelivery = 0.01,
                 SpreadFarFromDelivery = 0.01,
                 LevelVolumeMWh = 1e6,

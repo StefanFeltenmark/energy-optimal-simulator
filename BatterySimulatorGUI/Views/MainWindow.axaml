@@ -101,7 +101,7 @@
 
                 <Expander Header="Order book">
                     <StackPanel>
-                        <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">Used when the market model is Order book. 15-minute products, open from 15:00 the day before delivery at the day-ahead price; the mid at delivery is the realized intraday price.</TextBlock>
+                        <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">Used when the market model is Order book. 15-minute products, open from 15:00 the day before delivery with a jump from the day-ahead price; the mid at delivery is the realized intraday price. Mid-price defaults are fitted to SE3 2025/26; spread and depth are not.</TextBlock>
                         <TextBlock Classes="label">Gate closure (min before delivery)</TextBlock>
                         <NumericUpDown Value="{Binding GateClosureMinutes}" Minimum="0" Maximum="240" Increment="5" FormatString="0"/>
                         <CheckBox Margin="0 6 0 0" IsChecked="{Binding BookAwarePlanning}">POMA plans against bid/ask and positions</CheckBox>
@@ -110,6 +110,20 @@
                         <NumericUpDown Value="{Binding MidVolatility}" Minimum="0" Maximum="100" Increment="0.5"/>
                         <TextBlock Classes="label">Product-specific volatility (€/MWh/√h)</TextBlock>
                         <NumericUpDown Value="{Binding ProductNoiseVolatility}" Minimum="0" Maximum="100" Increment="0.1"/>
+                        <TextBlock Classes="label">Correlation of neighbouring quarter-hours</TextBlock>
+                        <NumericUpDown Value="{Binding ProductNoiseCorrelation}" Minimum="0" Maximum="0.999" Increment="0.005"/>
+                        <TextBlock Classes="label">Volatility at delivery (× far from delivery)</TextBlock>
+                        <NumericUpDown Value="{Binding VolatilityAtDeliveryFactor}" Minimum="0.1" Maximum="20" Increment="0.1"/>
+                        <TextBlock Classes="label">Volatility build-up time (h)</TextBlock>
+                        <NumericUpDown Value="{Binding VolatilityBuildUpHours}" Minimum="0.1" Maximum="48" Increment="0.5"/>
+                        <TextBlock Classes="label">Opening jump, common (€/MWh std)</TextBlock>
+                        <NumericUpDown Value="{Binding OpeningCommonStd}" Minimum="0" Maximum="100" Increment="0.5"/>
+                        <TextBlock Classes="label">Opening jump, per product (€/MWh std)</TextBlock>
+                        <NumericUpDown Value="{Binding OpeningProductStd}" Minimum="0" Maximum="100" Increment="0.5"/>
+                        <TextBlock Classes="label">Opening jump correlation of neighbours</TextBlock>
+                        <NumericUpDown Value="{Binding OpeningProductCorrelation}" Minimum="0" Maximum="0.999" Increment="0.01"/>
+                        <TextBlock Classes="label">Opening jump, independent share</TextBlock>
+                        <NumericUpDown Value="{Binding OpeningQuarterShare}" Minimum="0" Maximum="1" Increment="0.05"/>
                         <TextBlock Classes="label">Spread near delivery (€/MWh)</TextBlock>
                         <NumericUpDown Value="{Binding SpreadNearDelivery}" Minimum="0" Maximum="100" Increment="0.1"/>
                         <TextBlock Classes="label">Spread far from delivery (€/MWh)</TextBlock>

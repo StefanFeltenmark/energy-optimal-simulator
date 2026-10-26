@@ -968,6 +968,48 @@ namespace BatterySimulatorGUI.ViewModels
             set { if (value is { } v) { _settings.ProductNoiseVolatility = (double)v; OnSettingChanged(); } }
         }
 
+        public decimal? ProductNoiseCorrelation
+        {
+            get => (decimal)_settings.ProductNoiseCorrelation;
+            set { if (value is { } v) { _settings.ProductNoiseCorrelation = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? VolatilityAtDeliveryFactor
+        {
+            get => (decimal)_settings.VolatilityAtDeliveryFactor;
+            set { if (value is { } v) { _settings.VolatilityAtDeliveryFactor = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? VolatilityBuildUpHours
+        {
+            get => (decimal)_settings.VolatilityBuildUpHours;
+            set { if (value is { } v) { _settings.VolatilityBuildUpHours = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? OpeningCommonStd
+        {
+            get => (decimal)_settings.OpeningCommonStd;
+            set { if (value is { } v) { _settings.OpeningCommonStd = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? OpeningProductStd
+        {
+            get => (decimal)_settings.OpeningProductStd;
+            set { if (value is { } v) { _settings.OpeningProductStd = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? OpeningProductCorrelation
+        {
+            get => (decimal)_settings.OpeningProductCorrelation;
+            set { if (value is { } v) { _settings.OpeningProductCorrelation = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? OpeningQuarterShare
+        {
+            get => (decimal)_settings.OpeningQuarterShare;
+            set { if (value is { } v) { _settings.OpeningQuarterShare = (double)v; OnSettingChanged(); } }
+        }
+
         public bool BookAwarePlanning
         {
             get => _settings.BookAwarePlanning;

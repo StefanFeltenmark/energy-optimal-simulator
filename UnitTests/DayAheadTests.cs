@@ -41,7 +41,7 @@ namespace UnitTests
         [Fact]
         public void DayAheadIsForecastUntilPublishedThenTheBookTakesOver()
         {
-            var settings = new SimulationSettings { MarketModel = MarketModel.OrderBook, MidVolatility = 0, ProductNoiseVolatility = 0 };
+            var settings = new SimulationSettings { MarketModel = MarketModel.OrderBook, MidVolatility = 0, ProductNoiseVolatility = 0, OpeningCommonStd = 0, OpeningProductStd = 0 };
             var dayAhead = new TimeSeries { IsBreakPointSeries = true };
             dayAhead.SetValueAt(Day.AddDays(-2), 50);
             var forecast = new TimeSeries { IsBreakPointSeries = true };
