@@ -50,7 +50,8 @@ namespace BatteryPomaPlanner
         /// <summary>Soft upper SoC limit as a fraction (0-1); applied on every optimisation.</summary>
         public double SocSoftMax { get; set; } = 0.95;
 
-        public void SetUp(Battery battery, EnergyMarket market)
+        /// <param name="wear">Battery wear for POMA to weigh against trading profit, or null to ignore wear.</param>
+        public void SetUp(Battery battery, EnergyMarket market, BatteryWearModel? wear = null)
         {
             PriceUnit euroPerMw = new PriceUnit(Currencies.Euro, Units.MegaWatt);
 
@@ -144,7 +145,30 @@ namespace BatteryPomaPlanner
             _data.OptimizationId = _optimizationId;
 
             _data.CommonData.SolveParameters.LogLevel = 2;
+
+            ApplyWear(wear);
         }
+
+        /// <summary>
+        /// POMA's advanced degradation model with the simulator's wear map, SoC in percent like every Percentage.
+        /// (POMA before PR #2066 read it as a fraction and needs Percentage(0.5) for 50 %;
+        /// BatteryWearTests.PomaExpectsTheWearTheSimulatorCharges fails against such a service.) POMA also needs
+        /// a power-capacity map over the same range: the simulator models no power fade, so its points lose nothing.
+        /// </summary>
+        private void ApplyWear(BatteryWearModel? wear)
+        {
+            _battery.UseDegradationModel = wear != null;
+            _battery.DegradationCost = wear?.CostPerMWhLost ?? 0;
+            _battery.DegradationMapE = wear?.Points.Select(p => ToPomaPoint(p, p.CapacityLossMWhPerHour)).ToList() ?? [];
+            _battery.DegradationMapC = wear?.Points.Select(p => ToPomaPoint(p, 0)).ToList() ?? [];
+        }
+
+        private static DegradationPoint ToPomaPoint(WearPoint point, double degradation) =>
+            new(new Percentage(100 * point.SoC), new Power(point.NetChargeMW, Units.MegaWatt), degradation);
+
+        /// <summary>The latest optimisation result (intraday plan or day-ahead bid), or null before the first.</summary>
+        public PomaSolutionSet? LastSolution => _lastSolution;
+        private PomaSolutionSet? _lastSolution;
 
         public string Name => "POMA";
 
@@ -307,7 +331,8 @@ namespace BatteryPomaPlanner
 
             _data.OptimizationId = Guid.NewGuid();
 
-            return await CallMultiAssetService(_data);
+            _lastSolution = await CallMultiAssetService(_data);
+            return _lastSolution;
         }
 
      
