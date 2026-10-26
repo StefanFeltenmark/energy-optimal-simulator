@@ -522,8 +522,17 @@ namespace BatterySimulatorGUI.ViewModels
         public string? EquivalentCycles
         {
             get => _equivalentCycles; // todo
-            private set => this.RaiseAndSetIfChanged(ref _equivalentCycles, value); 
-        
+            private set => this.RaiseAndSetIfChanged(ref _equivalentCycles, value);
+
+        }
+
+        private string? _wearSummary;
+
+        /// <summary>Wear cost so far (included in the profit) and capacity lost; null without battery wear.</summary>
+        public string? WearSummary
+        {
+            get => _wearSummary;
+            private set => this.RaiseAndSetIfChanged(ref _wearSummary, value);
         }
 
         public DateTime SimulationTime
@@ -608,6 +617,7 @@ namespace BatterySimulatorGUI.ViewModels
             bookTimeAxis[0].MinLimit = bookTimeAxis[0].MaxLimit = null;
             positionTimeAxis[0].MinLimit = positionTimeAxis[0].MaxLimit = null;
             ExecutionSummary = null;
+            WearSummary = null;
         }
 
         /// <summary>
@@ -699,6 +709,11 @@ namespace BatterySimulatorGUI.ViewModels
                     val = _pnlValues[_pnlValues.Count - 1].Value.Value;
                 }
                 CurrentPnL = (new MonetaryAmount(val, Currencies.Euro)).ToString(); // todo
+
+                var pnl = _simulator?.PnlManager;
+                WearSummary = pnl != null && _simulator!.Wear != null
+                    ? $"Wear: {pnl.AccWearCost:F0} € ({pnl.CapacityLostMWh * 1000:F1} kWh lost)"
+                    : null;
             });
         }
 
@@ -1111,6 +1126,49 @@ namespace BatterySimulatorGUI.ViewModels
         {
             get => (decimal)_settings.InitialSoCPercent;
             set { if (value is { } v) { _settings.InitialSoCPercent = (double)v; OnSettingChanged(); } }
+        }
+
+        // Battery wear
+        public bool BatteryWear
+        {
+            get => _settings.BatteryWear;
+            set { _settings.BatteryWear = value; OnSettingChanged(); }
+        }
+
+        public bool WearAwarePlanning
+        {
+            get => _settings.WearAwarePlanning;
+            set { _settings.WearAwarePlanning = value; OnSettingChanged(); }
+        }
+
+        public decimal? WearCycleLife
+        {
+            get => (decimal)_settings.WearCycleLife;
+            set { if (value is { } v) { _settings.WearCycleLife = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? WearEndOfLifeCapacityPercent
+        {
+            get => (decimal)_settings.WearEndOfLifeCapacityPercent;
+            set { if (value is { } v) { _settings.WearEndOfLifeCapacityPercent = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? WearReplacementCostPerMWh
+        {
+            get => (decimal)_settings.WearReplacementCostPerMWh;
+            set { if (value is { } v) { _settings.WearReplacementCostPerMWh = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? WearExtremeSoCFactor
+        {
+            get => (decimal)_settings.WearExtremeSoCFactor;
+            set { if (value is { } v) { _settings.WearExtremeSoCFactor = (double)v; OnSettingChanged(); } }
+        }
+
+        public decimal? WearCalendarLossAtFullPercentPerYear
+        {
+            get => (decimal)_settings.WearCalendarLossAtFullPercentPerYear;
+            set { if (value is { } v) { _settings.WearCalendarLossAtFullPercentPerYear = (double)v; OnSettingChanged(); } }
         }
 
         // PriceLevelPlanner

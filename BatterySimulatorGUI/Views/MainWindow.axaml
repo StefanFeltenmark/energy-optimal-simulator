@@ -162,6 +162,23 @@
                     </StackPanel>
                 </Expander>
 
+                <Expander Header="Battery wear">
+                    <StackPanel>
+                        <CheckBox IsChecked="{Binding BatteryWear}">Charge wear in the profit (POMA's degradation map)</CheckBox>
+                        <CheckBox Margin="0 6 0 0" IsChecked="{Binding WearAwarePlanning}">Planners know the wear</CheckBox>
+                        <TextBlock Classes="label">Cycle life (full cycles at 50 % SoC)</TextBlock>
+                        <NumericUpDown Value="{Binding WearCycleLife}" Minimum="1" Maximum="100000" Increment="500"/>
+                        <TextBlock Classes="label">End-of-life capacity (%)</TextBlock>
+                        <NumericUpDown Value="{Binding WearEndOfLifeCapacityPercent}" Minimum="1" Maximum="99" Increment="5"/>
+                        <TextBlock Classes="label">Replacement cost (€/MWh of capacity)</TextBlock>
+                        <NumericUpDown Value="{Binding WearReplacementCostPerMWh}" Minimum="0" Maximum="10000000" Increment="10000"/>
+                        <TextBlock Classes="label">Cycling wear at empty/full (x 50 % SoC)</TextBlock>
+                        <NumericUpDown Value="{Binding WearExtremeSoCFactor}" Minimum="0" Maximum="10" Increment="0.1"/>
+                        <TextBlock Classes="label">Calendar ageing when full (%/year)</TextBlock>
+                        <NumericUpDown Value="{Binding WearCalendarLossAtFullPercentPerYear}" Minimum="0" Maximum="100" Increment="0.5"/>
+                    </StackPanel>
+                </Expander>
+
                 <Expander Header="Planner (live)">
                     <StackPanel>
                         <TextBlock Classes="label">Planning horizon (h)</TextBlock>
@@ -194,6 +211,7 @@
             <TextBlock  Margin="0 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas" Text="{Binding CurrentPnL, Mode = OneWay}"></TextBlock>
             <TextBlock Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas">EFC: </TextBlock>
             <TextBlock  Margin="0 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="24" FontFamily="Consolas" Text="{Binding EquivalentCycles, Mode = OneWay}"></TextBlock>
+            <TextBlock  Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="18" FontFamily="Consolas" Text="{Binding WearSummary, Mode = OneWay}"></TextBlock>
             <TextBlock  Margin="15 5" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="18" FontFamily="Consolas" Foreground="Red" Text="{Binding StatusMessage, Mode = OneWay}"></TextBlock>
         </StackPanel>
         <Border Grid.Column="2" Grid.Row="2" Background="White"
