@@ -24,14 +24,16 @@ namespace BatterySimulator
 
         /// <summary>
         /// Settings on <see cref="RecentPriceFile"/>, the data the GUI, console and experiment runner start from.
-        /// The start is a Thursday 09:00 like the 2018 default, after the October 2025 DST switch.
+        /// The start is a Thursday 09:00 like the 2018 default, after the October 2025 DST switch. Battery wear is on
+        /// (the 2018 defaults, used by most unit tests, keep it off).
         /// </summary>
         public static SimulationSettings Recent() => new()
         {
             PriceFile = RecentPriceFile,
             ForecastFile = RecentForecastFile,
             PriceArea = "SE3",
-            Start = new DateTime(2025, 11, 6, 9, 0, 0, DateTimeKind.Local)
+            Start = new DateTime(2025, 11, 6, 9, 0, 0, DateTimeKind.Local),
+            BatteryWear = true
         };
 
         /// <summary>
