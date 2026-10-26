@@ -160,8 +160,13 @@ namespace BatterySimulator
         /// profit by 43 %.
         /// </summary>
         public double WearReplacementCostPerMWh { get; set; } = 60000;
-        /// <summary>How many times faster cycling wears the battery at empty or full than at 50 % SoC.</summary>
-        public double WearExtremeSoCFactor { get; set; } = 1.5;
+        /// <summary>
+        /// How many times faster cycling wears the battery at empty or full than at 50 % SoC. Anything but 1 multiplies
+        /// power by an SoC factor and makes the map non-convex: POMA then reads it as its cheapest mix of points, under-
+        /// estimates wear between them and plans part-power, tapering operation. 1 (the default) keeps the map convex,
+        /// so POMA, the simulator and the bound read it alike; other values test POMA with a non-convex map.
+        /// </summary>
+        public double WearExtremeSoCFactor { get; set; } = 1;
         /// <summary>Extra calendar ageing while held full, % of nominal capacity per year, falling linearly to 0 at 50 % SoC.</summary>
         public double WearCalendarLossAtFullPercentPerYear { get; set; } = 1;
 

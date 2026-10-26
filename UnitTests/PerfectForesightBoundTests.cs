@@ -74,9 +74,9 @@ namespace UnitTests
         {
             // Replaying the LP's net schedule through the simulator books exactly the LP profit, so the LP
             // and the simulator agree on battery physics, cash and wear. (Simultaneous charge and discharge would
-            // be lossy, so the optimum does not use it.) The wear map is a convex one, where the simulator's
+            // be lossy, so the optimum does not use it.) The default wear map is convex, so the simulator's
             // interpolation and the LP's reading of the map agree.
-            var settings = new SimulationSettings { DurationHours = 24, TimeStepSeconds = 900, SleepMilliseconds = 0, BatteryWear = wear, WearExtremeSoCFactor = 1 };
+            var settings = new SimulationSettings { DurationHours = 24, TimeStepSeconds = 900, SleepMilliseconds = 0, BatteryWear = wear };
             var (bound, simulator) = await ReplayBound(settings);
             using var _ = simulator;
 
@@ -88,9 +88,9 @@ namespace UnitTests
         [Fact]
         public async Task WithANonConvexWearMapTheBoundStillHolds()
         {
-            // With the default map the LP reads wear as POMA does, at most what the simulator charges, so the replayed
+            // With a non-convex map the LP reads wear as POMA does, at most what the simulator charges, so the replayed
             // schedule wears more than the LP counted and earns at most the bound.
-            var settings = new SimulationSettings { DurationHours = 24, TimeStepSeconds = 900, SleepMilliseconds = 0, BatteryWear = true };
+            var settings = new SimulationSettings { DurationHours = 24, TimeStepSeconds = 900, SleepMilliseconds = 0, BatteryWear = true, WearExtremeSoCFactor = 1.5 };
             var (bound, simulator) = await ReplayBound(settings);
             using var _ = simulator;
             var pnl = simulator.PnlManager!;
@@ -123,7 +123,7 @@ namespace UnitTests
         {
             // From empty, lossless: charging 10 MWh at 0 % SoC wears 7.5 EUR/MWh (1.5 x 5), discharging them from 50 %
             // 5 EUR/MWh. A 10 EUR/MWh spread does not pay for that; a 70 EUR/MWh spread does.
-            var wear = new SimulationSettings { BatteryWear = true, WearCalendarLossAtFullPercentPerYear = 0 }.CreateWearModel();
+            var wear = new SimulationSettings { BatteryWear = true, WearExtremeSoCFactor = 1.5, WearCalendarLossAtFullPercentPerYear = 0 }.CreateWearModel();
             var free = PerfectForesightBound.Solve(new[] { 40.0, 50.0 }, new[] { 40.0, 50.0 }, 1, 10, 20, 0, 1, 1);
             var cheap = PerfectForesightBound.Solve(new[] { 40.0, 50.0 }, new[] { 40.0, 50.0 }, 1, 10, 20, 0, 1, 1, wear: wear);
             var dear = PerfectForesightBound.Solve(new[] { 10.0, 80.0 }, new[] { 10.0, 80.0 }, 1, 10, 20, 0, 1, 1, wear: wear);

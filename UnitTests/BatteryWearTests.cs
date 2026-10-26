@@ -9,6 +9,9 @@ namespace UnitTests
     {
         private static BatteryWearModel DefaultWear() => new SimulationSettings { BatteryWear = true }.CreateWearModel()!;
 
+        /// <summary>The default map with 1.5 times the cycling wear at empty or full: wear = power x an SoC factor, not convex.</summary>
+        private static BatteryWearModel NonConvexWear() => new SimulationSettings { BatteryWear = true, WearExtremeSoCFactor = 1.5 }.CreateWearModel()!;
+
         [Fact]
         public void IsOffByDefault()
         {
@@ -23,7 +26,8 @@ namespace UnitTests
 
             Assert.Equal(300000, wear.CostPerMWhLost, 6);
             Assert.Equal(5, wear.MarginalCostPerMWh(10), 6);
-            Assert.Equal(7.5, wear.MarginalCostPerMWh(10, soc: 1), 6);
+            Assert.Equal(5, wear.MarginalCostPerMWh(10, soc: 1), 6);
+            Assert.Equal(7.5, NonConvexWear().MarginalCostPerMWh(10, soc: 1), 6);
         }
 
         [Fact]
@@ -49,7 +53,7 @@ namespace UnitTests
         {
             // 25 % SoC, discharging 5 MW: cycling factor halfway between 1.5 and 1, half of 50 EUR/h at full power.
             // POMA's reading mixes half of (50 %, 10 MW) with half of (0 %, idle) and sees 25 EUR/h.
-            var wear = DefaultWear();
+            var wear = NonConvexWear();
             Assert.Equal(1.25 * 25, wear.Cost(0.25, 5, 1), 9);
             Assert.Equal(25, wear.CostPerMWhLost * wear.EnvelopeLossRate(0.25, 5), 9);
 
@@ -65,9 +69,9 @@ namespace UnitTests
         [Fact]
         public void BothReadingsAgreeWhenTheMapIsConvex()
         {
-            // Without extra cycling wear at empty or full, wear is a power part plus an SoC part (calendar ageing),
-            // convex with kinks on the grid lines: interpolation and POMA's cheapest mix are the same.
-            var wear = new SimulationSettings { BatteryWear = true, WearExtremeSoCFactor = 1 }.CreateWearModel()!;
+            // The default map has no extra cycling wear at empty or full: wear is a power part plus an SoC part (calendar
+            // ageing), convex with kinks on the grid lines, so interpolation and POMA's cheapest mix are the same.
+            var wear = DefaultWear();
             var random = new Random(5);
             for (int i = 0; i < 200; i++)
             {
