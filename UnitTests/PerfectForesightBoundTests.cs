@@ -67,13 +67,42 @@ namespace UnitTests
             Assert.True(profit <= bound + 1e-6, $"{plannerName}: profit {profit:F2} > bound {bound:F2}");
         }
 
-        [Fact]
-        public async Task TheOptimalScheduleEarnsTheBoundInTheSimulator()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TheOptimalScheduleEarnsTheBoundInTheSimulator(bool wear)
         {
             // Replaying the LP's net schedule through the simulator books exactly the LP profit, so the LP
-            // and the simulator agree on battery physics and cash. (Simultaneous charge and discharge would
-            // be lossy, so the optimum does not use it.)
-            var settings = new SimulationSettings { DurationHours = 24, TimeStepSeconds = 900, SleepMilliseconds = 0 };
+            // and the simulator agree on battery physics, cash and wear. (Simultaneous charge and discharge would
+            // be lossy, so the optimum does not use it.) The wear map is a convex one, where the simulator's
+            // interpolation and the LP's reading of the map agree.
+            var settings = new SimulationSettings { DurationHours = 24, TimeStepSeconds = 900, SleepMilliseconds = 0, BatteryWear = wear, WearExtremeSoCFactor = 1 };
+            var (bound, simulator) = await ReplayBound(settings);
+            using var _ = simulator;
+
+            Assert.Equal(bound.Profit, simulator.PnlManager!.AccProfit[simulator.End], 3);
+            Assert.Equal(bound.WearCost, simulator.PnlManager.AccWearCost, 3);
+            if (wear) Assert.True(bound.WearCost > 0);
+        }
+
+        [Fact]
+        public async Task WithANonConvexWearMapTheBoundStillHolds()
+        {
+            // With the default map the LP reads wear as POMA does, at most what the simulator charges, so the replayed
+            // schedule wears more than the LP counted and earns at most the bound.
+            var settings = new SimulationSettings { DurationHours = 24, TimeStepSeconds = 900, SleepMilliseconds = 0, BatteryWear = true };
+            var (bound, simulator) = await ReplayBound(settings);
+            using var _ = simulator;
+            var pnl = simulator.PnlManager!;
+
+            Assert.Equal(bound.WearCost, pnl.AccEnvelopeWearCost, 3);
+            Assert.True(pnl.AccWearCost > bound.WearCost);
+            Assert.Equal(bound.Profit - (pnl.AccWearCost - bound.WearCost), pnl.AccProfit[simulator.End], 3);
+        }
+
+        /// <summary>Solves the bound for <paramref name="settings"/> and replays its net schedule through a simulator.</summary>
+        private static async Task<(BoundResult Bound, BatterySimulator.BatterySimulator Simulator)> ReplayBound(SimulationSettings settings)
+        {
             using var probe = new BatterySimulator.BatterySimulator(new PriceLevelPlanner());
             probe.SetUp(settings.Clone());
             BoundResult bound = PerfectForesightBound.ForSimulation(probe);
@@ -82,12 +111,27 @@ namespace UnitTests
             var planner = new SchedulePlanner(t => bound.DischargeMW[Index(t)] - bound.ChargeMW[Index(t)]);
             int Index(DateTime t) => Math.Min((int)((t - start).TotalSeconds / settings.TimeStepSeconds), bound.ChargeMW.Length - 1);
 
-            using var simulator = new BatterySimulator.BatterySimulator(planner);
+            var simulator = new BatterySimulator.BatterySimulator(planner);
             simulator.SetUp(settings);
             simulator.SimulationEnabled = true;
             await simulator.Simulate();
+            return (bound, simulator);
+        }
 
-            Assert.Equal(bound.Profit, simulator.PnlManager!.AccProfit[simulator.End], 3);
+        [Fact]
+        public void WearMakesSmallSpreadsNotWorthTrading()
+        {
+            // From empty, lossless: charging 10 MWh at 0 % SoC wears 7.5 EUR/MWh (1.5 x 5), discharging them from 50 %
+            // 5 EUR/MWh. A 10 EUR/MWh spread does not pay for that; a 70 EUR/MWh spread does.
+            var wear = new SimulationSettings { BatteryWear = true, WearCalendarLossAtFullPercentPerYear = 0 }.CreateWearModel();
+            var free = PerfectForesightBound.Solve(new[] { 40.0, 50.0 }, new[] { 40.0, 50.0 }, 1, 10, 20, 0, 1, 1);
+            var cheap = PerfectForesightBound.Solve(new[] { 40.0, 50.0 }, new[] { 40.0, 50.0 }, 1, 10, 20, 0, 1, 1, wear: wear);
+            var dear = PerfectForesightBound.Solve(new[] { 10.0, 80.0 }, new[] { 10.0, 80.0 }, 1, 10, 20, 0, 1, 1, wear: wear);
+
+            Assert.Equal(100, free.Profit, 6);
+            Assert.Equal(0, cheap.Profit, 6);
+            Assert.Equal(10 * (80 - 10) - 75 - 50, dear.Profit, 6);
+            Assert.Equal(125, dear.WearCost, 6);
         }
 
         private static IBatteryPlanner CreatePlanner(string name) => name switch

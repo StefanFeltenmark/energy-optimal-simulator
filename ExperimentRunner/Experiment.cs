@@ -30,7 +30,10 @@ namespace ExperimentRunner
         double DayAheadNetCash = 0,
         double IntradayNetCash = 0,
         double DayAheadTradedMWh = 0,
-        double DayAheadRejectedSellMWh = 0)
+        double DayAheadRejectedSellMWh = 0,
+        double WearCost = 0,
+        double CapacityLostMWh = 0,
+        double EnvelopeWearCost = 0)
     {
         /// <summary>
         /// Share captured of the perfect-foresight profit for ending with at least the same energy: a fair
@@ -147,7 +150,10 @@ namespace ExperimentRunner
                 executor?.DayAheadNetCash ?? 0,
                 executor?.IntradayNetCash ?? 0,
                 executor != null ? executor.DayAheadBoughtMWh + executor.DayAheadSoldMWh : 0,
-                executor?.DayAheadRejectedSellMWh ?? 0);
+                executor?.DayAheadRejectedSellMWh ?? 0,
+                simulator.PnlManager.AccWearCost,
+                simulator.PnlManager.CapacityLostMWh,
+                simulator.PnlManager.AccEnvelopeWearCost);
         }
 
         /// <summary>
