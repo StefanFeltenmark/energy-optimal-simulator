@@ -217,6 +217,8 @@ namespace BatterySimulator
             {
                 priceLevelPlanner.EnergyPriceForecast = _priceForecaster.PriceForecast;
                 priceLevelPlanner.Battery1 = _battery;
+                priceLevelPlanner.EnergyContentMWh = initialState.EnergyContent.CovertToUnit(Units.MegaWattHour).Value;
+                _ems.Subscribe(priceLevelPlanner);
             }
             ApplyPlannerSettings();
             if(_planner is PomaPlanner pomaPlanner)

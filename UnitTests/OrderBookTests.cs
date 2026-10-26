@@ -312,7 +312,8 @@ namespace UnitTests
                 ImbalancePenalty = 0
             });
 
-            Assert.Equal(85.93, single, 2);
+            // A regression value: the planner ends this day full, so the day's cash is negative.
+            Assert.Equal(-195.24, single, 2);
             // Same trades; only the bid/ask sits half a spread either side of the price instead of at
             // price / price + spread, and re-planned positions are traded back and forth at that spread.
             Assert.InRange(book - single, -2, 2);

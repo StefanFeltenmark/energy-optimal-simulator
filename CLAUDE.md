@@ -74,7 +74,7 @@ Re-planning happens on a fixed interval (`replanningInterval`, 180 min) by await
 
 ### The four pluggable pieces (`BatterySimulator.Interfaces`)
 - `IBatteryPlanner` — the strategy under test. Implementations:
-  - `PriceLevelPlanner` (BatterySimulator) — buy below a low threshold, sell above a high threshold, computed from min/max over a look-ahead window. **Default planner** in the console + GUI.
+  - `PriceLevelPlanner` (BatterySimulator) — buy below a low threshold, sell above a high threshold, computed per period from min/max over a rolling look-ahead window, and only when the round trip pays for the losses. It observes the EMS and follows the battery's energy through the plan, so its plans are feasible (no imbalance from planning to charge a full battery); with a market view it keeps held positions and buys at the asks / sells at the bids. **Default planner** in the console + GUI, and the runner's baseline (2026-10-26, 4 weeks x 5 seeds, calibrated book: about 11.7k EUR/week in the book vs 1.0k before these changes; POMA made 12.9k in the day-ahead market).
   - `RetroPlanner`, `RandomBatteryPlanner` (BatterySimulator) — alternative strategies.
   - `PomaPlanner` (BatteryPomaPlanner) — calls the real POMA optimization service over HTTP (see below).
 - `IBatteryEMS` — the physical battery model. `BatteryEMS` applies the setpoint, integrates energy over the interval with charge/discharge efficiencies, truncates at empty/full, and pushes new `BatteryState` to observers.

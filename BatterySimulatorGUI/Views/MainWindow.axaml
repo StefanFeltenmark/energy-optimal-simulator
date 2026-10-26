@@ -104,7 +104,7 @@
                         <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">Used when the market model is Order book. 15-minute products, open from 15:00 the day before delivery with a jump from the day-ahead price; the mid at delivery is the realized intraday price. Mid-price defaults are fitted to SE3 2025/26; spread and depth are not.</TextBlock>
                         <TextBlock Classes="label">Gate closure (min before delivery)</TextBlock>
                         <NumericUpDown Value="{Binding GateClosureMinutes}" Minimum="0" Maximum="240" Increment="5" FormatString="0"/>
-                        <CheckBox Margin="0 6 0 0" IsChecked="{Binding BookAwarePlanning}">POMA plans against bid/ask and positions</CheckBox>
+                        <CheckBox Margin="0 6 0 0" IsChecked="{Binding BookAwarePlanning}">Planners plan against bid/ask and positions</CheckBox>
                         <CheckBox Margin="0 6 0 0" IsChecked="{Binding DayAheadMarket}">Bid day-ahead from forecast (12:00), trade intraday from 15:00</CheckBox>
                         <TextBlock Classes="label">Market volatility, all products (€/MWh/√h)</TextBlock>
                         <NumericUpDown Value="{Binding MidVolatility}" Minimum="0" Maximum="100" Increment="0.5"/>

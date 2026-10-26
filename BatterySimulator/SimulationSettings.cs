@@ -107,7 +107,7 @@ namespace BatterySimulator
         /// <summary>Seed for the synthetic mid-price paths (each product's path is derived from this and its delivery start).</summary>
         public int OrderBookSeed { get; set; } = 1;
         /// <summary>
-        /// With the order book, give planners that support it (POMA) the current bid/ask, depth and existing positions
+        /// With the order book, give planners that support it (POMA, PriceLevel) the current bid/ask, depth and existing positions
         /// instead of the reference price, so revising a position costs the spread inside the optimisation.
         /// </summary>
         public bool BookAwarePlanning { get; set; } = true;
