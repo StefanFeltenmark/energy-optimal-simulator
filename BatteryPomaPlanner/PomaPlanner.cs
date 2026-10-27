@@ -50,6 +50,18 @@ namespace BatteryPomaPlanner
         /// <summary>Soft upper SoC limit as a fraction (0-1); applied on every optimisation.</summary>
         public double SocSoftMax { get; set; } = 0.95;
 
+        public void SetUp(PlannerContext context)
+        {
+            SetUp(context.Battery, context.Market, context.Wear);
+            Subscribe(context.Ems);
+        }
+
+        public void ApplySettings(PlannerSettings settings)
+        {
+            SocSoftMin = settings.SocSoftMinPercent / 100.0;
+            SocSoftMax = settings.SocSoftMaxPercent / 100.0;
+        }
+
         /// <param name="wear">Battery wear for POMA to weigh against trading profit, or null to ignore wear.</param>
         public void SetUp(Battery battery, EnergyMarket market, BatteryWearModel? wear = null)
         {

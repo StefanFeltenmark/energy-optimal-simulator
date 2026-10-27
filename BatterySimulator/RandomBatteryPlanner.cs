@@ -35,6 +35,8 @@ namespace BatterySimulator
             set => _battery = value;
         }
 
+        public void SetUp(PlannerContext context) => _battery = context.Battery;
+
         public Power GetPlannedProduction(DateTime time)
         {
             return new Power(_plan[time], Units.MegaWatt);

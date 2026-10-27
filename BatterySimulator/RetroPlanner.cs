@@ -28,7 +28,7 @@ namespace BatterySimulator
             _plan = new TimeSeries();
             _buyPriceThreshold = new Percentage(15);
             _sellPriceThreshold = new Percentage(15);
-            _lookBack = TimeSpan.FromHours(6);
+            _lookBack = TimeSpan.FromHours(24);
             _plannedSoC = new ObservableTimeSeries();
             _priceForecast = new TimeSeries();
         }
@@ -70,6 +70,14 @@ namespace BatterySimulator
             set => _lookBack = value;
         }
 
+
+        /// <summary>Looks back at the reference buy prices and plans against the price forecast.</summary>
+        public void SetUp(PlannerContext context)
+        {
+            _battery = context.Battery;
+            _historicPrices = context.Market.Ts.EnergyBuyPrice;
+            _priceForecast = context.PriceForecast;
+        }
 
         public Power GetPlannedProduction(DateTime time)
         {

@@ -3,7 +3,6 @@ using Powel.Optimal.MultiAsset.Domain.EnergyStorage;
 using Powel.Optimal.MultiAsset.Domain.General.Data;
 using Powel.Optimal.MultiAsset.Domain.Quantities;
 using BatterySimulator.Interfaces;
-using BatteryPomaPlanner;
 using Domain;
 
 
@@ -215,34 +214,15 @@ namespace BatterySimulator
 
             // A snapshot like the book's: wear parameters apply on Start/Restart.
             _wear = settings.CreateWearModel();
-            BatteryWearModel? plannerWear = settings.WearAwarePlanning ? _wear : null;
 
-            // Generate a plan
-            if (_planner is PriceLevelPlanner priceLevelPlanner)
-            {
-                priceLevelPlanner.EnergyPriceForecast = _priceForecaster.PriceForecast;
-                priceLevelPlanner.Battery1 = _battery;
-                priceLevelPlanner.EnergyContentMWh = initialState.EnergyContent.CovertToUnit(Units.MegaWattHour).Value;
-                priceLevelPlanner.WearCostPerMWh = plannerWear?.MarginalCostPerMWh(settings.PowerMW) ?? 0;
-                _ems.Subscribe(priceLevelPlanner);
-            }
+            _planner.SetUp(new PlannerContext(
+                _battery,
+                _market,
+                _priceForecaster.PriceForecast,
+                initialState.EnergyContent.CovertToUnit(Units.MegaWattHour).Value,
+                settings.WearAwarePlanning ? _wear : null,
+                _ems));
             ApplyPlannerSettings();
-            if(_planner is PomaPlanner pomaPlanner)
-            {
-                pomaPlanner.SetUp(_battery, _market, plannerWear);
-                pomaPlanner.Subscribe(_ems);
-            }
-            if (_planner is RandomBatteryPlanner randomBatteryPlanner)
-            {
-                randomBatteryPlanner.Battery1 = _battery;
-            }
-            if (_planner is RetroPlanner retroPlanner)
-            {
-                retroPlanner.HistoricPrices = _market.Ts.EnergyBuyPrice;
-                retroPlanner.PriceForecast = _priceForecaster.PriceForecast;
-                retroPlanner.Battery1 = _battery;
-                retroPlanner.LookBack = TimeSpan.FromHours(24);
-            }
 
             _pnlManager = new PnLManager(_recorder);
             _pnlManager.SetUp(_start);
@@ -483,17 +463,12 @@ namespace BatterySimulator
         {
             if (Settings.Validate().Count > 0) return;
 
-            if (_planner is PriceLevelPlanner priceLevelPlanner)
-            {
-                priceLevelPlanner.LookaAhead = TimeSpan.FromHours(Settings.LookAheadHours);
-                priceLevelPlanner.BuyPriceThreshold = new Percentage(Settings.BuyThresholdPercent);
-                priceLevelPlanner.SellPriceThreshold = new Percentage(Settings.SellThresholdPercent);
-            }
-            else if (_planner is PomaPlanner pomaPlanner)
-            {
-                pomaPlanner.SocSoftMin = Settings.SocSoftMinPercent / 100.0;
-                pomaPlanner.SocSoftMax = Settings.SocSoftMaxPercent / 100.0;
-            }
+            _planner.ApplySettings(new PlannerSettings(
+                TimeSpan.FromHours(Settings.LookAheadHours),
+                Settings.BuyThresholdPercent,
+                Settings.SellThresholdPercent,
+                Settings.SocSoftMinPercent,
+                Settings.SocSoftMaxPercent));
         }
 
         // Completed while running; a pending source while paused. The loop awaits it before every step.
@@ -548,8 +523,7 @@ namespace BatterySimulator
             }
 
             PrepareMarketView(_start, _start + planPeriods * planResolution);
-            var planningTask = _planner.UpdatePlan(_start, planResolution, planPeriods);
-            await planningTask;
+            await _planner.UpdatePlan(_start, planResolution, planPeriods);
 
             DateTime lastPlanning = t;
             DateTime planEnd = t + planPeriods * planResolution;
@@ -585,15 +559,10 @@ namespace BatterySimulator
                     {
                         Console.Out.WriteLine($"Replanning...");
 
-                        if (planningTask.IsCompleted)
-                        {
-                            ApplyPlannerSettings();
-                            PrepareMarketView(t, t + planPeriods * planResolution);
-                            planningTask = _planner.UpdatePlan(t, planResolution, planPeriods);
-                            await planningTask;
-                            planEnd = t + planPeriods * planResolution;
-                        }
-
+                        ApplyPlannerSettings();
+                        PrepareMarketView(t, t + planPeriods * planResolution);
+                        await _planner.UpdatePlan(t, planResolution, planPeriods);
+                        planEnd = t + planPeriods * planResolution;
                         lastPlanning = t;
                     }
 

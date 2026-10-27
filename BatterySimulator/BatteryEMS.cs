@@ -10,14 +10,14 @@ namespace BatterySimulator
     {
         private Battery _battery;
         private BatteryState _state;
-        private DateTime _lastestObservationTime;
+        private DateTime _latestObservationTime;
         private List<IObserver<BatteryState>> _observers = new();
 
         public BatteryEMS(Battery battery, BatteryState initialState, DateTime start)
         {
             _battery = battery;
             _state = initialState;
-            _lastestObservationTime = start;
+            _latestObservationTime = start;
         }
 
         
@@ -43,7 +43,7 @@ namespace BatterySimulator
         
         public async Task UpdateState(DateTime time)
         {
-            Time delta = new Time((time -_lastestObservationTime).TotalHours, Units.Hour);
+            Time delta = new Time((time -_latestObservationTime).TotalHours, Units.Hour);
 
             if(delta.Value <= 0.00001) return;
             
@@ -91,7 +91,7 @@ namespace BatterySimulator
 
             await PushBatteryState(_state);
 
-            _lastestObservationTime = time;
+            _latestObservationTime = time;
 
         }
 

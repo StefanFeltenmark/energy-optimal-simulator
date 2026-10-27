@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BatteryPomaPlanner\BatteryPomaPlanner.csproj" />
     <ProjectReference Include="..\BatterySimulator\BatterySimulator.csproj" />
   </ItemGroup>
 

@@ -22,7 +22,7 @@ namespace UnitTests
                 Battery1 = simulator.Battery1,
                 EnergyPriceForecast = forecast,
                 EnergyContentMWh = energyMWh,
-                LookaAhead = TimeSpan.FromHours(6)
+                LookAhead = TimeSpan.FromHours(6)
             };
         }
 

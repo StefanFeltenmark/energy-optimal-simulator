@@ -20,11 +20,11 @@ namespace BatterySimulator
     {
         private TimeSeries _plan;
         private Battery? _battery;
-        private TimeSeries _energyPriceForecastForecast;
+        private TimeSeries _energyPriceForecast;
         private ObservableTimeSeries _plannedSoC;
         private Percentage _buyPriceThreshold;
         private  Percentage _sellPriceThreshold;
-        private TimeSpan _lookaAhead;
+        private TimeSpan _lookAhead;
         private MarketView? _marketView;
 
         public string Name => "PriceLevelPlanner";
@@ -35,7 +35,7 @@ namespace BatterySimulator
             _plan = new TimeSeries();
             _buyPriceThreshold = new Percentage(15);
             _sellPriceThreshold = new Percentage(15);
-            _lookaAhead = TimeSpan.FromHours(6);
+            _lookAhead = TimeSpan.FromHours(6);
             _plannedSoC = new ObservableTimeSeries();
         }
 
@@ -51,8 +51,8 @@ namespace BatterySimulator
 
         public TimeSeries EnergyPriceForecast
         {
-            get => _energyPriceForecastForecast;
-            set => _energyPriceForecastForecast = value;
+            get => _energyPriceForecast;
+            set => _energyPriceForecast = value;
         }
 
         public Percentage BuyPriceThreshold
@@ -73,15 +73,31 @@ namespace BatterySimulator
             set => _battery = value;
         }
 
-        public TimeSpan LookaAhead
+        public TimeSpan LookAhead
         {
-            get => _lookaAhead;
-            set => _lookaAhead = value;
+            get => _lookAhead;
+            set => _lookAhead = value;
         }
 
         /// <summary>The battery's energy content, MWh: set at the start of a run, then updated by the EMS.</summary>
         public double EnergyContentMWh { get; set; }
 
+
+        public void SetUp(PlannerContext context)
+        {
+            _battery = context.Battery;
+            _energyPriceForecast = context.PriceForecast;
+            EnergyContentMWh = context.InitialEnergyMWh;
+            WearCostPerMWh = context.Wear?.MarginalCostPerMWh(context.Battery.NominalChargeCapacity.CovertToUnit(Units.MegaWatt).Value) ?? 0;
+            context.Ems.Subscribe(this);
+        }
+
+        public void ApplySettings(PlannerSettings settings)
+        {
+            LookAhead = settings.LookAhead;
+            BuyPriceThreshold = new Percentage(settings.BuyThresholdPercent);
+            SellPriceThreshold = new Percentage(settings.SellThresholdPercent);
+        }
 
         public Power GetPlannedProduction(DateTime time)
         {
@@ -110,12 +126,12 @@ namespace BatterySimulator
                 // Step through local clock times: the prices and the plan are keyed by them. (PlanningPeriod's
                 // intervals are UTC and would shift both lookups by an hour.)
                 slots = Enumerable.Range(0, nPeriods).Select(k => planStart + k * resolution)
-                    .Select(t => new Slot(t, _energyPriceForecastForecast[t], _energyPriceForecastForecast[t], _energyPriceForecastForecast[t], -power, power))
+                    .Select(t => new Slot(t, _energyPriceForecast[t], _energyPriceForecast[t], _energyPriceForecast[t], -power, power))
                     .ToList();
                 // The window looks beyond the plan's end, as far as the forecast goes.
-                DateTime windowEnd = planStart + nPeriods * resolution + LookaAhead;
-                expected = _energyPriceForecastForecast.GetSubSeries(planStart, windowEnd).TimePoints()
-                    .Select(t => (t, _energyPriceForecastForecast[t])).ToList();
+                DateTime windowEnd = planStart + nPeriods * resolution + LookAhead;
+                expected = _energyPriceForecast.GetSubSeries(planStart, windowEnd).TimePoints()
+                    .Select(t => (t, _energyPriceForecast[t])).ToList();
             }
 
             var plan = new TimeSeries(true, true);
@@ -172,7 +188,7 @@ namespace BatterySimulator
             var schedule = new List<(DateTime, double)>(slots.Count);
             foreach (Slot slot in slots)
             {
-                var window = expected.Where(p => p.Time >= slot.Time && p.Time < slot.Time + LookaAhead).Select(p => p.Price).ToList();
+                var window = expected.Where(p => p.Time >= slot.Time && p.Time < slot.Time + LookAhead).Select(p => p.Price).ToList();
                 double production = 0;
                 if (window.Count > 0)
                 {
