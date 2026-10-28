@@ -409,10 +409,21 @@ namespace BatterySimulator
                 double positionMW = _executor.Position(product) / hours;
                 double mid = _knowledge!.Expected(product, t);
 
-                if (product < firstTradable || !book.HasOpened(product, t))
+                if (product < firstTradable)
                 {
-                    // Past gate closure (or not open yet): only the existing position can be delivered.
+                    // Past gate closure: only the existing position can be delivered.
                     quotes.Add(new ProductQuote(product, mid, mid, 0, 0, positionMW));
+                    continue;
+                }
+
+                if (!book.HasOpened(product, t))
+                {
+                    // Not open yet, but tradable later: at the price known now, the spread it opens with and full
+                    // power. Freezing it instead would make a horizon beyond the opening worthless. (Plans up to
+                    // 8 h never reach such a product: tomorrow opens at 15:00.)
+                    double halfSpread = book.Spread(product, book.TradingOpens(product)) / 2;
+                    double powerMW = fullPowerVolume / hours;
+                    quotes.Add(new ProductQuote(product, mid + halfSpread, mid - halfSpread, powerMW, powerMW, positionMW));
                     continue;
                 }
 

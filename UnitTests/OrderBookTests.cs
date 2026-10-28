@@ -449,6 +449,33 @@ namespace UnitTests
             Assert.All(planner.Views, Assert.Null);
         }
 
+        [Fact]
+        public async Task ProductsNotOpenYetAreQuotedAsTradableLater()
+        {
+            // A 24 h plan from 09:00 reaches tomorrow morning, whose trading opens at 15:00: frozen at zero, the
+            // horizon beyond midnight would be worthless.
+            var planner = new RecordingAwarePlanner(0);
+            using var sim = new BatterySimulator.BatterySimulator(planner);
+            sim.SetUp(new SimulationSettings
+            {
+                DurationHours = 1, TimeStepSeconds = 900, SleepMilliseconds = 0, MarketModel = MarketModel.OrderBook,
+                PlanningHorizonHours = 24
+            });
+            sim.SimulationEnabled = true;
+            await sim.Simulate();
+
+            DateTime tomorrow = sim.Start.Date.AddDays(1);
+            var notOpen = planner.Views[0]!.Products.Where(q => q.Product >= tomorrow).ToList();
+            Assert.Equal(4 * 9, notOpen.Count);                                  // midnight to 09:00
+            Assert.All(notOpen, q =>
+            {
+                Assert.Equal((10.0, 10.0), (q.MaxBuyMW, q.MaxSellMW));          // full power
+                double spreadAtOpening = sim.Executor!.Book.Spread(q.Product, sim.Executor.Book.TradingOpens(q.Product));
+                Assert.Equal(spreadAtOpening, q.BuyPrice - q.SellPrice, 9);
+                Assert.Equal(sim.SellPrices[q.Product], (q.BuyPrice + q.SellPrice) / 2, 9);   // the day-ahead price, known
+            });
+        }
+
         private class RecordingAwarePlanner : IBatteryPlanner, IOrderBookAwarePlanner
         {
             private readonly double _productionMW;
