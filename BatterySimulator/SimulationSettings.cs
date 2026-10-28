@@ -180,6 +180,11 @@ namespace BatterySimulator
         // POMA
         public double SocSoftMinPercent { get; set; } = 5;
         public double SocSoftMaxPercent { get; set; } = 95;
+        /// <summary>
+        /// Writes every POMA request to this directory as JSON that POMA's tooling reads, or none when empty.
+        /// A week is around 60 files, so set it for single runs.
+        /// </summary>
+        public string PomaRequestDirectory { get; set; } = "";
 
         /// <summary>
         /// POMA's degradation map built from the wear settings, or null with <see cref="BatteryWear"/> off. Points at

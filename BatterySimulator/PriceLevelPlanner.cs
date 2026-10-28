@@ -12,7 +12,7 @@ namespace BatterySimulator
     /// price range over the look-ahead window, sell where it is in the top <see cref="SellPriceThreshold"/>, and
     /// only if the round trip pays for the charge and discharge losses (and wear, see <see cref="WearCostPerMWh"/>). The plan follows the battery's energy from
     /// its current state (it observes the EMS), so it never plans to charge a full battery or discharge an empty
-    /// one, and products that can no longer be traded keep their positions. With a market view (order book) it
+    /// one, and products without a price signal (or that can no longer be traded) keep their positions. With a market view (order book) it
     /// buys at the asks and sells at the bids, with thresholds from the expected prices; without one it plans
     /// against <see cref="EnergyPriceForecast"/>.
     /// </summary>
@@ -158,8 +158,11 @@ namespace BatterySimulator
             return Task.FromResult(bid);
         }
 
-        /// <summary>One period to plan: the prices to buy and sell at, the expected price and the possible production (MW, + = discharge).</summary>
-        private readonly record struct Slot(DateTime Time, double BuyPrice, double SellPrice, double Expected, double MinProduction, double MaxProduction);
+        /// <summary>
+        /// One period to plan: the prices to buy and sell at, the expected price, the possible production and the
+        /// production of the held position (MW, + = discharge).
+        /// </summary>
+        private readonly record struct Slot(DateTime Time, double BuyPrice, double SellPrice, double Expected, double MinProduction, double MaxProduction, double Held = 0);
 
         /// <summary>
         /// A product of a market view as a slot: production is minus the target position, which can move from the
@@ -171,12 +174,12 @@ namespace BatterySimulator
             double min = Math.Max(-q.PositionMW - q.MaxBuyMW, -power);
             double max = Math.Min(-q.PositionMW + q.MaxSellMW, power);
             if (q.MaxBuyMW <= 0 && q.MaxSellMW <= 0) min = max = -q.PositionMW;
-            return new Slot(q.Product, q.BuyPrice, q.SellPrice, (q.BuyPrice + q.SellPrice) / 2, min, max);
+            return new Slot(q.Product, q.BuyPrice, q.SellPrice, (q.BuyPrice + q.SellPrice) / 2, min, max, -q.PositionMW);
         }
 
         /// <summary>
         /// Production per slot: full power in or out where the price clears the window's thresholds and the round
-        /// trip pays for the losses, otherwise idle, always within what the battery's energy (followed from its
+        /// trip pays for the losses, otherwise the held position (idle without one), always within what the battery's energy (followed from its
         /// current content) and the market allow.
         /// </summary>
         private List<(DateTime Time, double Production)> Schedule(List<Slot> slots, List<(DateTime Time, double Price)> expected, double hours)
@@ -189,7 +192,7 @@ namespace BatterySimulator
             foreach (Slot slot in slots)
             {
                 var window = expected.Where(p => p.Time >= slot.Time && p.Time < slot.Time + LookAhead).Select(p => p.Price).ToList();
-                double production = 0;
+                double production = slot.Held;
                 if (window.Count > 0)
                 {
                     double maxPrice = window.Max(), minPrice = window.Min();

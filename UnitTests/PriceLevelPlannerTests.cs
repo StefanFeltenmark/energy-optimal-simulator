@@ -80,6 +80,24 @@ namespace UnitTests
         }
 
         [Fact]
+        public async Task WithoutAPriceSignalTradableProductsKeepTheirPositions()
+        {
+            // Flat prices: no signal anywhere. Going to zero would sell back day-ahead purchases (and buy back sales)
+            // through the spread.
+            var planner = Planner(10);
+            var quotes = new List<ProductQuote>
+            {
+                new(Start, 51, 49, 10, 10, 2),               // bought 2 MW day-ahead
+                new(Start + Quarter, 51, 49, 10, 10, -3),    // sold 3 MW
+                new(Start + 2 * Quarter, 51, 49, 10, 10, 0),
+            };
+            planner.SetMarketView(new MarketView(quotes, 50));
+            await planner.UpdatePlan(Start, Quarter, quotes.Count);
+
+            Assert.Equal(new[] { -2.0, 3, 0 }, Production(planner, quotes.Count));
+        }
+
+        [Fact]
         public async Task DayAheadBidsFollowTheEnergyThroughHeldProducts()
         {
             // Rest of today held: 2 h of full-power charging (5 MWh into a battery at 14 MWh leaves 1 MWh room).

@@ -91,6 +91,36 @@ namespace UnitTests
             Assert.Equal(json1, json2);
         }
 
+        [Fact]
+        public void PomaRequestIsWrittenAsJsonPomaReadsBack()
+        {
+            var planner = new BatteryPomaPlanner.PomaPlanner();
+            using var simulator = new BatterySimulator.BatterySimulator(planner);
+            simulator.SetUp(new BatterySimulator.SimulationSettings { DurationHours = 4, TimeStepSeconds = 900, SleepMilliseconds = 0, BatteryWear = true });
+            MultiAssetData request = planner.PrepareRequest(simulator.Start, TimeSpan.FromMinutes(15), 32);
+
+            string directory = Path.Combine(Path.GetTempPath(), "PomaRequests-" + Guid.NewGuid());
+            try
+            {
+                string file = planner.WriteRequest(directory, simulator.Start);
+
+                // As Poma.Tests' TestWebServiceCall reads a request and sends it to the service.
+                var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto, Formatting = Formatting.Indented };
+                string json = File.ReadAllText(file);
+                var recovered = JsonConvert.DeserializeObject<MultiAssetData>(json, settings)!;
+
+                Assert.Equal(JsonConvert.SerializeObject(request, settings), JsonConvert.SerializeObject(recovered, settings));
+                Assert.NotEmpty(recovered.EnergyStorage.Batteries[0].DegradationMapE);
+                using var protobuf = new MemoryStream();
+                CreateTypeModel().Serialize(protobuf, recovered);
+                Assert.True(protobuf.Length > 0);
+            }
+            finally
+            {
+                if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+            }
+        }
+
         private static RuntimeTypeModel CreateTypeModel()
         {
             var typeModel = RuntimeTypeModel.Create();

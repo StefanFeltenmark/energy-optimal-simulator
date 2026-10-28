@@ -1,6 +1,7 @@
 ﻿using BatterySimulator;
 using BatterySimulator.Interfaces;
 using Domain;
+using Newtonsoft.Json;
 using Powel.Optimal.Domain.Infrastructure.Interfaces;
 using Powel.Optimal.MultiAsset.Domain;
 using Powel.Optimal.MultiAsset.Domain.Common;
@@ -60,6 +61,7 @@ namespace BatteryPomaPlanner
         {
             SocSoftMin = settings.SocSoftMinPercent / 100.0;
             SocSoftMax = settings.SocSoftMaxPercent / 100.0;
+            RequestDirectory = settings.RequestDirectory;
         }
 
         /// <param name="wear">Battery wear for POMA to weigh against trading profit, or null to ignore wear.</param>
@@ -317,6 +319,39 @@ namespace BatteryPomaPlanner
 
         private async Task<PomaSolutionSet> Optimize(DateTime planStart, TimeSpan resolution, int nPeriods)
         {
+            PrepareRequest(planStart, resolution, nPeriods);
+            // Written before the call, so a request that hangs or fails is on disk.
+            if (RequestDirectory != "") WriteRequest(RequestDirectory, planStart);
+
+            _lastSolution = await CallMultiAssetService(_data);
+            return _lastSolution;
+        }
+
+        /// <summary>
+        /// Directory to write every POMA request to as JSON (see <see cref="WriteRequest"/>), or empty for none.
+        /// </summary>
+        public string RequestDirectory { get; set; } = "";
+
+        /// <summary>
+        /// Writes the prepared request as JSON the way Gateway saves a MultiAssetData (Newtonsoft,
+        /// TypeNameHandling.Auto), so POMA's tooling reads it back, e.g. Poma.Tests' TestWebServiceCall.
+        /// Returns the file written.
+        /// </summary>
+        public string WriteRequest(string directory, DateTime planStart)
+        {
+            Directory.CreateDirectory(directory);
+            var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto, Formatting = Formatting.Indented };
+            string file = Path.Combine(directory,
+                $"{_data.CommonData.Parameters.CaseName}-{planStart:yyyyMMdd-HHmm}-{DateTime.Now:yyyyMMdd-HHmmss}-{Interlocked.Increment(ref _requestsWritten):D4}.json");
+            File.WriteAllText(file, JsonConvert.SerializeObject(_data, settings));
+            return file;
+        }
+
+        private int _requestsWritten;
+
+        /// <summary>Fills in the request for an optimisation from <paramref name="planStart"/> and returns it.</summary>
+        public MultiAssetData PrepareRequest(DateTime planStart, TimeSpan resolution, int nPeriods)
+        {
             _data.CommonData.PlanPeriod = new PlanningPeriod(planStart, resolution, nPeriods);
             _data.CommonData.EnergyMarketPeriod = _data.CommonData.PlanPeriod;
 
@@ -342,9 +377,7 @@ namespace BatteryPomaPlanner
                 new PriceUnit(Currencies.Euro, Units.MegaWattHour));
 
             _data.OptimizationId = Guid.NewGuid();
-
-            _lastSolution = await CallMultiAssetService(_data);
-            return _lastSolution;
+            return _data;
         }
 
      

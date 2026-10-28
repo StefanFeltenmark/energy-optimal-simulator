@@ -48,9 +48,11 @@ public sealed record PlannerContext(
 /// <param name="SellThresholdPercent">PriceLevel: sell in the top this % of the window's price range.</param>
 /// <param name="SocSoftMinPercent">POMA: soft lower SoC limit, %.</param>
 /// <param name="SocSoftMaxPercent">POMA: soft upper SoC limit, %.</param>
+/// <param name="RequestDirectory">POMA: directory to write every request to as Gateway-style JSON, or empty for none.</param>
 public sealed record PlannerSettings(
     TimeSpan LookAhead,
     double BuyThresholdPercent,
     double SellThresholdPercent,
     double SocSoftMinPercent,
-    double SocSoftMaxPercent);
+    double SocSoftMaxPercent,
+    string RequestDirectory = "");

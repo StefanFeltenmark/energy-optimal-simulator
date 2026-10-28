@@ -223,6 +223,24 @@ namespace UnitTests
             Assert.True(simulator.SimulationTime < simulator.End);
         }
 
+        [Fact]
+        public async Task PlannerTimeoutFailsTheRunInsteadOfEndingItEarly()
+        {
+            // HttpClient reports a timeout as a TaskCanceledException; only the caller's token may stop a run.
+            int calls = 0;
+            var planner = new FixedPlanner(_ => 0, (_, _) =>
+            {
+                if (++calls == 2) throw new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout.");
+            });
+
+            using var simulator = new BatterySimulator.BatterySimulator(planner);
+            simulator.SetUp(new SimulationSettings { DurationHours = 7, TimeStepSeconds = 900, SleepMilliseconds = 0 });
+            simulator.SimulationEnabled = true;
+
+            await Assert.ThrowsAsync<TaskCanceledException>(() => simulator.Simulate());
+            Assert.True(simulator.SimulationTime < simulator.End);
+        }
+
         private class FixedPlanner : IBatteryPlanner
         {
             private readonly Func<DateTime, double> _production;

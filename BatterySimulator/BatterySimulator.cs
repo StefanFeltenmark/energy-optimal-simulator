@@ -365,6 +365,24 @@ namespace BatterySimulator
         }
 
         /// <summary>
+        /// The number of plan periods from <paramref name="t"/>: the planning horizon, extended to the end of the last
+        /// product with a position. A plan that stopped short of held positions (e.g. the day-ahead purchases of the
+        /// evening) would trade as if the battery were free afterwards and could commit more energy than it can hold.
+        /// </summary>
+        private int PeriodsCoveringPositions(DateTime t, TimeSpan resolution, int horizonPeriods)
+        {
+            if (_executor == null) return horizonPeriods;
+            DateTime first = OrderBookExecutor.ProductStart(t);
+            DateTime lastEnd = _executor.Positions
+                .Where(p => p.Key >= first && Math.Abs(p.Value) > 1e-9)
+                .Select(p => p.Key + TimeSpan.FromMinutes(SimulationSettings.ProductMinutes))
+                .DefaultIfEmpty(t)
+                .Max();
+            int needed = (int)Math.Ceiling((lastEnd - t) / resolution);
+            return Math.Max(horizonPeriods, needed);
+        }
+
+        /// <summary>
         /// Gives an order-book-aware planner the market as it looks at <paramref name="t"/>: for every product of the
         /// coming plan, its existing position and, if still tradable, the price and depth for further trades. Each
         /// side is priced at the average of a read-only walk sized to one product at full battery power, so the
@@ -468,7 +486,8 @@ namespace BatterySimulator
                 Settings.BuyThresholdPercent,
                 Settings.SellThresholdPercent,
                 Settings.SocSoftMinPercent,
-                Settings.SocSoftMaxPercent));
+                Settings.SocSoftMaxPercent,
+                Settings.PomaRequestDirectory));
         }
 
         // Completed while running; a pending source while paused. The loop awaits it before every step.
@@ -522,11 +541,12 @@ namespace BatterySimulator
                 }
             }
 
-            PrepareMarketView(_start, _start + planPeriods * planResolution);
-            await _planner.UpdatePlan(_start, planResolution, planPeriods);
+            int periods = PeriodsCoveringPositions(_start, planResolution, planPeriods);
+            PrepareMarketView(_start, _start + periods * planResolution);
+            await _planner.UpdatePlan(_start, planResolution, periods);
 
             DateTime lastPlanning = t;
-            DateTime planEnd = t + planPeriods * planResolution;
+            DateTime planEnd = t + periods * planResolution;
 
             try
             {
@@ -560,9 +580,10 @@ namespace BatterySimulator
                         Console.Out.WriteLine($"Replanning...");
 
                         ApplyPlannerSettings();
-                        PrepareMarketView(t, t + planPeriods * planResolution);
-                        await _planner.UpdatePlan(t, planResolution, planPeriods);
-                        planEnd = t + planPeriods * planResolution;
+                        periods = PeriodsCoveringPositions(t, planResolution, planPeriods);
+                        PrepareMarketView(t, t + periods * planResolution);
+                        await _planner.UpdatePlan(t, planResolution, periods);
+                        planEnd = t + periods * planResolution;
                         lastPlanning = t;
                     }
 
@@ -619,9 +640,10 @@ namespace BatterySimulator
                     t = tNext;
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // Stop requested — exit the simulation loop cleanly.
+                // Stop requested — exit the simulation loop cleanly. Any other cancellation, such as an HTTP
+                // timeout in a planner, is a failure and must not end the run as if it had completed.
             }
         }
 

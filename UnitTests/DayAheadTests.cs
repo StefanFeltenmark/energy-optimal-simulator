@@ -102,6 +102,37 @@ namespace UnitTests
         }
 
         [Fact]
+        public async Task IntradayPlansReachTheLastHeldPosition()
+        {
+            // With the 8 h horizon alone, the 09:00 plan would end at 17:00 and trade as if the evening's day-ahead
+            // purchases did not exist (2025-12-25: positions that overfilled the battery).
+            var settings = SimulationSettings.Recent();
+            settings.DurationHours = 30;           // Thu 09:00 to Fri 15:00
+            settings.TimeStepSeconds = 900;
+            settings.SleepMilliseconds = 0;
+            settings.MarketModel = MarketModel.OrderBook;
+            settings.DayAheadMarket = true;
+
+            var spy = new SpyBidder();
+            using var simulator = new BatterySimulator.BatterySimulator(spy);
+            simulator.SetUp(settings);
+            DateTime start = simulator.Start, tomorrow = start.Date.AddDays(1);
+            simulator.SimulationEnabled = true;
+            await simulator.Simulate();
+
+            // Each plan ends at the later of the 8 h horizon and the last position: before 13:00 today's warm-start
+            // purchase at 23:45, from then tomorrow's up to the run end.
+            Assert.All(spy.Plans, p =>
+            {
+                DateTime lastPositionEnd = p.Start < start.Date.AddHours(13) ? tomorrow : simulator.End;
+                DateTime horizonEnd = p.Start.AddHours(settings.PlanningHorizonHours);
+                Assert.Equal(horizonEnd > lastPositionEnd ? horizonEnd : lastPositionEnd, p.End);
+            });
+            Assert.Equal(start, spy.Plans[0].Start);
+            Assert.Contains(spy.Plans, p => p.Start > start.Date.AddHours(13) && p.End == simulator.End);
+        }
+
+        [Fact]
         public async Task SnapshotsShowTomorrowsDayAheadPositionsFromPublication()
         {
             var settings = SimulationSettings.Recent();
@@ -144,7 +175,13 @@ namespace UnitTests
             public string Name => "Spy";
             public ObservableTimeSeries PlannedSoC { get; } = new ObservableTimeSeries();
             public Power GetPlannedProduction(DateTime time) => new Power(-BidMW, Units.MegaWatt);
-            public Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods) => Task.CompletedTask;
+            public List<(DateTime Start, DateTime End)> Plans { get; } = new();
+
+            public Task UpdatePlan(DateTime planStart, TimeSpan resolution, int nPeriods)
+            {
+                Plans.Add((planStart, planStart + nPeriods * resolution));
+                return Task.CompletedTask;
+            }
 
             public Task<IReadOnlyDictionary<DateTime, double>> PlanDayAhead(DateTime planStart, MarketView view)
             {
